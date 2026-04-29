@@ -52,35 +52,35 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-        /* ===== CSS Custom Properties ===== */
+        /* ===== CSS Custom Properties — Light Professional ===== */
         :root {
-            --primary: #0078d4;
-            --primary-dark: #005a9e;
-            --primary-light: #deecf9;
-            --accent: #00b4d8;
-            --accent-glow: rgba(0, 180, 216, 0.3);
-            --dark: #0f172a;
-            --dark-soft: #1e293b;
-            --text: #334155;
-            --text-light: #64748b;
-            --text-lighter: #94a3b8;
+            --primary: #1a365d;
+            --primary-dark: #0f2440;
+            --primary-light: #ebf0f7;
+            --accent: #c9853a;
+            --accent-glow: rgba(201, 133, 58, 0.3);
+            --dark: #1a202c;
+            --dark-soft: #2d3748;
+            --text: #2d3748;
+            --text-light: #718096;
+            --text-lighter: #a0aec0;
             --white: #ffffff;
-            --off-white: #f8fafc;
+            --off-white: #f7f8fa;
             --border: #e2e8f0;
-            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
-            --gradient-card: linear-gradient(135deg, rgba(0,120,212,0.05) 0%, rgba(0,180,216,0.05) 100%);
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
-            --shadow-glow: 0 0 30px rgba(0,120,212,0.15);
-            --radius: 16px;
-            --radius-sm: 10px;
+            --gradient-hero: linear-gradient(135deg, #1a365d 0%, #2a4a7f 50%, #1a365d 100%);
+            --gradient-card: linear-gradient(135deg, rgba(26,54,93,0.03) 0%, rgba(201,133,58,0.03) 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-glow: 0 0 20px rgba(26,54,93,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -93,7 +93,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
             color: var(--text);
             background: var(--off-white);
             line-height: 1.7;
@@ -254,15 +254,16 @@
         .hero-badge i { font-size: 0.7rem; }
 
         .hero h1 {
+            font-family: 'Playfair Display', Georgia, serif;
             font-size: 3.5rem;
             font-weight: 900;
             color: #fff;
             line-height: 1.1;
-            letter-spacing: -2px;
+            letter-spacing: -1px;
             margin-bottom: 16px;
         }
         .hero h1 .highlight {
-            background: linear-gradient(135deg, var(--accent), #38bdf8);
+            background: linear-gradient(135deg, var(--accent), #e8b86d);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -315,7 +316,7 @@
             border: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--primary), #2a4a7f);
             color: #fff;
             box-shadow: 0 4px 20px rgba(0,120,212,0.3);
         }
@@ -362,9 +363,10 @@
             transform: translateY(-4px);
         }
         .stat-number {
+            font-family: 'Playfair Display', Georgia, serif;
             font-size: 2.5rem;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--accent), #38bdf8);
+            background: linear-gradient(135deg, var(--accent), #e8b86d);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -404,10 +406,11 @@
         }
         .section-label i { font-size: 0.7rem; }
         .section-title {
+            font-family: 'Playfair Display', Georgia, serif;
             font-size: 2.5rem;
             font-weight: 800;
             color: var(--dark);
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
             line-height: 1.2;
         }
         .section-title .accent { color: var(--primary); }
@@ -519,7 +522,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--primary-light), rgba(0,180,216,0.1));
+            background: linear-gradient(135deg, var(--primary-light), rgba(201,133,58,0.1));
             border-radius: 12px;
             font-size: 1.3rem;
             color: var(--primary);
@@ -944,7 +947,7 @@
         }
         .edu-icon {
             width: 72px; height: 72px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--primary), #2a4a7f);
             border-radius: 18px;
             display: flex;
             align-items: center;
@@ -975,7 +978,7 @@
 
         /* ===== Contact / Footer ===== */
         #contact {
-            background: #0f172a;
+            background: #1a365d;
             color: #fff;
             position: relative;
             overflow: hidden;
@@ -1050,7 +1053,7 @@
             position: fixed;
             bottom: 32px; right: 32px;
             width: 48px; height: 48px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--primary), #2a4a7f);
             color: #fff;
             border: none;
             border-radius: 14px;

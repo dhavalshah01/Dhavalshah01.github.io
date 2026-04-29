@@ -52,36 +52,36 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-        /* ===== CSS Custom Properties ===== */
+        /* ===== CSS Custom Properties — Terminal Hacker ===== */
         :root {
-            --primary: #0078d4;
-            --primary-dark: #005a9e;
-            --primary-light: #deecf9;
-            --accent: #00b4d8;
-            --accent-glow: rgba(0, 180, 216, 0.3);
-            --dark: #0f172a;
-            --dark-soft: #1e293b;
-            --text: #334155;
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --primary-light: rgba(34,197,94,0.1);
+            --accent: #4ade80;
+            --accent-glow: rgba(74, 222, 128, 0.3);
+            --dark: #e2e8f0;
+            --dark-soft: #cbd5e1;
+            --text: #94a3b8;
             --text-light: #64748b;
-            --text-lighter: #94a3b8;
-            --white: #ffffff;
-            --off-white: #f8fafc;
-            --border: #e2e8f0;
-            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
-            --gradient-card: linear-gradient(135deg, rgba(0,120,212,0.05) 0%, rgba(0,180,216,0.05) 100%);
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
-            --shadow-glow: 0 0 30px rgba(0,120,212,0.15);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --text-lighter: #475569;
+            --white: #0a0e14;
+            --off-white: #0d1117;
+            --border: #1e2a3a;
+            --gradient-hero: linear-gradient(135deg, #0a0e14 0%, #0d1117 50%, #0a0e14 100%);
+            --gradient-card: linear-gradient(135deg, rgba(34,197,94,0.03) 0%, rgba(74,222,128,0.03) 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 30px rgba(34,197,94,0.15);
+            --radius: 4px;
+            --radius-sm: 2px;
+            --transition: all 0.2s ease;
         }
 
         /* ===== Reset & Base ===== */
@@ -93,7 +93,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
             color: var(--text);
             background: var(--off-white);
             line-height: 1.7;
@@ -112,7 +112,7 @@
             position: absolute;
             display: block;
             width: 4px; height: 4px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(34,197,94,0.2);
             border-radius: 50%;
             animation: float-up linear infinite;
         }
@@ -134,10 +134,10 @@
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 1000;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(10, 14, 20, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(34,197,94,0.1);
             transition: var(--transition);
         }
         .navbar.scrolled {
@@ -240,8 +240,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(0,180,216,0.12);
-            border: 1px solid rgba(0,180,216,0.25);
+            background: rgba(34,197,94,0.08);
+            border: 1px solid rgba(34,197,94,0.25);
             color: var(--accent);
             padding: 6px 16px;
             border-radius: 50px;
@@ -254,22 +254,23 @@
         .hero-badge i { font-size: 0.7rem; }
 
         .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 900;
-            color: #fff;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #22c55e;
             line-height: 1.1;
-            letter-spacing: -2px;
+            letter-spacing: -1px;
             margin-bottom: 16px;
+            text-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
         .hero h1 .highlight {
-            background: linear-gradient(135deg, var(--accent), #38bdf8);
+            background: linear-gradient(135deg, #4ade80, #22c55e);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         .hero-subtitle {
-            font-size: 1.2rem;
-            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+            color: rgba(34,197,94,0.6);
             font-weight: 400;
             line-height: 1.6;
             margin-bottom: 32px;
@@ -282,17 +283,18 @@
             margin-bottom: 36px;
         }
         .hero-tags span {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.8);
+            background: rgba(34,197,94,0.06);
+            border: 1px solid rgba(34,197,94,0.2);
+            color: rgba(34,197,94,0.8);
             padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 0.78rem;
+            border-radius: 2px;
+            font-size: 0.75rem;
             font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
             transition: var(--transition);
         }
         .hero-tags span:hover {
-            background: rgba(0,180,216,0.15);
+            background: rgba(34,197,94,0.15);
             border-color: var(--accent);
             color: var(--accent);
         }
@@ -348,8 +350,8 @@
             gap: 20px;
         }
         .stat-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(34,197,94,0.03);
+            border: 1px solid rgba(34,197,94,0.12);
             border-radius: var(--radius);
             padding: 28px 24px;
             text-align: center;
@@ -357,23 +359,24 @@
             transition: var(--transition);
         }
         .stat-card:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(0,180,216,0.3);
+            background: rgba(34,197,94,0.08);
+            border-color: rgba(34,197,94,0.3);
             transform: translateY(-4px);
         }
         .stat-number {
             font-size: 2.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent), #38bdf8);
+            font-weight: 700;
+            background: linear-gradient(135deg, #22c55e, #4ade80);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-shadow: none;
             line-height: 1;
             margin-bottom: 8px;
         }
         .stat-label {
-            color: rgba(255,255,255,0.6);
-            font-size: 0.82rem;
+            color: rgba(34,197,94,0.5);
+            font-size: 0.72rem;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -519,8 +522,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--primary-light), rgba(0,180,216,0.1));
-            border-radius: 12px;
+            background: rgba(34,197,94,0.08);
+            border-radius: 4px;
             font-size: 1.3rem;
             color: var(--primary);
             margin-bottom: 20px;
@@ -975,12 +978,12 @@
 
         /* ===== Contact / Footer ===== */
         #contact {
-            background: #0f172a;
-            color: #fff;
+            background: #0a0e14;
+            color: #22c55e;
             position: relative;
             overflow: hidden;
         }
-        #contact .section-title { color: #fff; }
+                #contact .section-title { color: #22c55e; }
         #contact .section-title .accent { color: var(--accent); }
         #contact .section-label { color: var(--accent); }
 
@@ -991,16 +994,16 @@
             margin-bottom: 60px;
         }
         .contact-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(34,197,94,0.04);
+            border: 1px solid rgba(34,197,94,0.12);
             border-radius: var(--radius);
             padding: 28px;
             text-align: center;
             transition: var(--transition);
         }
         .contact-card:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(0,180,216,0.3);
+            background: rgba(34,197,94,0.08);
+            border-color: rgba(34,197,94,0.3);
             transform: translateY(-4px);
         }
         .contact-card i {
@@ -1017,7 +1020,7 @@
             font-weight: 600;
         }
         .contact-card a, .contact-card p {
-            color: #fff;
+            color: #4ade80;
             text-decoration: none;
             font-size: 0.95rem;
             font-weight: 500;
