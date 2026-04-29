@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dhaval Shah | Senior Cloud Solution Architect – Azure AI, Microsoft 365, Power Platform</title>
-    <meta name="description" content="Dhaval Shah – Senior Cloud Solution Architect with 18+ years of experience in Azure AI, Microsoft 365, Power Platform, SharePoint, Copilot Studio, and enterprise digital transformation. Based in Houston, TX.">
-    <meta name="keywords" content="Dhaval Shah, Cloud Solution Architect, Azure AI, Microsoft 365, Power Platform, SharePoint, Copilot Studio, Power Apps, Power Automate, Dataverse, Houston, Texas, Microsoft Graph, SPFx, Digital Transformation, Enterprise Architecture">
+    <title>Dhaval Shah | Agentic AI & Cloud Solution Architect – Azure AI, Microsoft 365</title>
+    <meta name="description" content="Dhaval Shah – Senior Cloud Solution Architect building enterprise agentic AI solutions with Azure AI Foundry, Semantic Kernel, Copilot Studio, and multi-agent orchestration. 18+ years of experience in Azure AI, Microsoft 365, and Power Platform. Houston, TX.">
+    <meta name="keywords" content="Dhaval Shah, Agentic AI, AI Agents, Semantic Kernel, RAG, Azure OpenAI, Multi-Agent Systems, LLM, Prompt Engineering, AI Orchestration, Cloud Solution Architect, Azure AI, Microsoft 365, Power Platform, Copilot Studio, Azure AI Foundry, Power Apps, Dataverse, Houston, Texas, Microsoft Graph, Digital Transformation">
     <meta name="author" content="Dhaval Shah">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://dhavalshah01.github.io/">
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Dhaval Shah | Senior Cloud Solution Architect">
-    <meta property="og:description" content="18+ years designing enterprise-scale Azure AI, Microsoft 365, and Power Platform solutions. Houston, TX.">
+    <meta property="og:title" content="Dhaval Shah | Agentic AI & Cloud Solution Architect">
+    <meta property="og:description" content="Building enterprise agentic AI solutions with Azure AI Foundry, Semantic Kernel, and Copilot Studio. 18+ years in Azure AI & Microsoft 365. Houston, TX.">
     <meta property="og:url" content="https://dhavalshah01.github.io/">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Dhaval Shah | Senior Cloud Solution Architect">
-    <meta name="twitter:description" content="18+ years designing enterprise-scale Azure AI, Microsoft 365, and Power Platform solutions.">
+    <meta name="twitter:title" content="Dhaval Shah | Agentic AI & Cloud Solution Architect">
+    <meta name="twitter:description" content="Building enterprise agentic AI solutions with Azure AI Foundry, Semantic Kernel, and Copilot Studio. 18+ years in Azure AI & Microsoft 365.">
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -27,7 +27,7 @@
         "@context": "https://schema.org",
         "@type": "Person",
         "name": "Dhaval Shah",
-        "jobTitle": "Senior Cloud Solution Architect",
+        "jobTitle": "Senior Cloud Solution Architect | Agentic AI & Azure AI",
         "url": "https://dhavalshah01.github.io/",
         "email": "dhaval.shah01@gmail.com",
         "telephone": "+1-832-312-9454",
@@ -45,7 +45,7 @@
             "@type": "CollegeOrUniversity",
             "name": "Nirma University"
         },
-        "knowsAbout": ["Azure AI", "Microsoft 365", "Power Platform", "SharePoint", "Copilot Studio", "Cloud Architecture", "Digital Transformation"]
+        "knowsAbout": ["Agentic AI", "AI Agents", "Semantic Kernel", "RAG", "LLM Orchestration", "Azure AI Foundry", "Azure OpenAI", "Copilot Studio", "Azure AI", "Microsoft 365", "Power Platform", "Cloud Architecture", "Digital Transformation"]
     }
     </script>
 
@@ -596,6 +596,139 @@
             color: var(--text-light);
             margin-top: 2px;
         }
+        .cert-featured {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .cert-featured-label {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--white);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        /* ===== AI Projects ===== */
+        #ai-projects {
+            background: var(--off-white);
+        }
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .project-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+        .project-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-4px);
+        }
+        .project-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        .project-card h3 i {
+            color: var(--primary);
+            margin-right: 8px;
+        }
+        .project-card p {
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .project-tech span {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* ===== Dark Mode ===== */
+        .theme-toggle {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-lighter);
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-left: 8px;
+        }
+        .theme-toggle:hover {
+            color: var(--white);
+            border-color: var(--accent);
+        }
+        body.dark-mode {
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --dark: #f1f5f9;
+            --dark-soft: #e2e8f0;
+            --white: #1e293b;
+            --off-white: #0f172a;
+            --border: #334155;
+        }
+        body.dark-mode .navbar {
+            background: rgba(15, 23, 42, 0.98);
+        }
+        body.dark-mode .skill-card,
+        body.dark-mode .project-card,
+        body.dark-mode .timeline-card,
+        body.dark-mode .education-card,
+        body.dark-mode .about-info {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-mode .cert-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-mode .cert-featured {
+            background: rgba(0,120,212,0.15);
+            border-color: var(--primary);
+        }
+        body.dark-mode .skill-tags span {
+            background: #0f172a;
+            border-color: #334155;
+            color: #cbd5e1;
+        }
+        body.dark-mode .project-tech span {
+            background: rgba(0,120,212,0.15);
+            color: #60a5fa;
+        }
 
         /* ===== Experience Timeline ===== */
         #experience {
@@ -851,6 +984,7 @@
             .about-grid { grid-template-columns: 1fr; }
             .skills-grid { grid-template-columns: repeat(2, 1fr); }
             .cert-grid { grid-template-columns: repeat(2, 1fr); }
+            .projects-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
             .nav-links { display: none; }
@@ -869,6 +1003,7 @@
             .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
             .skills-grid { grid-template-columns: 1fr; }
             .cert-grid { grid-template-columns: 1fr; }
+            .projects-grid { grid-template-columns: 1fr; }
             .section-title { font-size: 1.8rem; }
             section { padding: 60px 16px; }
             .timeline { padding-left: 30px; }
@@ -886,6 +1021,7 @@
         <ul class="nav-links" id="navLinks">
             <li><a href="#about">About</a></li>
             <li><a href="#skills">Skills</a></li>
+            <li><a href="#ai-projects">AI Projects</a></li>
             <li><a href="#certifications">Certifications</a></li>
             <li><a href="#experience">Experience</a></li>
             <li><a href="#education">Education</a></li>
@@ -893,6 +1029,9 @@
         </ul>
         <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
             <i class="fas fa-bars"></i>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
         </button>
     </div>
 </nav>
@@ -905,22 +1044,26 @@
     </div>
     <div class="hero-content">
         <div class="hero-text">
-            <!-- <div class="hero-badge"><i class="fas fa-bolt"></i> Available for Consulting</div> -->
+            <div class="hero-badge"><i class="fas fa-robot"></i> Building Agentic AI Solutions</div>
             <h1>Dhaval <span class="highlight">Shah</span></h1>
-            <p class="hero-subtitle">Senior Cloud Solution Architect specializing in Azure AI, Microsoft 365, Power Platform, and enterprise digital transformation.</p>
+            <p class="hero-subtitle">Senior Cloud Solution Architect | Agentic AI & Azure AI — specializing in multi-agent orchestration, Azure AI Foundry, Copilot Studio, and enterprise digital transformation.</p>
             <div class="hero-tags">
-                <span>#CloudArchitect</span>
+                <span>#AgenticAI</span>
+                <span>#AIAgents</span>
+                <span>#AzureAIFoundry</span>
+                <span>#CopilotStudio</span>
+                <span>#PromptEngineering</span>
+                <span>#RAG</span>
+                <span>#SemanticKernel</span>
                 <span>#AzureAI</span>
                 <span>#Microsoft365</span>
                 <span>#PowerPlatform</span>
-                <span>#CopilotStudio</span>
-                <span>#SharePoint</span>
-                <span>#LowCode</span>
-                <span>#DigitalTransformation</span>
+                <span>#CloudArchitect</span>
             </div>
             <div class="hero-cta">
                 <a href="#contact" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Get in Touch</a>
                 <a href="https://www.linkedin.com/in/dhavalshah27" target="_blank" rel="noopener noreferrer" class="btn btn-outline"><i class="fab fa-linkedin"></i> LinkedIn</a>
+                <a href="#" class="btn btn-outline" onclick="window.print(); return false;"><i class="fas fa-file-pdf"></i> Download PDF</a>
             </div>
         </div>
         <div class="hero-stats">
@@ -951,13 +1094,13 @@
     <div class="section-container">
         <div class="section-header reveal">
             <div class="section-label"><i class="fas fa-user"></i> About Me</div>
-            <h2 class="section-title">Driving <span class="accent">Digital Transformation</span><br>with Cloud &amp; AI</h2>
+            <h2 class="section-title">Building <span class="accent">Agentic AI</span><br>for the Enterprise</h2>
         </div>
         <div class="about-grid">
             <div class="about-text reveal">
-                <p>Senior Cloud Solution Architect with over 18 years of experience designing and delivering enterprise-scale cloud, AI, and digital transformation solutions across Microsoft Azure and Microsoft 365 ecosystems. I specialize in helping organizations modernize legacy platforms, adopt cloud-native architectures, and unlock business value through intelligent, scalable, and secure solutions.</p>
-                <p>My expertise spans end-to-end solution architecture across Azure, Power Platform, and AI workloads, including Azure AI Foundry, Copilot Studio, Azure Functions, App Services, and Microsoft Graph. I have architected and delivered enterprise solutions such as AI-powered automation platforms, intelligent intranets, low-code business applications, data-driven dashboards, and secure external portals—ensuring alignment with business goals, governance standards, and cloud best practices.</p>
-                <p>As a technical leader, I bring extensive experience in guiding cross-functional teams, mentoring engineers, and driving architecture reviews and design standards. I thrive at the intersection of cloud architecture, AI innovation, and business strategy—helping enterprises build future-ready platforms using Azure, Dataverse, Power Platform, and integrated Microsoft technologies.</p>
+                <p>Architect of enterprise agentic AI systems with over 18 years of experience designing autonomous, multi-agent solutions that transform how organizations operate. I specialize in building AI agents using Azure AI Foundry, Semantic Kernel, and Copilot Studio—leveraging retrieval-augmented generation (RAG), tool-calling, function calling, and multi-agent orchestration to deliver intelligent, context-aware automation at scale.</p>
+                <p>My work spans the full AI solution lifecycle: from designing RAG pipelines with Azure AI Search and vector embeddings, to building multi-agent workflows where specialized agents collaborate on complex business processes—document analysis, data extraction, report generation, and autonomous task completion. I have delivered AI agents that reduced manual processing by 60%+ and enabled natural-language access to enterprise knowledge across 50K+ documents.</p>
+                <p>Beyond AI, I bring deep expertise in Azure cloud architecture, Microsoft 365, and Power Platform—ensuring AI solutions are production-grade, governed, secure, and integrated into existing enterprise ecosystems. As a technical leader, I mentor engineering teams, drive architecture reviews, and bridge the gap between AI innovation and business strategy.</p>
             </div>
             <div class="about-info reveal">
                 <div class="about-info-item">
@@ -995,6 +1138,13 @@
                         <div class="value"><a href="https://www.credly.com/users/dhaval-shah/badges" target="_blank" rel="noopener noreferrer">View Badges</a></div>
                     </div>
                 </div>
+                <div class="about-info-item">
+                    <i class="fab fa-github"></i>
+                    <div>
+                        <div class="label">GitHub</div>
+                        <div class="value"><a href="https://github.com/dhavalshah01" target="_blank" rel="noopener noreferrer">dhavalshah01</a></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1010,16 +1160,36 @@
         <div class="skills-grid">
             <div class="skill-card reveal">
                 <div class="skill-icon"><i class="fas fa-brain"></i></div>
-                <h3>AI &amp; Generative AI</h3>
+                <h3>Agentic AI &amp; Intelligent Automation</h3>
                 <div class="skill-tags">
                     <span>Azure AI Foundry</span>
-                    <span>Azure OpenAI (GPT-4/4o)</span>
+                    <span>Azure OpenAI (GPT-4o)</span>
                     <span>Copilot Studio</span>
-                    <span>AI Builder</span>
+                    <span>Semantic Kernel</span>
+                    <span>AutoGen</span>
+                    <span>LangChain</span>
                     <span>Prompt Engineering</span>
-                    <span>Vector Search</span>
-                    <span>Embeddings</span>
+                    <span>RAG</span>
+                    <span>Multi-Agent Orchestration</span>
+                    <span>Tool/Function Calling</span>
+                    <span>AI Builder</span>
                     <span>Responsible AI</span>
+                </div>
+            </div>
+            <div class="skill-card reveal">
+                <div class="skill-icon"><i class="fas fa-robot"></i></div>
+                <h3>AI Agent Development</h3>
+                <div class="skill-tags">
+                    <span>Agent Memory &amp; State</span>
+                    <span>Tool Registration</span>
+                    <span>Guardrails &amp; Content Safety</span>
+                    <span>Grounding &amp; Citation</span>
+                    <span>Human-in-the-Loop</span>
+                    <span>Agent Observability &amp; Tracing</span>
+                    <span>Vector Databases</span>
+                    <span>Embeddings &amp; Chunking</span>
+                    <span>Agent Evaluation</span>
+                    <span>MCP / A2A Protocols</span>
                 </div>
             </div>
             <div class="skill-card reveal">
@@ -1028,12 +1198,14 @@
                 <div class="skill-tags">
                     <span>Azure Functions</span>
                     <span>App Services</span>
+                    <span>Azure AI Search</span>
+                    <span>Azure AI Agent Service</span>
+                    <span>Azure Container Apps</span>
                     <span>Logic Apps</span>
                     <span>Managed Identities</span>
                     <span>Key Vault</span>
                     <span>Azure DevOps CI/CD</span>
-                    <span>Docker</span>
-                    <span>.NET Core</span>
+                    <span>API Management</span>
                 </div>
             </div>
             <div class="skill-card reveal">
@@ -1067,14 +1239,15 @@
                 <div class="skill-icon"><i class="fas fa-laptop-code"></i></div>
                 <h3>Development &amp; Frameworks</h3>
                 <div class="skill-tags">
+                    <span>Python</span>
+                    <span>C# / .NET</span>
                     <span>TypeScript</span>
                     <span>React</span>
-                    <span>C# / ASP.NET</span>
                     <span>Node.js</span>
                     <span>REST APIs</span>
                     <span>PowerShell</span>
                     <span>SQL Server</span>
-                    <span>JavaScript</span>
+                    <span>Docker</span>
                 </div>
             </div>
             <div class="skill-card reveal">
@@ -1093,6 +1266,61 @@
     </div>
 </section>
 
+<!-- AI Projects Section -->
+<section id="ai-projects">
+    <div class="section-container">
+        <div class="section-header reveal">
+            <div class="section-label"><i class="fas fa-rocket"></i> AI Projects</div>
+            <h2 class="section-title">Agentic AI <span class="accent">Case Studies</span></h2>
+        </div>
+        <div class="projects-grid">
+            <div class="project-card reveal">
+                <h3><i class="fas fa-search"></i> Enterprise AI Knowledge Agent</h3>
+                <p>Multi-agent RAG system for domain-specific Q&amp;A across 50K+ enterprise documents. Agents collaborate to retrieve, rank, and synthesize answers with grounded citations and source attribution.</p>
+                <div class="project-tech">
+                    <span>Azure AI Foundry</span>
+                    <span>Azure AI Search</span>
+                    <span>Azure OpenAI</span>
+                    <span>Semantic Kernel</span>
+                    <span>Vector Embeddings</span>
+                </div>
+            </div>
+            <div class="project-card reveal">
+                <h3><i class="fas fa-chart-line"></i> Autonomous Business Reporting Agent</h3>
+                <p>AI agent that autonomously queries Dataverse/Dynamics 365 data, generates executive summaries using GPT-4o, and distributes formatted reports—reducing manual reporting effort by 60%+.</p>
+                <div class="project-tech">
+                    <span>Azure OpenAI</span>
+                    <span>Power Automate</span>
+                    <span>Dataverse</span>
+                    <span>Function Calling</span>
+                    <span>Prompt Engineering</span>
+                </div>
+            </div>
+            <div class="project-card reveal">
+                <h3><i class="fas fa-comments"></i> Copilot Studio AI Agents</h3>
+                <p>Custom enterprise Copilot agents with tool-calling capabilities, Microsoft Graph integration, and enterprise data grounding to automate IT helpdesk, HR onboarding, and employee self-service workflows.</p>
+                <div class="project-tech">
+                    <span>Copilot Studio</span>
+                    <span>Microsoft Graph</span>
+                    <span>Custom Actions</span>
+                    <span>Dataverse</span>
+                    <span>Guardrails</span>
+                </div>
+            </div>
+            <div class="project-card reveal">
+                <h3><i class="fas fa-file-alt"></i> Intelligent Document Processing Pipeline</h3>
+                <p>End-to-end document intelligence pipeline that extracts, classifies, and routes enterprise documents using Azure AI Document Intelligence and GPT-4o with human-in-the-loop validation.</p>
+                <div class="project-tech">
+                    <span>Azure AI Document Intelligence</span>
+                    <span>GPT-4o</span>
+                    <span>Azure Functions</span>
+                    <span>Human-in-the-Loop</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Certifications Section -->
 <section id="certifications">
     <div class="section-container">
@@ -1101,13 +1329,13 @@
             <h2 class="section-title">Microsoft <span class="accent">Certifications</span></h2>
         </div>
         <div class="cert-grid">
-            <div class="cert-card reveal">
+            <div class="cert-card cert-featured reveal">
                 <div class="cert-icon"><img src="https://images.credly.com/images/61f56aa4-16fd-403c-90bc-1d90dba1fa99/image.png" alt="Azure AI Engineer Associate badge" loading="lazy"></div>
-                <div class="cert-info"><h3>AI-102 &middot; Designing and Implementing a Microsoft Azure AI Solution</h3><p class="cert-date">March 2025</p></div>
+                <div class="cert-info"><h3>AI-102 &middot; Designing and Implementing a Microsoft Azure AI Solution</h3><p class="cert-date">March 2025</p><span class="cert-featured-label">Featured</span></div>
             </div>
-            <div class="cert-card reveal">
+            <div class="cert-card cert-featured reveal">
                 <div class="cert-icon"><img src="https://images.credly.com/images/4136ced8-75d5-4afb-8677-40b6236e2672/azure-ai-fundamentals-600x600.png" alt="Azure AI Fundamentals badge" loading="lazy"></div>
-                <div class="cert-info"><h3>AI-900 &middot; Microsoft Azure AI Fundamentals</h3><p class="cert-date">October 2024</p></div>
+                <div class="cert-info"><h3>AI-900 &middot; Microsoft Azure AI Fundamentals</h3><p class="cert-date">October 2024</p><span class="cert-featured-label">Featured</span></div>
             </div>
             <div class="cert-card reveal">
                 <div class="cert-icon"><img src="https://images.credly.com/images/dca1c5d6-b309-4948-b34c-6950998f524b/image.png" alt="M365 Developer Associate badge" loading="lazy"></div>
@@ -1179,14 +1407,16 @@
                     </div>
                     <div class="timeline-location"><i class="fas fa-map-marker-alt"></i> Houston, Texas</div>
                     <ul class="timeline-bullets">
-                        <li>Delivered enterprise modernization and digital transformation across Microsoft 365 and Azure by architecting scalable, secure, and AI-driven solutions used across business-critical functions.</li>
-                        <li>Designed an enterprise AI platform using Azure AI Foundry, implementing prompt engineering, vector retrieval, and orchestration frameworks for intelligent search and natural-language experiences.</li>
-                        <li>Led strategic engagements with senior leadership, defining cloud adoption roadmaps, governance models, and modernization strategies aligned to organizational priorities.</li>
-                        <li>Architected end-to-end Power Platform solutions using Power Apps, Power Automate, Power BI, Dataverse, and enterprise connectors to replace legacy systems and reduce operational overhead.</li>
-                        <li>Delivered AI-assisted automation for business reporting and case documentation by combining Dataverse/Dynamics 365 data, Power Automate orchestration, and generative AI summarization.</li>
-                        <li>Delivered a secure, external-facing tax-payment Power Pages portal, integrating identity, Dataverse, and county financial systems to improve citizen services.</li>
+                        <li>Architected multi-agent AI systems using Azure AI Foundry, Semantic Kernel, and Azure OpenAI for autonomous enterprise workflows—enabling intelligent document processing, knowledge retrieval, and automated decision-making.</li>
+                        <li>Designed and deployed RAG pipelines with Azure AI Search, vector embeddings, and custom chunking strategies for domain-specific knowledge retrieval across 50K+ enterprise documents.</li>
+                        <li>Built AI agents with tool-calling and function-calling capabilities integrating enterprise APIs, Dataverse, Microsoft Graph, and custom data sources for autonomous task completion.</li>
+                        <li>Implemented agent evaluation frameworks including automated testing, prompt optimization, and human-in-the-loop validation to ensure accuracy, grounding, and responsible AI compliance.</li>
+                        <li>Built multi-agent orchestration workflows where specialized agents collaborate on complex business processes—document analysis, data extraction, summarization, and report generation.</li>
                         <li>Built Copilot Studio copilots and AI agents integrating Microsoft Graph, custom actions, and enterprise data sources to automate business operations and enhance employee experience.</li>
+                        <li>Delivered AI-assisted automation for business reporting and case documentation by combining Dataverse/Dynamics 365 data, Power Automate orchestration, and generative AI summarization.</li>
+                        <li>Architected end-to-end Power Platform solutions using Power Apps, Power Automate, Power BI, Dataverse, and enterprise connectors to replace legacy systems and reduce operational overhead.</li>
                         <li>Designed cloud-native applications using Azure App Services, Azure Functions, managed identities, and event-driven patterns to support scalable, resilient enterprise workloads.</li>
+                        <li>Led strategic engagements with senior leadership, defining cloud adoption roadmaps, governance models, and modernization strategies aligned to organizational priorities.</li>
                         <li>Defined governance, ALM patterns, compliance guardrails, and environment strategies for Power Platform, SharePoint, and Azure solutions.</li>
                     </ul>
                 </div>
@@ -1288,10 +1518,10 @@
                         <div class="timeline-date"><i class="fas fa-calendar"></i> Nov 2011 – May 2014</div>
                     </div>
                     <ul class="timeline-bullets">
-                        <li>Served as Senior Developer and Technical Lead for Deloitte Integrated Global Search, a global enterprise search platform built on SharePoint 2010 and FAST Search.</li>
+                        <li>Served as Senior Developer and Technical Lead for Deloitte Integrated Global Search—an enterprise-scale knowledge retrieval and information mining platform built on SharePoint 2010 and FAST Search, a precursor to modern RAG architectures.</li>
                         <li>Led a distributed team of developers, driving technical direction, code quality, sprint planning, and collaboration with US-based stakeholders.</li>
-                        <li>Built large-scale indexing and crawling pipelines for SharePoint and non-SharePoint content sources to expand enterprise search coverage.</li>
-                        <li>Developed a Content Enrichment Service (CES) to enhance metadata, improve search accuracy, and support SharePoint 2013 migration.</li>
+                        <li>Built large-scale indexing, crawling, and content ingestion pipelines for SharePoint and non-SharePoint content sources—establishing patterns now foundational to modern vector-based retrieval systems.</li>
+                        <li>Developed a Content Enrichment Service (CES) to enhance metadata, improve search relevance and ranking—analogous to modern embedding enrichment and chunking strategies in RAG pipelines.</li>
                         <li>Provided stable go-live and production support, ensuring reliability and continuous improvement of the global search platform.</li>
                     </ul>
                 </div>
@@ -1366,9 +1596,19 @@
                 <h3>Credly Badges</h3>
                 <a href="https://www.credly.com/users/dhaval-shah/badges" target="_blank" rel="noopener noreferrer">View Certifications</a>
             </div>
+            <div class="contact-card reveal">
+                <i class="fab fa-github"></i>
+                <h3>GitHub</h3>
+                <a href="https://github.com/dhavalshah01" target="_blank" rel="noopener noreferrer">github.com/dhavalshah01</a>
+            </div>
+            <div class="contact-card reveal">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Microsoft Learn</h3>
+                <a href="https://learn.microsoft.com/en-us/users/dhavalshah01/" target="_blank" rel="noopener noreferrer">Level 9 &middot; 52 Badges</a>
+            </div>
         </div>
         <div class="footer">
-            <p>&copy; 2025 Dhaval Shah. Built with passion for cloud, AI, and digital transformation.</p>
+            <p>&copy; 2026 Dhaval Shah. Building agentic AI solutions for the enterprise.</p>
         </div>
     </div>
 </section>
@@ -1404,6 +1644,21 @@
         });
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
     revealElements.forEach(el => revealObserver.observe(el));
+
+    // Dark mode toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+    }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
 
     // Back to top
     const backToTop = document.getElementById('backToTop');
