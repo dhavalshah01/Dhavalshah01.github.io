@@ -1410,6 +1410,8 @@
                 <button type="button" class="hero-skill" data-skill="azure" role="tab" aria-selected="false"><i class="fas fa-cloud"></i> Azure AI</button>
                 <button type="button" class="hero-skill" data-skill="sharepoint" role="tab" aria-selected="false"><i class="fab fa-microsoft"></i> SharePoint</button>
                 <button type="button" class="hero-skill" data-skill="power" role="tab" aria-selected="false"><i class="fas fa-bolt"></i> Power Platform</button>
+                <button type="button" class="hero-skill" data-skill="copilot" role="tab" aria-selected="false"><i class="fas fa-brain"></i> Microsoft Copilot</button>
+                <button type="button" class="hero-skill" data-skill="devops" role="tab" aria-selected="false"><i class="fas fa-code-branch"></i> DevOps &amp; ALM</button>
             </div>
 
             <ul class="hero-capabilities" id="heroCapabilities" aria-live="polite">
@@ -2099,6 +2101,30 @@
                 'Embed AI Builder & Copilot Studio agents into business apps',
                 'Establish CoE, ALM pipelines & DLP governance at scale'
             ]
+        },
+        copilot: {
+            badgeIcon: 'fa-brain',
+            badgeText: 'Extending Microsoft Copilot',
+            role: 'Microsoft Copilot Extensibility Architect',
+            subtitle: 'Extending Microsoft 365 Copilot with plugins, connectors, and Graph-grounded agents — delivering AI-powered productivity across the modern workplace.',
+            capabilities: [
+                'Build Copilot plugins & declarative agents for M365',
+                'Integrate Microsoft Graph data into Copilot experiences',
+                'Design Copilot Studio agents with custom knowledge sources',
+                'Implement Teams message extensions & adaptive card actions'
+            ]
+        },
+        devops: {
+            badgeIcon: 'fa-code-branch',
+            badgeText: 'Automating DevOps & ALM',
+            role: 'DevOps & ALM Strategist',
+            subtitle: 'Establishing CI/CD pipelines, ALM best practices, and governance frameworks for Power Platform, Azure, and SharePoint solutions at enterprise scale.',
+            capabilities: [
+                'Implement Azure DevOps & GitHub Actions CI/CD pipelines',
+                'Automate Power Platform solution deployments with ALM tooling',
+                'Manage environment strategies, branching & release gates',
+                'Enforce governance with DLP policies, CoE Starter Kit & auditing'
+            ]
         }
     };
 
@@ -2145,17 +2171,21 @@
         }, HERO_FADE_DURATION_MS);
     }
 
-    skillButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (btn.classList.contains('active')) return;
-            skillButtons.forEach(b => {
-                b.classList.remove('active');
-                b.setAttribute('aria-selected', 'false');
-            });
-            btn.classList.add('active');
-            btn.setAttribute('aria-selected', 'true');
-            applyHeroSkill(btn.dataset.skill);
+    function activateSkill(btn) {
+        if (btn.classList.contains('active')) return;
+        skillButtons.forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
         });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        applyHeroSkill(btn.dataset.skill);
+    }
+
+    skillButtons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => activateSkill(btn));
+        btn.addEventListener('focusin', () => activateSkill(btn));
+        btn.addEventListener('click', () => activateSkill(btn));
     });
 </script>
 
