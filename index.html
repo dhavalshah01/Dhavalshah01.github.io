@@ -296,6 +296,95 @@
             border-color: var(--accent);
             color: var(--accent);
         }
+
+        /* Hero role tagline (dynamic) */
+        .hero-role {
+            display: inline-block;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(0,120,212,0.25), rgba(0,180,216,0.25));
+            border: 1px solid rgba(0,180,216,0.35);
+            padding: 6px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            transition: opacity 0.25s ease;
+        }
+
+        /* Hero skill selector pills */
+        .hero-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .hero-skill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.85);
+            padding: 9px 16px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .hero-skill i { font-size: 0.9rem; opacity: 0.85; }
+        .hero-skill:hover {
+            background: rgba(0,180,216,0.12);
+            border-color: rgba(0,180,216,0.4);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .hero-skill.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 18px rgba(0,120,212,0.35);
+        }
+        .hero-skill.active i { opacity: 1; }
+        .hero-skill:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* "What I can do" capabilities list */
+        .hero-capabilities {
+            list-style: none;
+            margin: 0 0 32px 0;
+            padding: 16px 18px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-left: 3px solid var(--accent);
+            border-radius: 12px;
+            display: grid;
+            gap: 10px;
+            transition: opacity 0.25s ease;
+        }
+        .hero-capabilities li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: rgba(255,255,255,0.82);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+        .hero-capabilities li i {
+            color: var(--accent);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        /* Fade-out helper used during skill switch */
+        .hero-fade {
+            opacity: 0;
+        }
+
         .hero-cta {
             display: flex;
             gap: 16px;
@@ -1146,6 +1235,27 @@
                 -webkit-text-fill-color: #0078d4 !important;
             }
             .hero-subtitle { color: #333 !important; -webkit-text-fill-color: #333 !important; }
+            .hero-role {
+                background: none !important;
+                border: 1px solid #0078d4 !important;
+                color: #0078d4 !important;
+                -webkit-text-fill-color: #0078d4 !important;
+                font-size: 11pt !important;
+            }
+            .hero-skills { display: none !important; }
+            .hero-capabilities {
+                background: none !important;
+                border: none !important;
+                border-left: 2px solid #0078d4 !important;
+                padding: 4px 0 4px 12px !important;
+                margin-bottom: 10px !important;
+            }
+            .hero-capabilities li {
+                color: #333 !important;
+                -webkit-text-fill-color: #333 !important;
+                font-size: 9pt !important;
+            }
+            .hero-capabilities li i { color: #0078d4 !important; -webkit-text-fill-color: #0078d4 !important; }
             .hero-tags span {
                 border: 1px solid #ccc !important;
                 padding: 2px 8px !important;
@@ -1290,24 +1400,25 @@
     </div>
     <div class="hero-content">
         <div class="hero-text">
-            <div class="hero-badge"><i class="fas fa-robot"></i> Building Agentic AI Solutions</div>
+            <div class="hero-badge" id="heroBadge"><i class="fas fa-robot"></i> <span>Building Agentic AI Solutions</span></div>
             <h1>Dhaval <span class="highlight">Shah</span></h1>
-            <p class="hero-subtitle">Senior Cloud Solution Architect | Agentic AI & Azure AI — specializing in multi-agent orchestration, Azure AI Foundry, Copilot Studio, and enterprise digital transformation.</p>
-            <div class="hero-tags">
-                <span>#AgenticAI</span>
-                <span>#AIAgents</span>
-                <span>#AzureAIFoundry</span>
-                <span>#CopilotStudio</span>
-                <span>#PromptEngineering</span>
-                <span>#RAG</span>
-                <span>#SemanticKernel</span>
-                <span>#SPFx</span>
-                <span>#IntranetModernization</span>
-                <span>#AzureAI</span>
-                <span>#Microsoft365</span>
-                <span>#PowerPlatform</span>
-                <span>#CloudArchitect</span>
+            <div class="hero-role" id="heroRole">Agentic AI Architect</div>
+            <p class="hero-subtitle" id="heroSubtitle">Senior Cloud Solution Architect designing autonomous, multi-agent systems with Azure AI Foundry, Semantic Kernel, and Copilot Studio — turning enterprise data into intelligent action.</p>
+
+            <div class="hero-skills" role="tablist" aria-label="Choose a skill to see what I can do">
+                <button type="button" class="hero-skill active" data-skill="agentic" role="tab" aria-selected="true"><i class="fas fa-robot"></i> Agentic AI</button>
+                <button type="button" class="hero-skill" data-skill="azure" role="tab" aria-selected="false"><i class="fas fa-cloud"></i> Azure AI</button>
+                <button type="button" class="hero-skill" data-skill="sharepoint" role="tab" aria-selected="false"><i class="fab fa-microsoft"></i> SharePoint</button>
+                <button type="button" class="hero-skill" data-skill="power" role="tab" aria-selected="false"><i class="fas fa-bolt"></i> Power Platform</button>
             </div>
+
+            <ul class="hero-capabilities" id="heroCapabilities" aria-live="polite">
+                <li><i class="fas fa-check-circle"></i> Build multi-agent orchestration with Semantic Kernel &amp; AutoGen</li>
+                <li><i class="fas fa-check-circle"></i> Design RAG pipelines with Azure AI Search &amp; vector embeddings</li>
+                <li><i class="fas fa-check-circle"></i> Deploy Copilot Studio agents grounded in enterprise knowledge</li>
+                <li><i class="fas fa-check-circle"></i> Implement guardrails, evaluation &amp; responsible AI practices</li>
+            </ul>
+
             <div class="hero-cta">
                 <a href="#contact" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Get in Touch</a>
                 <a href="https://www.linkedin.com/in/dhavalshah27" target="_blank" rel="noopener noreferrer" class="btn btn-outline"><i class="fab fa-linkedin"></i> LinkedIn</a>
@@ -1938,8 +2049,93 @@
     window.addEventListener('scroll', () => {
         backToTop.classList.toggle('visible', window.scrollY > 500);
     });
-    backToTop.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Hero skill selector — updates badge, role, subtitle, and capabilities
+    const heroSkills = {
+        agentic: {
+            badgeIcon: 'fa-robot',
+            badgeText: 'Building Agentic AI Solutions',
+            role: 'Agentic AI Architect',
+            subtitle: 'Senior Cloud Solution Architect designing autonomous, multi-agent systems with Azure AI Foundry, Semantic Kernel, and Copilot Studio — turning enterprise data into intelligent action.',
+            capabilities: [
+                'Build multi-agent orchestration with Semantic Kernel & AutoGen',
+                'Design RAG pipelines with Azure AI Search & vector embeddings',
+                'Deploy Copilot Studio agents grounded in enterprise knowledge',
+                'Implement guardrails, evaluation & responsible AI practices'
+            ]
+        },
+        azure: {
+            badgeIcon: 'fa-cloud',
+            badgeText: 'Engineering Azure AI Solutions',
+            role: 'Azure AI Solutions Architect',
+            subtitle: 'Architecting enterprise-grade GenAI on Azure OpenAI, Azure AI Foundry, and Azure AI Search — with secure, scalable, production-ready deployments.',
+            capabilities: [
+                'Build GPT-4o RAG solutions on Azure AI Search & vector indexes',
+                'Develop AI enrichment pipelines with custom skills & Azure Functions',
+                'Architect end-to-end Azure AI Agent Service workflows',
+                'Secure AI workloads with Managed Identity, Key Vault & APIM'
+            ]
+        },
+        sharepoint: {
+            badgeIcon: 'fa-microsoft',
+            badgeIconStyle: 'fab',
+            badgeText: 'Modernizing SharePoint & M365',
+            role: 'SharePoint & Microsoft 365 Architect',
+            subtitle: 'Modernizing intranets and collaboration platforms with SPFx, Microsoft Graph, and AI-enhanced experiences across SharePoint Online and Teams.',
+            capabilities: [
+                'Develop SPFx web parts & extensions with React + TypeScript',
+                'Build AI-enhanced intranets using Copilot & Microsoft Graph',
+                'Lead end-to-end intranet modernization & migration programs',
+                'Implement personalization, enterprise search & governance'
+            ]
+        },
+        power: {
+            badgeIcon: 'fa-bolt',
+            badgeText: 'Delivering Power Platform Solutions',
+            role: 'Power Platform Solutions Architect',
+            subtitle: 'Delivering low-code business solutions with Power Apps, Power Automate, Dataverse, and Copilot Studio — scaled with strong ALM and governance.',
+            capabilities: [
+                'Build canvas & model-driven Power Apps on Dataverse',
+                'Automate processes with Power Automate & custom connectors',
+                'Embed AI Builder & Copilot Studio agents into business apps',
+                'Establish CoE, ALM pipelines & DLP governance at scale'
+            ]
+        }
+    };
+
+    const skillButtons = document.querySelectorAll('.hero-skill');
+    const heroBadge = document.getElementById('heroBadge');
+    const heroRole = document.getElementById('heroRole');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    const heroCapabilities = document.getElementById('heroCapabilities');
+
+    function applyHeroSkill(key) {
+        const data = heroSkills[key];
+        if (!data) return;
+        const targets = [heroBadge, heroRole, heroSubtitle, heroCapabilities];
+        targets.forEach(el => el && el.classList.add('hero-fade'));
+        setTimeout(() => {
+            const iconStyle = data.badgeIconStyle || 'fas';
+            heroBadge.innerHTML = '<i class="' + iconStyle + ' ' + data.badgeIcon + '"></i> <span>' + data.badgeText + '</span>';
+            heroRole.textContent = data.role;
+            heroSubtitle.textContent = data.subtitle;
+            heroCapabilities.innerHTML = data.capabilities
+                .map(c => '<li><i class="fas fa-check-circle"></i> ' + c + '</li>')
+                .join('');
+            targets.forEach(el => el && el.classList.remove('hero-fade'));
+        }, 180);
+    }
+
+    skillButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('active')) return;
+            skillButtons.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            applyHeroSkill(btn.dataset.skill);
+        });
     });
 </script>
 
