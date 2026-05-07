@@ -2108,21 +2108,41 @@
     const heroSubtitle = document.getElementById('heroSubtitle');
     const heroCapabilities = document.getElementById('heroCapabilities');
 
+    // Match the CSS opacity transition duration on .hero-fade targets (0.25s).
+    const HERO_FADE_DURATION_MS = 250;
+
+    function buildBadge(data) {
+        const icon = document.createElement('i');
+        icon.className = (data.badgeIconStyle || 'fas') + ' ' + data.badgeIcon;
+        const label = document.createElement('span');
+        label.textContent = data.badgeText;
+        heroBadge.replaceChildren(icon, document.createTextNode(' '), label);
+    }
+
+    function buildCapabilities(items) {
+        const frag = document.createDocumentFragment();
+        items.forEach(text => {
+            const li = document.createElement('li');
+            const i = document.createElement('i');
+            i.className = 'fas fa-check-circle';
+            li.append(i, document.createTextNode(' ' + text));
+            frag.appendChild(li);
+        });
+        heroCapabilities.replaceChildren(frag);
+    }
+
     function applyHeroSkill(key) {
         const data = heroSkills[key];
         if (!data) return;
         const targets = [heroBadge, heroRole, heroSubtitle, heroCapabilities];
         targets.forEach(el => el && el.classList.add('hero-fade'));
         setTimeout(() => {
-            const iconStyle = data.badgeIconStyle || 'fas';
-            heroBadge.innerHTML = '<i class="' + iconStyle + ' ' + data.badgeIcon + '"></i> <span>' + data.badgeText + '</span>';
+            buildBadge(data);
             heroRole.textContent = data.role;
             heroSubtitle.textContent = data.subtitle;
-            heroCapabilities.innerHTML = data.capabilities
-                .map(c => '<li><i class="fas fa-check-circle"></i> ' + c + '</li>')
-                .join('');
+            buildCapabilities(data.capabilities);
             targets.forEach(el => el && el.classList.remove('hero-fade'));
-        }, 180);
+        }, HERO_FADE_DURATION_MS);
     }
 
     skillButtons.forEach(btn => {
