@@ -7,6 +7,8 @@ This repository is a **static website** (no build step, no framework, no package
 ```
 Dhavalshah01.github.io/
 ├── index.html                  # Main portfolio / landing page (self-contained, inline <style>)
+├── sitemap.xml                 # SEO: lists every indexable page (regenerate when pages change)
+├── robots.txt                  # SEO: allows crawling, points to sitemap.xml
 ├── README.md
 ├── GOOGLE_ANALYTICS_SETUP.md
 ├── variants/                   # Alternate portfolio designs (self-contained)
@@ -74,6 +76,37 @@ Cards live in `<div class="blog-grid" id="blogGrid">`, ordered **newest-first** 
 
 - The hero date inside the article uses the long form (`June 9, 2026`); the index card uses the short form (`Jun 9, 2026`). Keep them consistent for the same article.
 - The tag **filter is generic** — it reads `data-tags`, so new tag slugs work with no JavaScript changes. Existing slugs include `search-ai`, `prompt-engineering`, `agentic-ai`, `azure`, `power-platform`. Reuse an existing slug so the article appears under an existing filter chip.
+7. **Update the SEO files** (see below) — the new page must be added to `sitemap.xml`.
+
+## Updating SEO files when pages are added or removed
+
+Whenever you **add, rename, or delete** any indexable page (a blog article, a new top-level page, etc.), the SEO files must be kept in sync or search engines won't discover the change:
+
+- **`sitemap.xml`** (required) — must contain a `<url>` entry for every public page and exclude `blog/post-template.html`. Regenerate it from the filesystem rather than hand-editing, so nothing is missed. Run this from the repo root (`resume/`):
+
+  ```powershell
+  $root = "Dhavalshah01.github.io"; $base = "https://dhavalshah01.github.io"
+  $urls = New-Object System.Collections.Generic.List[object]
+  $urls.Add([pscustomobject]@{ loc = "$base/"; priority = "1.0"; mod = (Get-Item "$root\index.html").LastWriteTime.ToString("yyyy-MM-dd") })
+  $urls.Add([pscustomobject]@{ loc = "$base/blog/"; priority = "0.9"; mod = (Get-Item "$root\blog\index.html").LastWriteTime.ToString("yyyy-MM-dd") })
+  Get-ChildItem "$root\blog" -Filter *.html |
+      Where-Object { $_.Name -notin @('index.html','post-template.html') } | Sort-Object Name |
+      ForEach-Object { $urls.Add([pscustomobject]@{ loc = "$base/blog/$($_.Name)"; priority = "0.8"; mod = $_.LastWriteTime.ToString("yyyy-MM-dd") }) }
+  $sb = New-Object System.Text.StringBuilder
+  [void]$sb.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
+  [void]$sb.AppendLine('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+  foreach ($u in $urls) {
+      [void]$sb.AppendLine("  <url>"); [void]$sb.AppendLine("    <loc>$($u.loc)</loc>")
+      [void]$sb.AppendLine("    <lastmod>$($u.mod)</lastmod>"); [void]$sb.AppendLine("    <changefreq>monthly</changefreq>")
+      [void]$sb.AppendLine("    <priority>$($u.priority)</priority>"); [void]$sb.AppendLine("  </url>")
+  }
+  [void]$sb.AppendLine('</urlset>')
+  Set-Content -Path "$root\sitemap.xml" -Value $sb.ToString() -Encoding UTF8 -NoNewline
+  ```
+
+- **`robots.txt`** — usually no change needed. Only edit it if a path should be hidden from crawlers (add a `Disallow:`) or if the `Sitemap:` URL changes. `post-template.html` is already disallowed.
+- **Per-page SEO meta** — every new page still needs its own `canonical`, `og:url`, `title`, and `description` in `<head>` (see "Required `<head>` blocks"). The sitemap lists the page; the canonical/OG tags make it index correctly.
+- After regenerating, confirm the new slug appears in `sitemap.xml` and that the count matches the number of public pages.
 
 ## Theme / dark mode
 
