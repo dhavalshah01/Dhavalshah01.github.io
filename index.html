@@ -509,6 +509,12 @@
             line-height: 1.2;
         }
         .section-title .accent { color: var(--primary); }
+        .section-subtitle {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: var(--text-light);
+            max-width: 600px;
+        }
 
         /* ===== About / Summary ===== */
         #about {
@@ -642,6 +648,67 @@
             font-size: 0.78rem;
             font-weight: 500;
             border: 1px solid var(--border);
+        }
+
+        /* ===== YouTube Series ===== */
+        #youtube-series {
+            background: var(--off-white);
+        }
+        .yt-series-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .yt-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            transition: var(--transition);
+            text-decoration: none;
+            color: inherit;
+        }
+        .yt-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+            border-color: #ff0000;
+        }
+        .yt-num {
+            min-width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .yt-info {
+            flex: 1;
+        }
+        .yt-info h4 {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--dark);
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        .yt-watch {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #ff0000;
+        }
+        .yt-watch i {
+            font-size: 0.9rem;
         }
 
         /* ===== Certifications ===== */
@@ -900,6 +967,16 @@
         body.dark-mode .cert-featured {
             background: rgba(0,120,212,0.15);
             border-color: var(--primary);
+        }
+        body.dark-mode .yt-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-mode .yt-info h4 {
+            color: #f1f5f9;
+        }
+        body.dark-mode #youtube-series {
+            background: #0f172a;
         }
         body.dark-mode .skill-tags span {
             background: #0f172a;
@@ -1387,6 +1464,7 @@
             <li><a href="#about">About</a></li>
             <li><a href="#skills">Skills</a></li>
             <li><a href="#ai-projects">AI Projects</a></li>
+            <li><a href="#youtube-series">YouTube</a></li>
             <li><a href="#certifications">Certifications</a></li>
             <li><a href="#experience">Experience</a></li>
             <li><a href="#education">Education</a></li>
@@ -1707,6 +1785,61 @@
                     <span>PnP JS</span>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- YouTube Series Section -->
+<section id="youtube-series">
+    <div class="section-container">
+        <div class="section-header reveal">
+            <div class="section-label"><i class="fab fa-youtube"></i> Video Series</div>
+            <h2 class="section-title">Contoso AI Paints — <span class="accent">Build Series</span></h2>
+            <p class="section-subtitle">A 6-part end-to-end walkthrough: from Azure Functions scaffolding to a live RAG agent in Azure AI Foundry.</p>
+        </div>
+        <div class="yt-series-grid">
+            <a href="https://www.youtube.com/watch?v=Cok8n3AzucA" target="_blank" rel="noopener noreferrer" class="yt-card reveal">
+                <div class="yt-num">1</div>
+                <div class="yt-info">
+                    <h4>Project Setup &amp; Azure Functions</h4>
+                    <span class="yt-watch"><i class="fab fa-youtube"></i> Watch on YouTube</span>
+                </div>
+            </a>
+            <a href="https://youtu.be/ZVIzQQEr2RY" target="_blank" rel="noopener noreferrer" class="yt-card reveal">
+                <div class="yt-num">2</div>
+                <div class="yt-info">
+                    <h4>Azure Blob Storage &amp; PDF Upload</h4>
+                    <span class="yt-watch"><i class="fab fa-youtube"></i> Watch on YouTube</span>
+                </div>
+            </a>
+            <a href="https://youtu.be/HoDNXV5arjk" target="_blank" rel="noopener noreferrer" class="yt-card reveal">
+                <div class="yt-num">3</div>
+                <div class="yt-info">
+                    <h4>Azure OpenAI — Deploy GPT-4.1</h4>
+                    <span class="yt-watch"><i class="fab fa-youtube"></i> Watch on YouTube</span>
+                </div>
+            </a>
+            <a href="https://youtu.be/9_94-0T_fh8" target="_blank" rel="noopener noreferrer" class="yt-card reveal">
+                <div class="yt-num">4</div>
+                <div class="yt-info">
+                    <h4>Azure AI Search — Index, Skillset &amp; Indexer</h4>
+                    <span class="yt-watch"><i class="fab fa-youtube"></i> Watch on YouTube</span>
+                </div>
+            </a>
+            <a href="https://youtu.be/aFAwXZY8CMU" target="_blank" rel="noopener noreferrer" class="yt-card reveal">
+                <div class="yt-num">5</div>
+                <div class="yt-info">
+                    <h4>Custom AI Extraction — Deploy the GPT-4.1 Function</h4>
+                    <span class="yt-watch"><i class="fab fa-youtube"></i> Watch on YouTube</span>
+                </div>
+            </a>
+            <a href="https://youtu.be/DusO4Z-XZOQ" target="_blank" rel="noopener noreferrer" class="yt-card reveal">
+                <div class="yt-num">6</div>
+                <div class="yt-info">
+                    <h4>RAG Agent in Azure AI Foundry — Live Demo &amp; Finale</h4>
+                    <span class="yt-watch"><i class="fab fa-youtube"></i> Watch on YouTube</span>
+                </div>
+            </a>
         </div>
     </div>
 </section>
