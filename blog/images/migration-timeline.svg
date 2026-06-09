@@ -1,0 +1,103 @@
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="900" height="500" fill="#f8f9fa" rx="12"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a2e">Migration Timeline — 7 Phases to Full ACS Retirement</text>
+  <line x1="60" y1="50" x2="840" y2="50" stroke="#dee2e6" stroke-width="1.5"/>
+
+  <!-- Timeline spine -->
+  <line x1="80" y1="280" x2="840" y2="280" stroke="#0078d4" stroke-width="3"/>
+
+  <!-- Defs for markers -->
+  <defs>
+    <marker id="tArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0078d4"/>
+    </marker>
+  </defs>
+  <line x1="830" y1="280" x2="855" y2="280" stroke="#0078d4" stroke-width="3" marker-end="url(#tArrow)"/>
+
+  <!-- Phase data: x positions -->
+  <!-- Phase 0: x=100, Phase 1: x=210, Phase 2: x=320, Phase 3: x=430, Phase 4: x=540, Phase 5: x=650, Phase 6: x=760 -->
+
+  <!-- PHASE 0 — Immediate -->
+  <circle cx="100" cy="280" r="14" fill="#c50f1f"/>
+  <text x="100" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">0</text>
+  <line x1="100" y1="266" x2="100" y2="195" stroke="#c50f1f" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="28" y="140" width="144" height="54" rx="6" fill="#fde7e7" stroke="#c50f1f" stroke-width="1.5"/>
+  <text x="100" y="159" text-anchor="middle" font-size="10" font-weight="700" fill="#c50f1f">IMMEDIATE</text>
+  <text x="100" y="174" text-anchor="middle" font-size="9" fill="#333">Assess which apps</text>
+  <text x="100" y="187" text-anchor="middle" font-size="9" fill="#333">are still needed</text>
+
+  <!-- PHASE 1 — Week 1 -->
+  <circle cx="210" cy="280" r="14" fill="#e07000"/>
+  <text x="210" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">1</text>
+  <line x1="210" y1="294" x2="210" y2="355" stroke="#e07000" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="138" y="356" width="144" height="54" rx="6" fill="#fff4e6" stroke="#e07000" stroke-width="1.5"/>
+  <text x="210" y="374" text-anchor="middle" font-size="10" font-weight="700" fill="#e07000">WEEK 1</text>
+  <text x="210" y="390" text-anchor="middle" font-size="9" fill="#333">Contact vendors</text>
+  <text x="210" y="403" text-anchor="middle" font-size="9" fill="#333">Valo · Plumsail · Saketa</text>
+
+  <!-- PHASE 2 — Week 1–2 -->
+  <circle cx="330" cy="280" r="14" fill="#e07000"/>
+  <text x="330" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">2</text>
+  <line x1="330" y1="266" x2="330" y2="195" stroke="#e07000" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="258" y="140" width="144" height="54" rx="6" fill="#fff4e6" stroke="#e07000" stroke-width="1.5"/>
+  <text x="330" y="159" text-anchor="middle" font-size="10" font-weight="700" fill="#e07000">WEEK 1–2</text>
+  <text x="330" y="174" text-anchor="middle" font-size="9" fill="#333">Migrate PnP scripts</text>
+  <text x="330" y="187" text-anchor="middle" font-size="9" fill="#333">→ Entra cert auth</text>
+
+  <!-- PHASE 3 — Week 2–3 -->
+  <circle cx="450" cy="280" r="14" fill="#0078d4"/>
+  <text x="450" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">3</text>
+  <line x1="450" y1="294" x2="450" y2="355" stroke="#0078d4" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="378" y="356" width="144" height="54" rx="6" fill="#e6f2fb" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="450" y="374" text-anchor="middle" font-size="10" font-weight="700" fill="#0078d4">WEEK 2–3</text>
+  <text x="450" y="390" text-anchor="middle" font-size="9" fill="#333">Deploy vendor updates</text>
+  <text x="450" y="403" text-anchor="middle" font-size="9" fill="#333">or replacements</text>
+
+  <!-- PHASE 4 — Week 3–4 -->
+  <circle cx="570" cy="280" r="14" fill="#0078d4"/>
+  <text x="570" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">4</text>
+  <line x1="570" y1="266" x2="570" y2="195" stroke="#0078d4" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="498" y="140" width="144" height="54" rx="6" fill="#e6f2fb" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="570" y="159" text-anchor="middle" font-size="10" font-weight="700" fill="#0078d4">WEEK 3–4</text>
+  <text x="570" y="174" text-anchor="middle" font-size="9" fill="#333">Migrate custom</text>
+  <text x="570" y="187" text-anchor="middle" font-size="9" fill="#333">provider-hosted apps</text>
+
+  <!-- PHASE 5 — Week 4–6 -->
+  <circle cx="690" cy="280" r="14" fill="#107c10"/>
+  <text x="690" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">5</text>
+  <line x1="690" y1="294" x2="690" y2="355" stroke="#107c10" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="618" y="356" width="144" height="54" rx="6" fill="#eaf5ea" stroke="#107c10" stroke-width="1.5"/>
+  <text x="690" y="374" text-anchor="middle" font-size="10" font-weight="700" fill="#107c10">WEEK 4–6</text>
+  <text x="690" y="390" text-anchor="middle" font-size="9" fill="#333">Replace SP-hosted</text>
+  <text x="690" y="403" text-anchor="middle" font-size="9" fill="#333">Add-Ins with SPFx</text>
+
+  <!-- PHASE 6 & 7 — Week 6+ (combined at end of arrow) -->
+  <circle cx="810" cy="280" r="14" fill="#1a1a2e"/>
+  <text x="810" y="285" text-anchor="middle" font-size="10" font-weight="700" fill="white">6+</text>
+  <line x1="810" y1="266" x2="810" y2="195" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="738" y="110" width="144" height="84" rx="6" fill="#e8e8f0" stroke="#1a1a2e" stroke-width="1.5"/>
+  <text x="810" y="132" text-anchor="middle" font-size="10" font-weight="700" fill="#1a1a2e">WEEK 6+</text>
+  <text x="810" y="148" text-anchor="middle" font-size="9" fill="#333">Clean up old ACS</text>
+  <text x="810" y="162" text-anchor="middle" font-size="9" fill="#333">principals &amp; add-ins</text>
+  <text x="810" y="178" text-anchor="middle" font-size="9" font-weight="600" fill="#c50f1f">Disable ACS tenant-wide</text>
+
+  <!-- Today marker -->
+  <line x1="450" y1="60" x2="450" y2="75" stroke="transparent"/>
+
+  <!-- Phase labels below timeline -->
+  <text x="100" y="305" text-anchor="middle" font-size="9" fill="#888">P0</text>
+  <text x="210" y="305" text-anchor="middle" font-size="9" fill="#888">P1</text>
+  <text x="330" y="305" text-anchor="middle" font-size="9" fill="#888">P2</text>
+  <text x="450" y="305" text-anchor="middle" font-size="9" fill="#888">P3</text>
+  <text x="570" y="305" text-anchor="middle" font-size="9" fill="#888">P4</text>
+  <text x="690" y="305" text-anchor="middle" font-size="9" fill="#888">P5</text>
+  <text x="810" y="305" text-anchor="middle" font-size="9" fill="#888">P6/7</text>
+
+  <!-- Footer note -->
+  <rect x="60" y="435" width="780" height="45" rx="8" fill="#fff3cd" stroke="#ffc107" stroke-width="1"/>
+  <text x="450" y="454" text-anchor="middle" font-size="10" font-weight="700" fill="#7a5800">Safety Gate before Phase 7:</text>
+  <text x="450" y="470" text-anchor="middle" font-size="10" fill="#7a5800">Validate ALL apps are functional on Entra ID auth before running Set-SPOTenant -DisableCustomAppAuthentication $true</text>
+</svg>

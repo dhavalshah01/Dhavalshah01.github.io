@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Block the reusable article template from indexing
+Disallow: /blog/post-template.html
+
+Sitemap: https://dhavalshah01.github.io/sitemap.xml

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Legacy to Modern: Navigating the Azure ACS Retirement | Dhaval Shah</title>
+    <meta name="description" content="A real-world account of migrating a SharePoint tenant off the retired Azure ACS authentication: discovery with the M365 Assessment Tool, risk stratification, a four-track migration plan, and a phased cut-over to Microsoft Entra ID.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/azure-acs-retirement-migration.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="From Legacy to Modern: Navigating the Azure ACS Retirement">
+    <meta property="og:description" content="Discovery, risk stratification, a four-track plan, and a phased cut-over from Azure ACS to Microsoft Entra ID authentication.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/azure-acs-retirement-migration.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Azure ACS</span>
+            <span class="article-tag">Microsoft Entra ID</span>
+            <span class="article-tag">Migration</span>
+        </div>
+        <h1>From Legacy to Modern: Navigating the Azure ACS Retirement</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 9, 2026</span>
+            <span><i class="fas fa-clock"></i> 14 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">In early 2026, Microsoft reached a long-announced milestone: <strong>Azure Access Control Service (ACS) for SharePoint was officially retired on April 2, 2026.</strong> When a customer reached out with the deadline weeks away, no inventory of which apps used ACS, and a few apps already broken, we turned that uncertainty into a structured, prioritized, fully documented migration — in a matter of days. This is how.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>ACS was the original "app-only" mechanism that let apps and scripts authenticate against SharePoint without a user credential. It predated Microsoft Entra ID (formerly Azure AD), and thousands of tenants built on it — custom code, automation scripts, intranet platforms, and marketplace add-ins.</span>
+        </div>
+
+        <h2>Step 1 — Understand what you're dealing with</h2>
+        <p>Before writing a single line of migration code, I needed to understand exactly what ACS was and why it was worth solving properly rather than patching.</p>
+
+        <h3>What is Azure ACS?</h3>
+        <p>Azure ACS is a legacy token-based authentication system that SharePoint supported for app-only access. An app registered directly with SharePoint (via <code>/_layouts/15/AppRegNew.aspx</code>), received a Client ID and Client Secret, and used those to obtain access tokens. Microsoft's <code>TokenHelper.cs</code> class — shipped with classic provider-hosted add-in templates — abstracted all of this. In PowerShell, it looked like this:</p>
+
+        <pre><code># Legacy ACS-based PnP connection
+Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/MySite" `
+    -AppId "&lt;client-id&gt;" `
+    -AppSecret "&lt;client-secret&gt;"</code></pre>
+
+        <h3>Why was it retired?</h3>
+        <p>ACS has fundamental security limitations:</p>
+        <ul>
+            <li><strong>No Conditional Access support</strong> — you can't enforce MFA, IP restrictions, or device compliance on an ACS token.</li>
+            <li><strong>Shared secrets</strong> — client secrets are easy to leak and hard to rotate at scale.</li>
+            <li><strong>No Entra ID integration</strong> — ACS principals don't appear in Entra ID, making governance nearly impossible.</li>
+            <li><strong>Broad permissions by default</strong> — no <code>Sites.Selected</code> equivalent; tenant-scoped apps got <code>FullControl</code> across everything.</li>
+        </ul>
+        <p>Microsoft Entra ID solves all of these. The retirement was announced years in advance — but that didn't mean organizations were ready.</p>
+
+        <figure class="article-figure">
+            <img src="./images/acs-vs-entraid.svg" alt="Side-by-side comparison of Azure ACS legacy app-only authentication versus Microsoft Entra ID certificate-based authentication, contrasting registration, secrets, Conditional Access support, and governance" loading="lazy">
+            <figcaption>Azure ACS vs. Microsoft Entra ID app-only authentication — the modern model wins on every governance and security dimension.</figcaption>
+        </figure>
+
+        <h2>Step 2 — Discovery: finding every ACS-dependent app</h2>
+        <p>Every migration starts with one question: <strong>what do we actually have?</strong> For this customer the answer was unknown — over a decade of SharePoint, multiple third-party products, developer teams that had come and gone, and a pile of automation scripts nobody fully owned.</p>
+        <p>The answer was the <strong>Microsoft 365 Assessment Tool</strong> — an open-source tool from the PnP community (<a href="https://github.com/pnp/pnpassessment" target="_blank" rel="noopener noreferrer">github.com/pnp/pnpassessment</a>).</p>
+
+        <h3>Setting up the assessment</h3>
+        <p>The tool authenticates using a dedicated Entra ID app registration. I set this up with PnP PowerShell:</p>
+
+        <pre><code>Register-PnPAzureADApp `
+    -ApplicationName "Microsoft365AssessmentToolForACS" `
+    -Tenant "contoso.onmicrosoft.com" `
+    -Store CurrentUser `
+    -GraphApplicationPermissions "Sites.Read.All", "Application.Read.All" `
+    -SharePointApplicationPermissions "Sites.Read.All" `
+    -GraphDelegatePermissions "Sites.Read.All", "Application.Read.All", "User.Read" `
+    -SharePointDelegatePermissions "AllSites.Read" `
+    -DeviceLogin</code></pre>
+
+        <p>This created a self-signed certificate in the Windows certificate store and registered the Entra app in one step. After capturing the <strong>App ID</strong> and <strong>certificate thumbprint</strong>, I granted admin consent via the Entra portal.</p>
+
+        <h3>Running the scan</h3>
+        <p>With the app configured, the scan was a single command:</p>
+
+        <pre><code>.\microsoft365-assessment.exe start `
+    --mode AddInsACS `
+    --authmode application `
+    --tenant contoso.sharepoint.com `
+    --applicationid &lt;app-id&gt; `
+    --certpath "My|CurrentUser|&lt;thumbprint&gt;"</code></pre>
+
+        <p>I monitored progress with <code>.\microsoft365-assessment.exe status</code> and exported the final report once complete:</p>
+
+        <pre><code>.\microsoft365-assessment.exe report --id &lt;assessment-id&gt;</code></pre>
+
+        <figure class="article-figure">
+            <img src="./images/discovery-workflow.svg" alt="Discovery workflow showing the Microsoft 365 Assessment Tool scanning SharePoint sites and producing CSV reports and a Power BI dashboard of ACS principals and add-ins" loading="lazy">
+            <figcaption>The discovery workflow: a single assessment run produced CSVs plus a Power BI template — a living audit capability, not a one-time snapshot.</figcaption>
+        </figure>
+
+        <h3>What the assessment revealed</h3>
+        <p>The scan covered <strong>97 sites</strong> and produced a full set of CSVs plus a Power BI <code>.pbit</code> template. The results were eye-opening:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Finding</th><th>Count</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>ACS Principals</td><td>9</td><td><strong>All expired</strong></td></tr>
+                <tr><td>SharePoint Add-Ins</td><td>8</td><td>Mixed — some active</td></tr>
+                <tr><td>Tenant-scoped principals</td><td>3</td><td>FullControl — highest risk</td></tr>
+                <tr><td>SharePoint-hosted Add-Ins</td><td>5</td><td>No ACS dependency, but also retiring</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>The key insight: <strong>all 9 ACS principals had already expired.</strong> The apps were either already broken or about to cease functioning. The customer had been running on borrowed time without knowing it.</p>
+
+        <h2>Step 3 — Analysis: reading between the lines</h2>
+        <p>Raw scan data is just a starting point. The real work is interpretation.</p>
+
+        <h3>Not all apps are equal</h3>
+        <p>I categorized the discovered apps along two dimensions: <strong>scope</strong> (tenant vs. site) and <strong>app type</strong> (vendor product vs. custom code vs. PnP script vs. SharePoint-hosted add-in). The intersection of those dimensions drives both risk and migration path.</p>
+
+        <figure class="article-figure">
+            <img src="./images/risk-matrix.svg" alt="Risk stratification matrix plotting discovered apps by scope and type, with tenant-scoped FullControl principals marked highest priority and site-scoped scripts as medium priority" loading="lazy">
+            <figcaption>Risk stratification: tenant-scoped <code>FullControl</code> principals top the list; site-scoped scripts have a limited blast radius.</figcaption>
+        </figure>
+
+        <ul>
+            <li><strong>Tenant-scoped principals are the highest priority</strong> — they hold <code>FullControl</code> across the entire tenant. A misconfigured or compromised token here is catastrophic.</li>
+            <li><strong>Site-scoped custom principals are medium priority</strong> — they do real work (file operations, automation), but their blast radius is limited.</li>
+            <li><strong>SharePoint-hosted add-ins are a separate track</strong> — they don't use ACS for auth, but the <strong>Add-In model itself is retiring</strong> alongside ACS, so they must move to SPFx regardless.</li>
+        </ul>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Expired ≠ gone.</strong> Every ACS principal here was expired, yet still <em>registered</em> — still in the app catalog, still consuming governance overhead, still a source of confusion. An expired app nobody cleaned up is security noise. Removing them was an explicit part of the plan.</span>
+        </div>
+
+        <h2>Step 4 — Building the migration plan</h2>
+        <p>With inventory and risk stratification in hand, I built a four-track migration plan. Each track has a different technical path and a different owner.</p>
+
+        <h3>Track A — Vendor products (Valo Intranet, Plumsail, Saketa)</h3>
+        <p><strong>The rule here: engage the vendor before writing a single line of code.</strong> For products like Valo Intranet, the vendor (now Staffbase after acquiring Valo) has their own Entra ID migration path. Hacking around a vendor product's ACS dependency is a maintenance nightmare. The right steps:</p>
+        <ol>
+            <li>Contact the vendor and confirm their Entra ID-compatible version.</li>
+            <li>Plan the upgrade to their modern release.</li>
+            <li>Register a new Entra app with appropriate permissions (<code>Sites.FullControl.All</code> for Valo, scoped appropriately for others).</li>
+            <li>Upload the certificate, configure the product, test on a pilot site.</li>
+            <li>Decommission the old ACS principal only after full validation.</li>
+        </ol>
+        <p>For marketplace add-ins where the vendor had no migration path (or the product was abandoned), I documented native Microsoft alternatives:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Legacy Add-In</th><th>Modern Replacement</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Plumsail Org Chart</td><td>Microsoft Visio Org Chart, SPFx Org Chart Web Part</td></tr>
+                <tr><td>Saketa Employee Directory</td><td>Microsoft Search (People vertical), Viva Engage, SPFx People Web Part</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>Track B — Custom app-only code (SiteAdminCApp)</h3>
+        <p>One tenant-scoped principal had a mysterious name: <code>SiteAdminCApp</code>. No documentation, no known owner — a classic scenario in long-lived tenants. The first task was identifying the owner by correlating the App ID against development team records. The code modernization pattern is straightforward, and it was also the moment to right-size permissions:</p>
+
+        <p><strong>Before (ACS — <code>TokenHelper.cs</code>):</strong></p>
+        <pre><code>var accessToken = TokenHelper.GetAppOnlyAccessToken(
+    TokenHelper.SharePointPrincipal, siteUrl, realm);</code></pre>
+
+        <p><strong>After (Entra ID — MSAL):</strong></p>
+        <pre><code>var app = ConfidentialClientApplicationBuilder
+    .Create("&lt;client-id&gt;")
+    .WithCertificate(certificate)
+    .WithAuthority($"https://login.microsoftonline.com/&lt;tenant-id&gt;")
+    .Build();
+
+var result = await app.AcquireTokenForClient(
+    new[] { "https://contoso.sharepoint.com/.default" })
+    .ExecuteAsync();</code></pre>
+
+        <p>The new registration was created with the minimum necessary permissions rather than inheriting the old <code>FullControl</code> scope. <strong>ACS retirement is the right moment to audit and reduce permissions.</strong></p>
+
+        <h3>Track C — PnP automation scripts</h3>
+        <p>Four site-scoped principals were owned by internal automation scripts doing file operations. The pattern was identical for each: <code>Connect-PnPOnline -AppId -AppSecret</code>. The migration is elegant and well-supported by PnP PowerShell:</p>
+
+        <p><strong>Before:</strong></p>
+        <pre><code>Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/MySite" `
+    -AppId "4fa73701-..." `
+    -AppSecret "&lt;secret&gt;"</code></pre>
+
+        <p><strong>After:</strong></p>
+        <pre><code>Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/MySite" `
+    -ClientId "&lt;entra-app-id&gt;" `
+    -Tenant "contoso.onmicrosoft.com" `
+    -CertificatePath "C:\certs\PnPOperations.pfx"</code></pre>
+
+        <p>Rather than creating four separate Entra apps, I consolidated them into a single <code>PnP-FileOperations-EntraID</code> app and used <strong><code>Sites.Selected</code></strong> permission — granting access only to the specific sites it needed:</p>
+
+        <pre><code>Grant-PnPAzureADAppSitePermission `
+    -AppId "&lt;entra-app-id&gt;" `
+    -DisplayName "PnP-FileOperations" `
+    -Permissions Write `
+    -Site "https://contoso.sharepoint.com/sites/MySite"</code></pre>
+
+        <p>This is a material security improvement over the original configuration, where each ACS app had <code>Write</code> permissions granted broadly.</p>
+
+        <h3>Track D — SharePoint-hosted add-ins → SPFx</h3>
+        <p>Five add-ins were SharePoint-hosted — they ran entirely within SharePoint and didn't use ACS for auth. But the <strong>Add-In model itself is retiring</strong>, so they still need to move. The modernization path is to SPFx (SharePoint Framework):</p>
+
+        <pre><code>SharePoint-hosted Add-In   →   SPFx Web Part
+─────────────────────────────────────────────────────
+App Web + Custom ASPX Page   →   SPFx WebPart (client-side)
+Lists stored in App Web      →   Regular site lists / Microsoft Lists
+Custom CSS / Branding        →   Site Themes + SPFx Application Extension
+Remote Object Model calls    →   Microsoft Graph API or SharePoint REST</code></pre>
+
+        <p>For branding add-ins specifically, I recommended moving to SharePoint's built-in <strong>site themes</strong> and <strong>site designs</strong> — no code required for the majority of styling needs.</p>
+
+        <h2>Step 5 — Executing in phases</h2>
+        <p>With four tracks and multiple apps in each, sequencing mattered. Running everything in parallel creates confusion and makes rollback harder.</p>
+
+        <figure class="article-figure">
+            <img src="./images/migration-timeline.svg" alt="Migration timeline spanning roughly six weeks, sequencing vendor outreach, PnP script migration, vendor solution deployment, custom code modernization, SPFx replacement, ACS principal cleanup, and the final tenant-wide ACS disable" loading="lazy">
+            <figcaption>The phased timeline — each phase has a clear owner and gate, ending with a reversible tenant-wide ACS disable.</figcaption>
+        </figure>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Phase</th><th>When</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Phase 0</strong></td><td>Immediate</td><td>Confirm which apps are still actively used</td></tr>
+                <tr><td><strong>Phase 1</strong></td><td>Week 1</td><td>Vendor outreach (Valo, Plumsail, Saketa)</td></tr>
+                <tr><td><strong>Phase 2</strong></td><td>Week 1–2</td><td>Migrate PnP scripts to certificate auth</td></tr>
+                <tr><td><strong>Phase 3</strong></td><td>Week 2–3</td><td>Deploy vendor-updated solutions or replacements</td></tr>
+                <tr><td><strong>Phase 4</strong></td><td>Week 3–4</td><td>Modernize custom provider-hosted app code</td></tr>
+                <tr><td><strong>Phase 5</strong></td><td>Week 4–6</td><td>Replace SharePoint-hosted Add-Ins with SPFx</td></tr>
+                <tr><td><strong>Phase 6</strong></td><td>Week 6+</td><td>Remove all legacy ACS principals and disabled add-ins</td></tr>
+                <tr><td><strong>Phase 7</strong></td><td>After validation</td><td>Disable ACS tenant-wide</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>The safety gate</h3>
+        <p>The final step — disabling ACS tenant-wide — is the most consequential:</p>
+
+        <pre><code>Connect-SPOService -Url https://contoso-admin.sharepoint.com
+Set-SPOTenant -DisableCustomAppAuthentication $true</code></pre>
+
+        <p>Importantly, this setting is reversible (<code>$false</code> brings it back). I recommended a <strong>two-week validation window</strong> between Phase 6 and Phase 7, where all modern replacements ran in production before the kill switch was flipped. No app failures during that window? Turn it off.</p>
+
+        <h2>What I learned</h2>
+        <p>A few lessons stand out that apply well beyond ACS:</p>
+        <ol>
+            <li><strong>Discovery first, always.</strong> Running the assessment before anything else was the most important decision. Without it, the migration would have been guesswork. The assessment tool plus Power BI gave the customer a living audit capability.</li>
+            <li><strong>Expired registrations are still a problem.</strong> All 9 principals were expired and non-functional, yet still registered — cluttering the catalog and complicating governance. Cleaning up dead registrations is part of migration, not an afterthought.</li>
+            <li><strong>Retirements are permission-review opportunities.</strong> The original apps had accumulated <code>FullControl</code> everywhere. Every new Entra registration used <code>Sites.Selected</code> or the minimum Graph scope required. The tenant ended up <em>more</em> secure than before.</li>
+            <li><strong>Vendor products need vendor tracks.</strong> Don't work around a vendor's ACS dependency with custom code. Hold them accountable to a timeline and test the output.</li>
+            <li><strong>Certificates beat secrets.</strong> Every modern registration used certificate-based auth — no rotating secrets, none stored in config or leaked in source control. A one-time setup cost with ongoing security dividends.</li>
+        </ol>
+
+        <h2>Conclusion</h2>
+        <p>When the ACS retirement deadline arrived, this customer's environment was ready. The apps that mattered had moved to Entra ID authentication, the obsolete ones were decommissioned, and the tenant's permissions posture was better than it had been in years.</p>
+        <p>If you haven't run an ACS inventory yet — even post-retirement — you should. The assessment tool will still show you what's registered. Dead ACS principals don't disappear just because the service is retired; they sit there, undocumented, waiting to confuse the next engineer who inherits the environment. <strong>Run the scan. Know what you have. Clean it up.</strong></p>
+
+        <h2>Resources</h2>
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Resource</th><th>Link</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>M365 Assessment Tool</td><td><a href="https://github.com/pnp/pnpassessment" target="_blank" rel="noopener noreferrer">github.com/pnp/pnpassessment</a></td></tr>
+                <tr><td>Azure ACS Retirement Guide</td><td><a href="https://aka.ms/retirement/acs/support" target="_blank" rel="noopener noreferrer">aka.ms/retirement/acs/support</a></td></tr>
+                <tr><td>SharePoint Add-In Retirement</td><td><a href="https://aka.ms/retirement/addins/support" target="_blank" rel="noopener noreferrer">aka.ms/retirement/addins/support</a></td></tr>
+                <tr><td>Migration Guidance</td><td><a href="https://aka.ms/retirement/addins/guidance" target="_blank" rel="noopener noreferrer">aka.ms/retirement/addins/guidance</a></td></tr>
+                <tr><td>SPFx Development Docs</td><td><a href="https://aka.ms/spfx" target="_blank" rel="noopener noreferrer">aka.ms/spfx</a></td></tr>
+                <tr><td>PnP PowerShell</td><td><a href="https://pnp.github.io/powershell/" target="_blank" rel="noopener noreferrer">pnp.github.io/powershell</a></td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>All customer details in this article have been anonymized. The architecture diagrams represent general patterns encountered, not specific production configurations.</span>
+        </div>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/azure-acs-retirement-migration.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

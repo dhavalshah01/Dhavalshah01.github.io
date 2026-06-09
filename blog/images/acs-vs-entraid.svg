@@ -1,0 +1,77 @@
+<svg width="900" height="460" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="900" height="460" fill="#f8f9fa" rx="12"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a2e">Azure ACS vs. Microsoft Entra ID App-Only Auth</text>
+  <line x1="80" y1="50" x2="820" y2="50" stroke="#dee2e6" stroke-width="1.5"/>
+
+  <!-- Left column header — ACS (Legacy) -->
+  <rect x="60" y="65" width="350" height="46" rx="8" fill="#c50f1f"/>
+  <text x="235" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="white">Azure ACS (Legacy — RETIRED)</text>
+  <text x="235" y="101" text-anchor="middle" font-size="11" fill="#ffd7d7">Deprecated April 2, 2026</text>
+
+  <!-- Right column header — Entra ID -->
+  <rect x="490" y="65" width="350" height="46" rx="8" fill="#107c10"/>
+  <text x="665" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="white">Microsoft Entra ID (Modern)</text>
+  <text x="665" y="101" text-anchor="middle" font-size="11" fill="#d4edda">Certificate + MSAL · Industry Standard</text>
+
+  <!-- VS circle -->
+  <circle cx="450" cy="88" r="22" fill="#1a1a2e"/>
+  <text x="450" y="94" text-anchor="middle" font-size="13" font-weight="700" fill="white">VS</text>
+
+  <!-- Row labels -->
+  <!-- Row 1: Registration -->
+  <rect x="60" y="130" width="350" height="50" rx="6" fill="#fff0f0" stroke="#f4c0c0" stroke-width="1"/>
+  <text x="235" y="152" text-anchor="middle" font-size="11" font-weight="600" fill="#c50f1f">App registered directly in SharePoint</text>
+  <text x="235" y="168" text-anchor="middle" font-size="10" fill="#555">/_layouts/15/AppRegNew.aspx</text>
+
+  <rect x="60" y="123" width="140" height="18" rx="4" fill="#e8e8e8"/>
+  <text x="130" y="135" text-anchor="middle" font-size="9" font-weight="600" fill="#444">APP REGISTRATION</text>
+
+  <rect x="490" y="130" width="350" height="50" rx="6" fill="#f0fff0" stroke="#b3d9b3" stroke-width="1"/>
+  <text x="665" y="152" text-anchor="middle" font-size="11" font-weight="600" fill="#107c10">App registered in Entra ID portal</text>
+  <text x="665" y="168" text-anchor="middle" font-size="10" fill="#555">entra.microsoft.com — centrally managed</text>
+
+  <!-- Row 2: Credentials -->
+  <rect x="60" y="195" width="350" height="50" rx="6" fill="#fff0f0" stroke="#f4c0c0" stroke-width="1"/>
+  <text x="235" y="217" text-anchor="middle" font-size="11" font-weight="600" fill="#c50f1f">Client ID + Client Secret</text>
+  <text x="235" y="233" text-anchor="middle" font-size="10" fill="#555">Shared secret · Hard to rotate · Leakable</text>
+
+  <rect x="60" y="188" width="110" height="18" rx="4" fill="#e8e8e8"/>
+  <text x="115" y="200" text-anchor="middle" font-size="9" font-weight="600" fill="#444">CREDENTIALS</text>
+
+  <rect x="490" y="195" width="350" height="50" rx="6" fill="#f0fff0" stroke="#b3d9b3" stroke-width="1"/>
+  <text x="665" y="217" text-anchor="middle" font-size="11" font-weight="600" fill="#107c10">Certificate (public/private key pair)</text>
+  <text x="665" y="233" text-anchor="middle" font-size="10" fill="#555">No secret transmitted · Cryptographically secure</text>
+
+  <!-- Row 3: Conditional Access -->
+  <rect x="60" y="260" width="350" height="50" rx="6" fill="#fff0f0" stroke="#f4c0c0" stroke-width="1"/>
+  <text x="235" y="282" text-anchor="middle" font-size="11" font-weight="600" fill="#c50f1f">No Conditional Access support</text>
+  <text x="235" y="298" text-anchor="middle" font-size="10" fill="#555">Cannot enforce MFA, IP restrictions, device compliance</text>
+
+  <rect x="60" y="253" width="145" height="18" rx="4" fill="#e8e8e8"/>
+  <text x="132" y="265" text-anchor="middle" font-size="9" font-weight="600" fill="#444">CONDITIONAL ACCESS</text>
+
+  <rect x="490" y="260" width="350" height="50" rx="6" fill="#f0fff0" stroke="#b3d9b3" stroke-width="1"/>
+  <text x="665" y="282" text-anchor="middle" font-size="11" font-weight="600" fill="#107c10">Full Conditional Access integration</text>
+  <text x="665" y="298" text-anchor="middle" font-size="10" fill="#555">MFA, IP-based policies, Compliant Device enforcement</text>
+
+  <!-- Row 4: Permissions -->
+  <rect x="60" y="325" width="350" height="50" rx="6" fill="#fff0f0" stroke="#f4c0c0" stroke-width="1"/>
+  <text x="235" y="347" text-anchor="middle" font-size="11" font-weight="600" fill="#c50f1f">SharePoint permissions only</text>
+  <text x="235" y="363" text-anchor="middle" font-size="10" fill="#555">Broad scopes — no Sites.Selected support</text>
+
+  <rect x="60" y="318" width="105" height="18" rx="4" fill="#e8e8e8"/>
+  <text x="112" y="330" text-anchor="middle" font-size="9" font-weight="600" fill="#444">PERMISSIONS</text>
+
+  <rect x="490" y="325" width="350" height="50" rx="6" fill="#f0fff0" stroke="#b3d9b3" stroke-width="1"/>
+  <text x="665" y="347" text-anchor="middle" font-size="11" font-weight="600" fill="#107c10">Graph + SharePoint + custom APIs</text>
+  <text x="665" y="363" text-anchor="middle" font-size="10" fill="#555">Sites.Selected — least privilege per site</text>
+
+  <!-- Divider line -->
+  <line x1="435" y1="120" x2="435" y2="390" stroke="#dee2e6" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- Footer -->
+  <text x="450" y="430" text-anchor="middle" font-size="10" fill="#888">Migration: Replace TokenHelper.cs / -AppSecret → ConfidentialClientApplicationBuilder (MSAL) / -CertificatePath</text>
+</svg>
