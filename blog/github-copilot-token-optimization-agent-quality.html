@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Copilot Usage-Based Billing, Part 3: Token Optimization &amp; Agent Quality | Dhaval Shah</title>
+    <meta name="description" content="Part 3 of a series on GitHub Copilot usage-based billing: how tokens work, efficient prompting, planning large work, managing context, agentic guardrails, model selection, and measuring quality alongside usage.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/github-copilot-token-optimization-agent-quality.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="GitHub Copilot Usage-Based Billing, Part 3: Token Optimization & Agent Quality">
+    <meta property="og:description" content="Efficient prompting, focused context, agent guardrails, and model selection that improve both cost and engineering outcomes.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/github-copilot-token-optimization-agent-quality.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">GitHub Copilot</span>
+            <span class="article-tag">Usage &amp; Billing</span>
+            <span class="article-tag">Part 3</span>
+        </div>
+        <h1>GitHub Copilot Usage-Based Billing, Part 3: Token Optimization &amp; Agent Quality</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 9, 2026</span>
+            <span><i class="fas fa-clock"></i> 13 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">As GitHub Copilot grows more capable, the difference between casual use and skilled use becomes significant — both in <strong>cost efficiency</strong> and <strong>engineering quality</strong>. Token optimization is not about doing less with AI; it's about doing more with intention. This closing part of the series shows how thoughtful prompting, focused context, model selection, and agent guardrails improve outcomes while keeping usage healthy. (<a href="./github-copilot-usage-based-billing-overview.html">Part 1</a> covered the billing mindset; <a href="./github-copilot-budgets-and-alerts.html">Part 2</a> covered budgets.)</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Model names, capabilities, context limits, and feature behavior change frequently. Treat the model and feature references here as illustrative — confirm current options in your Copilot settings and GitHub documentation.</span>
+        </div>
+
+        <h2>What tokens are</h2>
+        <p>AI models process text as tokens — small fragments of language. Understanding them helps developers work efficiently:</p>
+        <ul>
+            <li>A token may be a word, part of a word, punctuation, or whitespace.</li>
+            <li>Both your input and the model's output are measured in tokens.</li>
+            <li>Larger context means more tokens to process.</li>
+            <li>More capable models can be more token-intensive.</li>
+            <li>Repeated or redundant context adds up across a session.</li>
+        </ul>
+        <p>You don't need to count tokens manually. You just need to recognize what increases or decreases them — and the habits that follow naturally from that awareness.</p>
+
+        <h2>Optimization is not about being cheap</h2>
+        <p>Token optimization is sometimes misread as "use AI less." That misses the point. The real goal is to maximize the <strong>value per interaction</strong>. Poor optimization wastes tokens <em>and</em> produces worse results; good optimization improves quality while reducing waste.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Poor optimization</th><th>Better optimization</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Vague prompts that trigger long clarifying loops</td><td>Specific prompts that get it right the first time</td></tr>
+                <tr><td>Dumping entire files when a few functions matter</td><td>Sharing only the relevant code and context</td></tr>
+                <tr><td>Re-explaining the same background every message</td><td>Building on established context in a session</td></tr>
+                <tr><td>Using a heavy model for a trivial task</td><td>Matching the model to the difficulty of the task</td></tr>
+                <tr><td>Letting an agent run with no boundaries</td><td>Giving an agent a clear objective and stop condition</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>Efficient prompting in practice</h2>
+        <p>The single biggest lever most developers control is the prompt itself. Compare a typical inefficient request with an effective one:</p>
+
+        <div class="diff-block">
+            <div class="diff-side before">
+                <span class="diff-tag"><i class="fas fa-circle-xmark"></i> Inefficient</span>
+                <div class="diff-text">"Look at my project and fix whatever is wrong."<br><br><em>The agent must explore broadly, guess intent, and produce many follow-ups — burning context with little direction.</em></div>
+            </div>
+            <div class="diff-side after">
+                <span class="diff-tag"><i class="fas fa-circle-check"></i> Effective</span>
+                <div class="diff-text">"In <mark>order-service</mark>, the <mark>retry logic</mark> in <mark>PaymentClient</mark> doesn't back off correctly. Review that class, explain the issue, and propose the <mark>smallest fix</mark> with a test."</div>
+            </div>
+        </div>
+
+        <p>The effective prompt sets a target, narrows scope, and defines the deliverable. It usually costs less <em>and</em> returns more useful output.</p>
+
+        <h2>Start with a plan for large work</h2>
+        <p>For anything beyond a small change, asking an agent to "just do it" tends to waste effort. A short planning step keeps work focused and reviewable:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-list-check"></i> Plan first, then execute</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-bullseye"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">1. Define the goal</span><span class="flow-node-sub">State the outcome you actually want</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-diagram-project"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">2. Ask for a plan</span><span class="flow-node-sub">Have Copilot outline the steps first</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-user-check"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">3. Review the plan</span><span class="flow-node-sub">Correct direction before any code is written</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-code"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">4. Execute in steps</span><span class="flow-node-sub">Implement one focused chunk at a time</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">5. Validate</span><span class="flow-node-sub">Tests and review confirm the result</span></div>
+                    </div>
+                </div>
+                <p class="ui-caption">Planning catches wrong directions early — before tokens and engineering time are spent on the wrong thing.</p>
+            </div>
+        </div>
+
+        <h2>Manage context deliberately</h2>
+        <p>Context is powerful but not free. More context is not automatically better — irrelevant context can dilute focus and increase cost. A few habits help:</p>
+        <ul>
+            <li>Share the specific files, functions, or errors that matter.</li>
+            <li>Remove noise that isn't relevant to the task.</li>
+            <li>Use focused sessions instead of one endless thread.</li>
+            <li>Reset or start fresh when the topic changes substantially.</li>
+            <li>Let the tool retrieve context rather than pasting everything manually.</li>
+        </ul>
+
+        <h2>Agentic workflows need guardrails</h2>
+        <p>Agentic features can perform multi-step engineering tasks — and that power needs direction. An agent without boundaries can wander, over-engineer, or burn context exploring the wrong path. Define the boundaries up front:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Guardrail</th><th>What it sets</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Objective</td><td>The specific outcome the agent should achieve.</td></tr>
+                <tr><td>Scope</td><td>Which files, modules, or areas are in or out of bounds.</td></tr>
+                <tr><td>Constraints</td><td>Patterns, standards, and approaches to follow or avoid.</td></tr>
+                <tr><td>Validation</td><td>How success is checked — tests, builds, review.</td></tr>
+                <tr><td>Stop condition</td><td>When the agent should stop and hand back to a human.</td></tr>
+                <tr><td>Output</td><td>The expected deliverable: a diff, a plan, a summary.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>Improving agent quality</h2>
+        <p>Better-quality agent interactions tend to share the same characteristics. Aim for these:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-wand-magic-sparkles"></i> Habits that raise agent quality</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">1</span>
+                        <div class="habit-icon"><i class="fas fa-bullseye"></i></div>
+                        <h5>Be specific</h5>
+                        <p>Clear objectives beat open-ended requests.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">2</span>
+                        <div class="habit-icon"><i class="fas fa-compress"></i></div>
+                        <h5>Keep scope tight</h5>
+                        <p>Small, focused tasks are easier to verify.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">3</span>
+                        <div class="habit-icon"><i class="fas fa-vials"></i></div>
+                        <h5>Demand validation</h5>
+                        <p>Ask for tests and checks alongside changes.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">4</span>
+                        <div class="habit-icon"><i class="fas fa-shoe-prints"></i></div>
+                        <h5>Work in steps</h5>
+                        <p>Iterate in reviewable increments, not one giant pass.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">5</span>
+                        <div class="habit-icon"><i class="fas fa-eye"></i></div>
+                        <h5>Review output</h5>
+                        <p>Treat AI changes like any pull request.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">6</span>
+                        <div class="habit-icon"><i class="fas fa-stop"></i></div>
+                        <h5>Set stop points</h5>
+                        <p>Hand back to a human at the right moment.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">7</span>
+                        <div class="habit-icon"><i class="fas fa-book"></i></div>
+                        <h5>Provide standards</h5>
+                        <p>Point to conventions so output fits the codebase.</p>
+                    </div>
+                </div>
+                <p class="ui-caption">Higher quality and lower waste usually come from the same disciplined habits.</p>
+            </div>
+        </div>
+
+        <h2>Model selection matters</h2>
+        <p>Not every task needs the most powerful model. Matching model to task is one of the easiest ways to balance quality and cost:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Task</th><th>Reasonable strategy</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Quick completions and small edits</td><td>A lighter, faster model is often enough.</td></tr>
+                <tr><td>Routine explanations or boilerplate</td><td>A mid-tier model usually handles it well.</td></tr>
+                <tr><td>Complex reasoning, architecture, migrations</td><td>A more capable model earns its cost.</td></tr>
+                <tr><td>Large-context analysis across many files</td><td>Choose for context handling, then mind the size.</td></tr>
+                <tr><td>Multi-step agentic work</td><td>Strong reasoning helps — pair it with tight guardrails.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>Code review and large context</h2>
+        <p>Copilot's code-review and large-context features are valuable, but they process more information by nature. Use them where the payoff is real — reviewing a substantial pull request, reasoning across a module, or analyzing a tricky bug — rather than for trivial changes a lighter interaction would handle. The goal is to spend big context on big problems.</p>
+
+        <h2>Developer habits that reduce waste</h2>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Write specific prompts &middot; share only relevant context &middot; ask for a plan before large work &middot; review and correct early &middot; pick the right model for the task &middot; keep sessions focused &middot; avoid repeating background unnecessarily &middot; validate with tests &middot; set scope and stop conditions for agents &middot; treat AI output as reviewable code, not finished truth.</span>
+        </div>
+
+        <h2>Team-level optimization</h2>
+        <p>Individual habits scale further when teams make them shared practice. Effective teams tend to:</p>
+        <ul>
+            <li>Share effective prompt patterns and examples.</li>
+            <li>Agree on when to use heavier models versus lighter ones.</li>
+            <li>Establish guardrail conventions for agentic work.</li>
+            <li>Document standards the AI can follow consistently.</li>
+            <li>Review usage trends together and learn from outliers.</li>
+        </ul>
+
+        <h2>Measure quality alongside usage</h2>
+        <p>Usage numbers alone can mislead. High usage tied to high value is healthy; low usage that ships poor changes is not. Track both sides together:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Quality signal</th><th>What it tells you</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>First-attempt success rate</td><td>How often prompts work without long clarifying loops.</td></tr>
+                <tr><td>Rework after AI changes</td><td>Whether output needs heavy correction.</td></tr>
+                <tr><td>Review feedback on AI-assisted PRs</td><td>How well output meets standards.</td></tr>
+                <tr><td>Time saved on real tasks</td><td>The actual productivity benefit.</td></tr>
+                <tr><td>Usage vs outcomes</td><td>Whether consumption maps to delivered value.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>Token optimization and agent quality are two sides of the same coin. Skilled use of Copilot means writing clear prompts, managing context deliberately, choosing the right model, guiding agents with guardrails, and reviewing output like any other engineering work. Done well, this lowers waste <em>and</em> raises quality at the same time. The organizations that get the most from Copilot aren't the ones that use it the least — they're the ones that use it <strong>intentionally</strong>.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>That wraps the series. Revisit <a href="./github-copilot-usage-based-billing-overview.html">Part 1 — the billing mindset</a> and <a href="./github-copilot-budgets-and-alerts.html">Part 2 — budgets and alerts</a> to connect the operating model end to end: aware usage, sensible budgets, and disciplined optimization.</span>
+        </div>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/github-copilot-token-optimization-agent-quality.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

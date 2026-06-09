@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Copilot Usage-Based Billing, Part 2: Budgets &amp; Alerts | Dhaval Shah</title>
+    <meta name="description" content="Part 2 of a series on GitHub Copilot usage-based billing: budget scopes, soft alerts vs hard stops, avoiding overlapping-budget confusion, worked pilot and production examples, and a governance checklist.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/github-copilot-budgets-and-alerts.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="GitHub Copilot Usage-Based Billing, Part 2: Budgets & Alerts">
+    <meta property="og:description" content="Budget scopes, soft vs hard stops, overlapping-budget pitfalls, and worked pilot and production examples.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/github-copilot-budgets-and-alerts.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">GitHub Copilot</span>
+            <span class="article-tag">Usage &amp; Billing</span>
+            <span class="article-tag">Part 2</span>
+        </div>
+        <h1>GitHub Copilot Usage-Based Billing, Part 2: Budgets &amp; Alerts</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 9, 2026</span>
+            <span><i class="fas fa-clock"></i> 12 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Usage-based billing gives organizations flexibility, but it also creates a new operational responsibility: a clear budget strategy. Without budgets, AI usage can grow in ways that are hard to explain. With overly restrictive budgets, developers get blocked from high-value work. The right approach treats budgets as both a control mechanism and a learning tool. This is Part 2 of the series — <a href="./github-copilot-usage-based-billing-overview.html">Part 1</a> set up the billing mindset; <a href="./github-copilot-token-optimization-agent-quality.html">Part 3</a> covers optimization.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Budget capabilities, scopes, and admin controls evolve. Verify the current GitHub billing UI and documentation before implementing controls — available options vary by account type and billing model.</span>
+        </div>
+
+        <h2>Why budget strategy matters</h2>
+        <p>Copilot usage varies by user, team, model, and feature. A team doing simple code completion has a very different pattern from one using chat, code review, CLI assistance, agentic workflows, and large-context analysis. Budgets help organizations:</p>
+        <ol>
+            <li>Monitor usage before it becomes a surprise.</li>
+            <li>Alert owners when spend approaches defined thresholds.</li>
+            <li>Limit or stop additional usage where hard controls are appropriate.</li>
+            <li>Separate experimentation from production-scale adoption.</li>
+            <li>Understand which teams or workflows need enablement.</li>
+        </ol>
+        <p>A good budget strategy <strong>supports adoption</strong> instead of blocking it blindly.</p>
+
+        <h2>Common budget scopes</h2>
+        <p>Public GitHub billing documentation describes several budget concepts — including product-level, SKU-level, and bundled AI-credit budgets. Options vary by account type and billing model, so confirm the current UI before implementing. At a practical level, think about scope like this:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Scope</th><th>Example use</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Enterprise-level budget</td><td>An overall spending guardrail for Copilot-related AI consumption.</td></tr>
+                <tr><td>Organization-level budget</td><td>Track usage for a business unit or engineering organization.</td></tr>
+                <tr><td>Cost center budget</td><td>Align Copilot spend with internal financial ownership.</td></tr>
+                <tr><td>User-level budget</td><td>Apply a per-user limit or default guardrail for licensed users.</td></tr>
+                <tr><td>Product or SKU budget</td><td>Track or limit a specific metered product or feature category.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>The important design decision is not "what number should the budget be?" It is <strong>"what behavior should this budget encourage or prevent?"</strong></p>
+
+        <h2>Avoid overlapping-budget confusion</h2>
+        <p>A common mistake is creating too many overlapping budgets at once — enterprise-wide, organization, cost center, <em>and</em> user-level all together. When usage is blocked, users can't tell which budget was exhausted or who to ask. Overlapping budgets aren't always wrong, but each one needs a clear purpose. Good design makes these easy to answer:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-circle-question"></i> When a budget blocks someone, can you answer these?</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">1</span>
+                        <div class="habit-icon"><i class="fas fa-gauge"></i></div>
+                        <h5>Which budget?</h5>
+                        <p>Which budget was actually consumed.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">2</span>
+                        <div class="habit-icon"><i class="fas fa-user-shield"></i></div>
+                        <h5>Who owns it?</h5>
+                        <p>Who is accountable for that budget.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">3</span>
+                        <div class="habit-icon"><i class="fas fa-traffic-light"></i></div>
+                        <h5>Blocked or alerted?</h5>
+                        <p>Whether usage was stopped or only flagged.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">4</span>
+                        <div class="habit-icon"><i class="fas fa-route"></i></div>
+                        <h5>What action?</h5>
+                        <p>What the user or admin should do next.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">5</span>
+                        <div class="habit-icon"><i class="fas fa-sliders"></i></div>
+                        <h5>Adjust it?</h5>
+                        <p>Whether to raise, change, or leave the budget.</p>
+                    </div>
+                </div>
+                <p class="ui-caption">If a developer is blocked mid-workflow, the support path should be obvious — not a mystery.</p>
+            </div>
+        </div>
+
+        <h2>Soft budgets vs hard stops</h2>
+        <p>Not every budget should stop usage. In early adoption, <strong>soft (alert-only) budgets</strong> are often better: they create visibility without disrupting developers. A <strong>hard-stop budget</strong> is useful when spend must be strictly controlled — but use it carefully. Blocking Copilot in the middle of an important release, incident response, or migration could cost the business more than the AI usage itself.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Budget style</th><th>Best for</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Alert-only budget</td><td>Learning usage patterns, early rollout, the enablement phase.</td></tr>
+                <tr><td>Hard-stop budget</td><td>Strict cost control, pilots, high-risk experiments, limited funding.</td></tr>
+                <tr><td>User-level budget</td><td>Preventing a single user or workflow from consuming disproportionate usage.</td></tr>
+                <tr><td>Cost center budget</td><td>Aligning usage to business ownership.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>How alert thresholds work</h2>
+        <p>Alert-style budgets typically notify owners as consumption climbs past set points — commonly 75%, 90%, and 100% — so leaders can react before a limit is reached rather than after.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-bell"></i> Escalating alert thresholds</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="ctx-bars">
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">75% reached<small>Early heads-up</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width:75%;background:#eab308;">75%</div></div>
+                    </div>
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">90% reached<small>Plan a response</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width:90%;background:#f97316;">90%</div></div>
+                    </div>
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">100% reached<small>Limit hit — alert or stop</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width:100%;background:#dc2626;">100%</div></div>
+                    </div>
+                </div>
+                <p class="ui-caption">Notify the right owners at each step. Whether 100% alerts or hard-stops depends on the budget type you chose.</p>
+            </div>
+        </div>
+
+        <h2>Example: budgeting for a pilot</h2>
+        <p>Assume a company is piloting Copilot usage-based features with 50 developers across three teams: Team A uses chat and inline suggestions, Team B uses code review and repository analysis, and Team C experiments with agentic workflows. A reasonable first approach:</p>
+        <ol>
+            <li>Create an enterprise- or organization-level budget with <strong>alerts</strong>.</li>
+            <li>Avoid hard stops during the first few weeks.</li>
+            <li>Review usage by team and feature category.</li>
+            <li>Check whether high usage is tied to valuable work.</li>
+            <li>Add more specific budgets only where needed.</li>
+        </ol>
+        <p>After the pilot, the organization might find Team C consumes more because agentic workflows perform more complex tasks. That can be perfectly acceptable if Team C is automating migration work that saves significant engineering time. The point is to <strong>evaluate cost in context</strong>.</p>
+
+        <h2>Example: budgeting for production adoption</h2>
+        <p>For production, the model should be more structured. A mature organization might define:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-building"></i> A layered production budget model</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-globe"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Top-level AI usage budget</span><span class="flow-node-sub">Overall visibility across the org</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-sitemap"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Cost center budgets</span><span class="flow-node-sub">Aligned to departments or portfolios</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-user-gear"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">User-level defaults</span><span class="flow-node-sub">Prevent unexpected individual overuse</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Alerts + monthly reporting</span><span class="flow-node-sub">75/90/100% to leaders; usage tied to outcomes</span></div>
+                    </div>
+                </div>
+                <p class="ui-caption">Keep spending visible while letting teams keep using Copilot for meaningful work — plus a clear process for raising limits.</p>
+            </div>
+        </div>
+
+        <h2>What to do when a budget is reached</h2>
+        <p>When a threshold is hit, the first response should be <strong>investigation, not panic</strong>. Ask:</p>
+        <ol>
+            <li>Is this expected usage from a planned project?</li>
+            <li>Is one workflow or feature driving most of the consumption?</li>
+            <li>Are users repeatedly submitting large or inefficient prompts?</li>
+            <li>Is the team using advanced models where lighter ones would do?</li>
+            <li>Is the usage producing measurable business value?</li>
+            <li>Should the budget be adjusted, or should the team get guidance?</li>
+        </ol>
+        <p>Sometimes the right answer is to raise the budget. Sometimes it's to optimize usage (see <a href="./github-copilot-token-optimization-agent-quality.html">Part 3</a>). Sometimes it's to change workflow design.</p>
+
+        <h2>Budget governance checklist</h2>
+        <div class="callout callout-tip">
+            <i class="fas fa-clipboard-check"></i>
+            <span>Define who owns budget decisions &middot; decide alert-only vs hard-stop &middot; avoid unnecessary overlapping budgets &middot; align scopes with ownership &middot; configure alerts for the right recipients &middot; review usage trends monthly &middot; create a budget-increase request process &middot; educate developers on efficient usage &middot; track business outcomes, not only consumption &middot; revisit budgets as features and patterns evolve.</span>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>Budgets are not just financial controls — they're part of the operating model for AI-assisted software development. A good strategy gives teams room to innovate while helping leaders understand and manage consumption. The best organizations use budgets to <strong>guide responsible adoption</strong>, not to discourage developers from using Copilot. The goal is predictable spend, high-value usage, and continuous optimization.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Next: <a href="./github-copilot-token-optimization-agent-quality.html">Part 3 — Token optimization and agent quality</a> shows how better prompts, focused context, model choice, and agent guardrails improve both cost efficiency and engineering outcomes.</span>
+        </div>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/github-copilot-budgets-and-alerts.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>
