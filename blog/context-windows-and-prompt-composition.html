@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Is Everything: Memory, Windows & What the AI Actually Sees | Dhaval Shah</title>
+    <meta name="description" content="How AI context works: the context window and why it matters, what really goes into a prompt behind the scenes, and practical ways to give the model the right background.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/context-windows-and-prompt-composition.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Context Is Everything: Memory, Windows & What the AI Actually Sees">
+    <meta property="og:description" content="The context window, what really goes into a prompt behind the scenes, and how to give the model the right background.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/context-windows-and-prompt-composition.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Prompt Engineering</span>
+            <span class="article-tag">Context</span>
+            <span class="article-tag">AI</span>
+        </div>
+        <h1>Context Is Everything: Memory, Windows &amp; What the AI Actually Sees</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 4, 2026</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">We've reached the final piece of the series, and it's the one that quietly underpins everything else: <strong>context</strong>. Every answer an AI gives is shaped not just by your latest question, but by everything it can "see" at that moment — earlier messages, attached files, and instructions you never typed. Understand how context works and you'll write better prompts, know why an assistant sometimes "forgets," and get more from every tool you touch.</p>
+
+        <h2>What "context" means here</h2>
+        <p>Context is simply all the information the model is considering when it generates a reply. That includes your current question, but also the conversation so far, any documents you've shared, and behind-the-scenes instructions the product adds. The model doesn't truly remember you between sessions — instead, on every single turn, it reads through whatever context it's given and predicts a response based on the whole picture.</p>
+
+        <h2>The context window: the model's short-term memory</h2>
+        <p>There's a limit to how much the model can hold in mind at once. That limit is called the <strong>context window</strong>, usually measured in "tokens" (a token is roughly a few characters — a short word is about one token). Everything has to fit inside it: your instructions, the conversation history, any pasted documents, <em>and</em> the answer being written. When a conversation grows past the window, the oldest parts fall out of view — which is exactly why a long chat can seem to "forget" something you said near the start.</p>
+        <p>Context windows have grown dramatically as models have improved — from a couple of pages of text to entire books:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-ruler-horizontal"></i> How much can a model hold at once?</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="ctx-bars">
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">Early models<small>~a few pages</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 8%;">small</div></div>
+                    </div>
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">Mid-generation<small>~a short chapter</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 28%;">larger</div></div>
+                    </div>
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">Modern models<small>~a long report</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 60%;">large</div></div>
+                    </div>
+                    <div class="ctx-bar">
+                        <div class="ctx-bar-label">Latest models<small>~an entire book</small></div>
+                        <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 95%;">huge</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Relative sizes, not exact numbers — the point is the direction: context windows keep getting bigger.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>A bigger window means you can share more — a whole document, a long thread — without the model losing track. But it isn't infinite, and burying the key detail in a wall of text still makes it easier to miss. More room is not a substitute for being clear.</span>
+        </div>
+
+        <h2>What actually goes into a prompt</h2>
+        <p>When you hit enter, the model usually receives far more than the sentence you typed. A typical assistant assembles several streams of context into one combined prompt before the model ever sees it:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-layer-group"></i> What the model receives on each turn</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="compose-stack">
+                    <div class="compose-layer">
+                        <div class="cl-icon"><i class="fas fa-keyboard"></i></div>
+                        <div class="cl-text"><span class="cl-title">Your question</span><span class="cl-sub">The prompt you just typed</span></div>
+                    </div>
+                    <div class="compose-layer">
+                        <div class="cl-icon"><i class="fas fa-comments"></i></div>
+                        <div class="cl-text"><span class="cl-title">Conversation history</span><span class="cl-sub">Earlier messages in this chat, as far back as the window allows</span></div>
+                    </div>
+                    <div class="compose-layer">
+                        <div class="cl-icon"><i class="fas fa-paperclip"></i></div>
+                        <div class="cl-text"><span class="cl-title">Attached material</span><span class="cl-sub">Files, selected text, or other context you've added</span></div>
+                    </div>
+                    <div class="compose-layer rag">
+                        <div class="cl-icon"><i class="fas fa-folder-open"></i></div>
+                        <div class="cl-text"><span class="cl-title">Retrieved documents</span><span class="cl-sub">Relevant content the tool fetches automatically (RAG)</span></div>
+                    </div>
+                    <div class="compose-layer system">
+                        <div class="cl-icon"><i class="fas fa-shield-halved"></i></div>
+                        <div class="cl-text"><span class="cl-title">System instructions</span><span class="cl-sub">Hidden guidance on tone, safety, and behaviour added by the product</span></div>
+                    </div>
+                    <div class="compose-merge"><i class="fas fa-angles-down"></i></div>
+                    <div class="compose-final"><i class="fas fa-robot"></i> One combined prompt &rarr; the model</div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Your words are just one layer. History, attachments, retrieved content, and hidden system instructions all ride along.</p>
+
+        <h2>Those hidden "system instructions"</h2>
+        <p>Most assistants quietly prepend a set of instructions — sometimes called a system prompt — that you never see. These set the assistant's overall behaviour: be helpful and respectful, stay safe, keep answers clear. They also act as shortcuts, so that a brief request like "write tests for this" expands into a fuller instruction behind the scenes. It's worth knowing this layer exists: it's part of why two different tools built on the same model can feel so different to use.</p>
+
+        <h2>Putting context to work</h2>
+        <p>Once you picture the prompt as layers, several practical habits follow naturally:</p>
+        <ul>
+            <li><strong>Front-load what matters.</strong> Put the key instruction or detail where it's easy to find, not buried at the end of a long paragraph.</li>
+            <li><strong>Attach, don't describe.</strong> If a tool lets you add a file or select text, do it — supplying the real source beats summarising it from memory.</li>
+            <li><strong>Start fresh when you switch topics.</strong> A brand-new conversation clears stale history that might otherwise confuse the answer.</li>
+            <li><strong>Re-state key facts in long chats.</strong> If an important detail was many messages ago, briefly repeat it so it's certainly still in view.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>A handy mental check before you send: <em>"Does everything the model needs to answer this well fit in what it can currently see?"</em> If not, add the missing context — or start a cleaner conversation.</span>
+        </div>
+
+        <h2>A note on privacy</h2>
+        <p>Because context can include whatever you paste in, it's worth a moment's thought about <em>what</em> you share — especially sensitive or confidential information — and reviewing how a given tool handles and retains your data. Good prompting and good judgement go together: give the model what it needs to help you, and no more than you're comfortable sharing.</p>
+
+        <h2>The takeaway — and the series</h2>
+        <p>Context is the stage every answer is performed on. The context window sets how much the model can hold at once, and the prompt it receives is layered far beyond your typed words — history, attachments, retrieved documents, and hidden instructions all shape the reply. Manage that context deliberately and the model has what it needs to do its best work. That closes our prompt-engineering series: from <em>specificity</em>, through <em>habits</em> and <em>techniques</em>, to <em>grounding</em> and now <em>context</em>. None of it requires code — just clear thinking about how to ask. That, in the end, is what prompt engineering really is.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/context-windows-and-prompt-composition.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

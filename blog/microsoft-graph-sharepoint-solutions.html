@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building SharePoint Solutions with Microsoft Graph API | Dhaval Shah</title>
+    <meta name="description" content="Use Microsoft Graph for SharePoint: resolving site IDs, working with lists, items, and drives, and keeping data in sync efficiently with delta queries.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/microsoft-graph-sharepoint-solutions.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Building SharePoint Solutions with Microsoft Graph API">
+    <meta property="og:description" content="Resolving site IDs, lists, items, drives, and efficient sync with delta queries.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/microsoft-graph-sharepoint-solutions.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Microsoft Graph</span>
+            <span class="article-tag">Delta Query</span>
+            <span class="article-tag">REST</span>
+        </div>
+        <h1>Building SharePoint Solutions with Microsoft Graph API</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> September 21, 2021</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Microsoft Graph is the strategic API for all of Microsoft 365, SharePoint included. It exposes sites, lists, list items, and document libraries under a single endpoint, with one authentication model and one set of conventions. If you're building a service that touches SharePoint <em>and</em> users, groups, Teams, or mail, Graph lets you do it all through one API instead of stitching several together. The catch is its addressing model — once you internalise how Graph identifies a site, the rest falls into place.</p>
+
+        <h2>The SharePoint surface of Graph</h2>
+        <p>Everything lives under <code>https://graph.microsoft.com/v1.0</code>. The SharePoint entities you'll use most:</p>
+        <ul>
+            <li><code>/sites/{site-id}</code> — a site (web).</li>
+            <li><code>/sites/{site-id}/lists/{list-id}</code> — a list, and <code>/items</code> beneath it.</li>
+            <li><code>/sites/{site-id}/drive</code> and <code>/drives/{drive-id}</code> — document libraries as OneDrive-style drives, with <code>/items</code> and <code>/root/children</code>.</li>
+        </ul>
+
+        <h2>The first hurdle: resolving a site ID</h2>
+        <p>Graph doesn't address sites by URL — it uses a composite <strong>site ID</strong> of the form <code>{hostname},{site-collection-guid},{web-guid}</code>. You rarely know that up front, so you resolve it from the friendly URL using the <code>:/sites/...</code> path syntax:</p>
+
+        <pre><code>GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/ops
+# → returns the site, whose "id" is the composite you use everywhere else
+
+# Root site of the tenant:
+GET https://graph.microsoft.com/v1.0/sites/root</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Resolve the site ID once and cache it. The composite ID is stable for the life of the site, so there's no reason to pay for the lookup on every operation. Caching it also removes a round-trip from every code path that touches the site.</span>
+        </div>
+
+        <h2>Working with lists and items</h2>
+        <p>Once you have the site ID, lists and items use the OData query options you already know. Note that item <em>columns</em> live under the <code>fields</code> facet, which you expand:</p>
+
+        <pre><code># All lists on a site
+GET /sites/{site-id}/lists
+
+# Items with selected columns (fields must be expanded)
+GET /sites/{site-id}/lists/{list-id}/items
+    ?$expand=fields($select=Title,ContractStatus,Modified)
+    &amp;$top=50
+
+# Filter on a column (header required for non-indexed filters)
+GET /sites/{site-id}/lists/{list-id}/items?$expand=fields
+Headers: Prefer: HonorNonIndexedQueriesWarningMayFailRandomly</code></pre>
+
+        <h3>Creating and updating items</h3>
+        <pre><code>POST /sites/{site-id}/lists/{list-id}/items
+{
+  "fields": {
+    "Title": "Acme MSA 2021",
+    "ContractStatus": "Draft"
+  }
+}
+
+# Update just the fields of an existing item
+PATCH /sites/{site-id}/lists/{list-id}/items/{item-id}/fields
+{ "ContractStatus": "Approved" }</code></pre>
+
+        <h2>Files via the drive</h2>
+        <p>Document libraries surface as <strong>drives</strong>, so file operations reuse the entire OneDrive/Graph files API — upload, download, move, share, thumbnails, and more:</p>
+
+        <pre><code># List the root folder of the default library
+GET /sites/{site-id}/drive/root/children
+
+# Upload a small file (&lt; 4 MB) by path
+PUT /sites/{site-id}/drive/root:/Contracts/acme.pdf:/content
+Content-Type: application/pdf
+&lt;binary&gt;
+
+# Download
+GET /sites/{site-id}/drive/items/{item-id}/content</code></pre>
+        <p>For large files you create an <strong>upload session</strong> and send the bytes in chunks — the same resumable pattern across all of Graph's file storage.</p>
+
+        <h2>Delta queries: efficient sync</h2>
+        <p>If you're keeping an external system in step with a list or library, polling everything is wasteful. <strong>Delta query</strong> returns only what changed since your last call. You make an initial delta call, follow <code>@odata.nextLink</code> through the pages, and store the <code>@odata.deltaLink</code> you get at the end. Next time, call the deltaLink and you receive only the changes:</p>
+
+        <pre><code># Initial sync — walk nextLink pages to the end
+GET /sites/{site-id}/lists/{list-id}/items/delta?$expand=fields
+# … pages …
+# Final page returns: "@odata.deltaLink": ".../delta?token=ABC123"
+
+# Later — only what changed since that token
+GET /sites/{site-id}/lists/{list-id}/items/delta?token=ABC123</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Delta query is Graph's answer to the CSOM <code>GetChanges</code>/change-token pattern. Persist the <code>deltaLink</code> exactly as you'd persist a change token, and your sync becomes incremental and cheap — even against large libraries. Deleted items come back marked with an <code>@removed</code> facet so you can mirror deletions too.</span>
+        </div>
+
+        <h2>Throttling: design for 429</h2>
+        <p>Graph throttles aggressively under load and returns <code>429 Too Many Requests</code> with a <code>Retry-After</code> header. Production code must honour it:</p>
+
+        <pre><code>var res = await graph.Sites[siteId].Lists[listId].Items
+    .Request().GetAsync();   // SDK retries 429 with Retry-After by default
+
+// If hand-rolling HTTP, respect the header yourself:
+if ((int)response.StatusCode == 429)
+{
+    var wait = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(10);
+    await Task.Delay(wait);
+    // retry
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Never ignore <code>Retry-After</code>.</strong> Hammering through a 429 gets your app throttled harder and can affect the whole tenant. Use the official Graph SDKs where you can — they implement compliant retry/back-off out of the box — and batch with <code>/$batch</code> to cut request counts.</span>
+        </div>
+
+        <h2>Graph vs the SharePoint REST API</h2>
+        <ul>
+            <li><strong>Reach for Graph</strong> when your solution spans Microsoft 365, when you want one auth model, or when you need delta sync and the files API.</li>
+            <li><strong>Reach for <code>_api</code></strong> when you need a SharePoint-specific capability Graph doesn't expose yet (some field/schema operations, certain site administration, search nuances).</li>
+        </ul>
+
+        <p>The trajectory is clear: Graph keeps absorbing more SharePoint surface every release, and it's where Microsoft invests. Build new integrations on Graph, fall back to <code>_api</code> only where you must, and you'll have a solution that ages well and reaches the entire Microsoft 365 platform from a single, consistent API.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/microsoft-graph-sharepoint-solutions.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

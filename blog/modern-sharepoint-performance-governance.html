@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance & Governance Best Practices for Modern SharePoint | Dhaval Shah</title>
+    <meta name="description" content="Keep large SharePoint solutions fast and healthy: the 5000-item list view threshold, indexed columns, throttling and Retry-After, User-Agent decoration, and governance.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/modern-sharepoint-performance-governance.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Performance & Governance Best Practices for Modern SharePoint">
+    <meta property="og:description" content="List view threshold, indexed columns, throttling, User-Agent decoration, and a governance checklist.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/modern-sharepoint-performance-governance.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Governance</span>
+            <span class="article-tag">Throttling</span>
+            <span class="article-tag">Large Lists</span>
+        </div>
+        <h1>Performance &amp; Governance Best Practices for Modern SharePoint</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> August 30, 2022</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Most SharePoint solutions don't fail at launch — they degrade over time as lists grow, jobs multiply, and "just one more flow" piles on. The platform has well-defined limits and protective throttling, and the difference between a solution that scales and one that grinds to a halt is whether you designed for those limits from day one. This is the consultant's field guide to keeping large SharePoint deployments fast and governable.</p>
+
+        <h2>The 5,000-item list view threshold</h2>
+        <p>The single most misunderstood limit in SharePoint. A list can hold <strong>millions of items</strong> — up to 30 million — but a single <em>query/view</em> cannot return more than <strong>5,000 items in one request</strong>. Exceed it and the operation is throttled with the dreaded "this view cannot be displayed."</p>
+        <p>The threshold is about the <em>query</em>, not the list size. The fixes:</p>
+        <ul>
+            <li><strong>Index the columns you filter and sort on.</strong> An indexed column lets SharePoint resolve a filtered query that <em>returns</em> fewer than 5,000 rows even when the list holds far more.</li>
+            <li><strong>Filter your views</strong> so each returns under 5,000 rows — by date range, status, or a calculated "owner" column.</li>
+            <li><strong>Page your code</strong> in batches well under the limit (e.g. 2,000) using <code>RowLimit</code>/paging tokens.</li>
+        </ul>
+
+        <pre><code># Add an index to a column with PnP PowerShell
+Set-PnPField -List "Contracts" -Identity "ContractStatus" `
+  -Values @{ Indexed = $true }
+
+# Page a large list safely in code (CAML + RowLimit)
+&lt;View&gt;
+  &lt;Query&gt;&lt;Where&gt;&lt;Eq&gt;
+    &lt;FieldRef Name='ContractStatus' /&gt;&lt;Value Type='Text'&gt;Approved&lt;/Value&gt;
+  &lt;/Eq&gt;&lt;/Where&gt;&lt;/Query&gt;
+  &lt;RowLimit&gt;2000&lt;/RowLimit&gt;
+&lt;/View&gt;</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Index <em>before</em> the list gets big.</strong> SharePoint won't let you add an index to a column once the list already exceeds the threshold (the indexing operation itself would breach the limit). Plan indexes when you design the list, or add them while the list is still small.</span>
+        </div>
+
+        <h2>Throttling: the 429 you must respect</h2>
+        <p>SharePoint Online protects shared capacity by throttling apps that send too many requests too fast. You'll get <strong>HTTP 429 (Too Many Requests)</strong> or sometimes <strong>503</strong>, with a <code>Retry-After</code> header telling you how many seconds to wait. The only correct response is to back off:</p>
+
+        <pre><code>HttpResponseMessage resp = await httpClient.SendAsync(request);
+if ((int)resp.StatusCode == 429 || (int)resp.StatusCode == 503)
+{
+    var retry = resp.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(10);
+    await Task.Delay(retry);
+    // retry the request (with a capped exponential back-off)
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Retrying immediately through a 429 makes it worse — SharePoint escalates throttling and can temporarily block the whole app. Honour <code>Retry-After</code> exactly, add exponential back-off with jitter, and reduce concurrency. Decorate requests so Microsoft can identify well-behaved traffic (below).</span>
+        </div>
+
+        <h3>Decorate your traffic with a User-Agent</h3>
+        <p>Microsoft asks apps to identify themselves with a structured <code>User-Agent</code> string (<code>ISV|CompanyName|AppName/Version</code> or <code>NONISV|...</code>). Decorated traffic is throttled more leniently and is far easier to diagnose. PnP libraries set this for you; for raw HTTP, set it yourself:</p>
+
+        <pre><code>request.Headers.UserAgent.ParseAdd("NONISV|Contoso|ContractSync/1.4");</code></pre>
+
+        <h2>Other limits worth designing around</h2>
+        <ul>
+            <li><strong>Lookup column limit per view</strong> — too many lookup/person columns in one view (the limit is small, around a dozen) triggers the threshold even under 5,000 rows. Keep views lean.</li>
+            <li><strong>File size &amp; upload</strong> — large uploads need chunked/resumable sessions, not a single PUT.</li>
+            <li><strong>Batch your API calls</strong> — use <code>$batch</code> (REST) or PnPjs batching to collapse many operations into one request and stay well clear of throttling.</li>
+            <li><strong>Avoid chatty page loads</strong> — an SPFx web part firing dozens of calls on render will be throttled and will feel slow; fetch once, cache, and reuse.</li>
+        </ul>
+
+        <h2>Governance: keeping it healthy over time</h2>
+        <p>Performance is half the story; governance keeps the environment from sprawling into chaos. A practical checklist:</p>
+        <ul>
+            <li><strong>Site provisioning</strong> — standardise new sites with site designs + the PnP provisioning engine so structure, indexes, and policies are baked in, not bolted on.</li>
+            <li><strong>Lifecycle</strong> — set expiration/inactivity policies so abandoned sites are reviewed and archived; orphaned sites are a security and cost liability.</li>
+            <li><strong>Permissions</strong> — prefer group-based access over per-item breaks; broken inheritance at scale is both a performance and a manageability problem.</li>
+            <li><strong>External sharing</strong> — define and enforce a tenant policy; review sharing reports.</li>
+            <li><strong>Capacity</strong> — monitor storage and large-list growth before they hit limits.</li>
+            <li><strong>App governance</strong> — track which SPFx solutions and API permissions are deployed (those grants are tenant-wide and shared).</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Treat governance as code where you can: provision sites from templates, set indexes during provisioning, and audit permissions with PnP PowerShell on a schedule. The environments that stay healthy are the ones where the right configuration is applied automatically, not left to whoever clicked "create site."</span>
+        </div>
+
+        <h2>A simple maturity test</h2>
+        <p>Ask three questions of any SharePoint solution heading to production:</p>
+        <ol>
+            <li>Will every list view still return under 5,000 rows when this list is ten times bigger — and are the filter/sort columns indexed?</li>
+            <li>Does every piece of code that calls SharePoint honour <code>Retry-After</code>, decorate its <code>User-Agent</code>, and batch where possible?</li>
+            <li>Is the site provisioned from a standard template, with lifecycle, permission, and sharing policies defined?</li>
+        </ol>
+
+        <p>If the answer to all three is yes, the solution will scale and stay governable. If not, you've just found your backlog. Designing for limits and governance isn't glamorous, but it's exactly what separates a SharePoint deployment that thrives for years from one that quietly becomes everyone's least favourite system.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/modern-sharepoint-performance-governance.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

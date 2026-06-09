@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompting Techniques That Level You Up: Examples, Step-by-Step & Building Knowledge | Dhaval Shah</title>
+    <meta name="description" content="A friendly tour of prompting techniques beyond the basics: zero, one, and few-shot prompting, chain-of-thought step-by-step reasoning, and the generated-knowledge approach.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/prompting-techniques-shots-chain-of-thought.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Prompting Techniques That Level You Up">
+    <meta property="og:description" content="Zero/one/few-shot prompting, chain-of-thought reasoning, and the generated-knowledge approach, explained simply.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/prompting-techniques-shots-chain-of-thought.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Prompt Engineering</span>
+            <span class="article-tag">AI</span>
+            <span class="article-tag">Techniques</span>
+        </div>
+        <h1>Prompting Techniques That Level You Up: Examples, Step-by-Step &amp; Building Knowledge</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> April 30, 2026</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">So far in this series we've covered specificity and a checklist of good habits. Now we move to named <strong>techniques</strong> — repeatable patterns that experienced users reach for when a plain request isn't enough. The good news: these have intimidating names but simple ideas. Master three of them — showing examples, asking for step-by-step reasoning, and building up knowledge first — and you'll handle far more demanding tasks with confidence.</p>
+
+        <h2>Technique 1: show examples ("shot" prompting)</h2>
+        <p>One of the most reliable ways to steer an AI is to <em>show</em> it what you want instead of only describing it. This is called "shot" prompting, where a "shot" simply means an example. The number of examples you provide gives the technique its name:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-clone"></i> Zero, one, and few-shot prompting</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="shot-grid">
+                    <div class="shot-col">
+                        <div class="shot-col-head">
+                            <div class="shot-dots"><span></span><span></span><span></span></div>
+                            <h5>Zero-shot</h5>
+                            <small>No examples</small>
+                        </div>
+                        <div class="shot-body">
+                            <div class="shot-ex task">"Turn this product note into a one-line tagline."</div>
+                            <div class="shot-ex">You rely entirely on the model's general ability. Fast, and often fine for simple tasks.</div>
+                        </div>
+                    </div>
+                    <div class="shot-col">
+                        <div class="shot-col-head">
+                            <div class="shot-dots"><span class="on"></span><span></span><span></span></div>
+                            <h5>One-shot</h5>
+                            <small>One example</small>
+                        </div>
+                        <div class="shot-body">
+                            <div class="shot-ex task">"Turn this note into a tagline. Example: 'Noise-cancelling earbuds' &rarr; 'Silence, on demand.'"</div>
+                            <div class="shot-ex">A single example pins down the style and tone you're after.</div>
+                        </div>
+                    </div>
+                    <div class="shot-col">
+                        <div class="shot-col-head">
+                            <div class="shot-dots"><span class="on"></span><span class="on"></span><span class="on"></span></div>
+                            <h5>Few-shot</h5>
+                            <small>A handful of examples</small>
+                        </div>
+                        <div class="shot-body">
+                            <div class="shot-ex task">"Turn this note into a tagline. Here are three examples of the voice we use&hellip;"</div>
+                            <div class="shot-ex">Several examples set firm boundaries, so the output stays consistent.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">More examples mean tighter control. Start at zero-shot; add examples when the style or format matters.</p>
+
+        <p>The pattern is wonderfully general. Want the model to classify feedback as positive or negative, format addresses a certain way, or match your brand's writing voice? Give it two or three worked examples and it will follow the pattern. Examples communicate nuance that's hard to put into rules.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Reach for examples when <em>tone, format, or style</em> matters more than facts. If you find yourself struggling to <em>describe</em> exactly what "good" looks like, stop describing and just show one.</span>
+        </div>
+
+        <h2>Technique 2: ask for step-by-step reasoning (chain-of-thought)</h2>
+        <p>For anything involving logic, planning, or multiple moving parts, asking the model to work through it <em>in steps</em> dramatically improves the result. This is called <strong>chain-of-thought</strong> prompting. Instead of demanding the final answer immediately, you invite the model to reason out loud — and to build the solution one stage at a time, with you steering between stages.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-shoe-prints"></i> Chain-of-thought: one stage at a time</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-flag"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">"Let's plan my budget step by step."</span><span class="flow-node-sub">Set the goal and invite reasoning</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-1"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Step 1 — list income sources</span><span class="flow-node-sub">Model lays out the foundation</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-2"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Step 2 — group monthly expenses</span><span class="flow-node-sub">You confirm, then continue</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-3"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Step 3 — set savings targets</span><span class="flow-node-sub">Builds on the prior steps</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">A complete, reasoned plan</span><span class="flow-node-sub">Each stage checked along the way</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Breaking a problem into ordered steps lets you verify each stage instead of trusting one big leap.</p>
+
+        <p>Two things make this work. First, the model produces better conclusions when it reasons before answering, rather than committing to a guess up front. Second, by going stage by stage, <em>you</em> stay in control — if step two looks wrong, you fix it before it pollutes step three. It's the difference between reviewing a plan as it's built and discovering a flaw only at the very end.</p>
+
+        <h2>Technique 3: build knowledge first (generated knowledge)</h2>
+        <p>Sometimes the best way to get a great answer is to have the model <em>prepare</em> before it produces. The <strong>generated-knowledge</strong> approach splits the work into two moves: first ask the model to lay out the relevant facts or principles, then ask it to use that material to do the actual task. The first answer becomes high-quality context for the second.</p>
+        <ul>
+            <li><strong>First prompt:</strong> "List the key principles of a healthy weekly meal plan, with a sentence on why each matters."</li>
+            <li><strong>Then:</strong> "Using those principles, create a 7-day meal plan for a busy vegetarian."</li>
+        </ul>
+        <p>Because the second request is now grounded in the principles the model just articulated, the plan it produces is more thoughtful and consistent than if you'd asked for it cold. You're essentially letting the model assemble its own reference material — then holding it to that material.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Notice how these techniques layer. Generated knowledge is really chain-of-thought stretched across two prompts, and you can sprinkle in examples (shot prompting) at either stage. They're building blocks, not rival choices — combine them to fit the task.</span>
+        </div>
+
+        <h2>Choosing the right technique</h2>
+        <p>A quick rule of thumb for when to reach for each:</p>
+        <ul>
+            <li><strong>Show examples</strong> when style, tone, or format is what matters — classification, rewriting, matching a voice.</li>
+            <li><strong>Ask for steps</strong> when the task involves logic, planning, or several interdependent parts.</li>
+            <li><strong>Build knowledge first</strong> when you want a richer, more grounded result on an open-ended or expert topic.</li>
+        </ul>
+        <p>And when in doubt, combine them: a few-shot example <em>plus</em> a request to reason step by step is a powerful default for tricky work.</p>
+
+        <h2>The takeaway</h2>
+        <p>Techniques sound advanced, but each rests on an everyday instinct: show what you mean, think before you answer, and gather your facts before you start. Shot prompting, chain-of-thought, and generated knowledge give you reliable patterns for the moments when a plain request falls short. In the final article of the series, we'll look at <em>context</em> — how much an AI can keep in mind at once, and how the right background quietly shapes everything it says.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/prompting-techniques-shots-chain-of-thought.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

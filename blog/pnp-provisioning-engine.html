@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repeatable Site Provisioning with the PnP Provisioning Engine | Dhaval Shah</title>
+    <meta name="description" content="Capture a SharePoint site as a template and re-apply it anywhere with the PnP provisioning engine, parameter tokens, and site designs/scripts for automation.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/pnp-provisioning-engine.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Repeatable Site Provisioning with the PnP Provisioning Engine">
+    <meta property="og:description" content="Capture a site as a template, parameterise it with tokens, and re-apply it anywhere.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/pnp-provisioning-engine.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">PnP</span>
+            <span class="article-tag">Provisioning</span>
+            <span class="article-tag">PowerShell</span>
+        </div>
+        <h1>Repeatable Site Provisioning with the PnP Provisioning Engine</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> March 9, 2020</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">"Can you make another site exactly like the project site, but for the new client?" In the farm days that meant site templates and feature stapling. In Microsoft 365 the answer is the PnP provisioning engine: extract a fully-configured site into a portable XML template, parameterise it, and apply it to as many new sites as you like — consistently, repeatably, and in source control.</p>
+
+        <h2>What the engine does</h2>
+        <p>The PnP provisioning engine reads and writes a <strong>provisioning template</strong> — an XML document (the PnP schema) that describes a site's structure: lists and libraries, content types, site columns, navigation, pages, web parts, permissions, branding, and more. Two halves:</p>
+        <ul>
+            <li><strong>Extraction</strong> — point it at a configured "reference" site and it captures the structure into a template.</li>
+            <li><strong>Application</strong> — point it at a target site and it provisions everything the template describes.</li>
+        </ul>
+
+        <h2>Extracting a template</h2>
+        <p>With PnP PowerShell, connect to your model site and export it. (In recent PnP.PowerShell the cmdlets are <code>Get-PnPSiteTemplate</code> / <code>Invoke-PnPSiteTemplate</code>; older PnP-PowerShell used <code>Get-PnPProvisioningTemplate</code> / <code>Apply-PnPProvisioningTemplate</code> — same engine, renamed.)</p>
+
+        <pre><code>Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/project-model" -Interactive
+
+# Extract the whole site to an XML template
+Get-PnPSiteTemplate -Out "ProjectSite.xml"
+
+# Or scope it to just what you want
+Get-PnPSiteTemplate -Out "ProjectSite.xml" `
+  -Handlers Lists, ContentTypes, Fields, Navigation</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Use <code>-Handlers</code> to extract only the parts you care about. A full extract pulls in security, pages, and theming you may not want to redeploy. Scoping the handlers keeps the template small, reviewable, and far less likely to carry environment-specific cruft into the next site.</span>
+        </div>
+
+        <h2>Parameterising with tokens</h2>
+        <p>A template that hard-codes "Project Alpha" everywhere isn't reusable. The engine supports <strong>tokens</strong> — placeholders resolved at apply time. You define parameters in the template and reference them as <code>{parameter:Name}</code>, then supply values when you apply:</p>
+
+        <pre><code>&lt;!-- inside the template --&gt;
+&lt;pnp:Parameters&gt;
+  &lt;pnp:Parameter Key="ClientName" Required="true" /&gt;
+  &lt;pnp:Parameter Key="ProjectCode" Required="true" /&gt;
+&lt;/pnp:Parameters&gt;
+
+&lt;!-- used later --&gt;
+&lt;pnp:Title&gt;{parameter:ClientName} Project Workspace&lt;/pnp:Title&gt;</code></pre>
+
+        <p>Other built-in tokens resolve site-relative URLs, the site title, term IDs, and more — for example <code>{site}</code>, <code>{siteid}</code>, and <code>{themecatalog}</code> — so the same template works regardless of the target URL.</p>
+
+        <h2>Applying the template</h2>
+        <p>Connect to a freshly created target site and apply, passing parameter values:</p>
+
+        <pre><code>Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/acme-project" -Interactive
+
+Invoke-PnPSiteTemplate -Path "ProjectSite.xml" `
+  -Parameters @{ "ClientName" = "Acme"; "ProjectCode" = "AC-204" }</code></pre>
+
+        <p>The engine is broadly <strong>idempotent</strong> — re-applying a template updates what exists rather than duplicating it — which makes it safe to re-run when you evolve the template and want to push changes to sites already provisioned.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>"Broadly" idempotent is not "always" idempotent. Some artifacts (certain pages, list items, security) can duplicate or conflict on re-apply depending on handlers and overwrite settings. <strong>Always test re-application on a throwaway site</strong> before running it against live workspaces.</span>
+        </div>
+
+        <h2>Site designs &amp; site scripts</h2>
+        <p>The provisioning engine runs <em>when you invoke it</em>. To make a template fire automatically <strong>whenever a user creates a site</strong>, pair it with <strong>site designs and site scripts</strong> — the native SharePoint mechanism. A site script is JSON describing actions; a site design groups scripts and appears in the "create site" experience.</p>
+
+        <p>The common production pattern: a small site script triggers a webhook/Azure Function (via the <code>triggerFlow</code> action), and that function runs the full PnP template — giving you the rich PnP schema <em>and</em> automatic execution on site creation:</p>
+
+        <pre><code># Register a site script and design with PnP PowerShell
+$script = Get-Content "trigger-script.json" -Raw
+$siteScript = Add-PnPSiteScript -Title "Apply Project Template" -Content $script
+
+Add-PnPSiteDesign -Title "Project Workspace" `
+  -SiteScriptIds $siteScript.Id -WebTemplate TeamSite</code></pre>
+
+        <h2>Where this fits</h2>
+        <ul>
+            <li><strong>Governed self-service</strong> — users create sites that come pre-configured to your standards.</li>
+            <li><strong>Multi-tenant / multi-client consistency</strong> — one template, many identical workspaces.</li>
+            <li><strong>Source-controlled structure</strong> — the XML template lives in Git; site structure becomes reviewable, diff-able, and deployable through a pipeline.</li>
+            <li><strong>Disaster recovery / migration</strong> — rebuild a site's structure anywhere from the template.</li>
+        </ul>
+
+        <p>The provisioning engine is the closest thing modern SharePoint has to "infrastructure as code" for site structure. Capture once, parameterise, version it, and you turn the ad-hoc, click-by-click site build into a repeatable, auditable deployment — exactly the discipline consultants need when every client wants "the same thing, but theirs."</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/pnp-provisioning-engine.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

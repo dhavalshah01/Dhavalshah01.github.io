@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theming & Fluent UI in SPFx: Building Accessible Web Parts | Dhaval Shah</title>
+    <meta name="description" content="Make SPFx web parts respect the site theme and section backgrounds using IReadonlyTheme and semanticColors, and build accessible UIs with Fluent UI React.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/theming-fluent-ui-spfx.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Theming & Fluent UI in SPFx: Building Accessible Web Parts">
+    <meta property="og:description" content="Respect the site theme with IReadonlyTheme and semanticColors, and build accessible UIs with Fluent UI.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/theming-fluent-ui-spfx.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">SPFx</span>
+            <span class="article-tag">Fluent UI</span>
+            <span class="article-tag">Theming</span>
+        </div>
+        <h1>Theming &amp; Fluent UI in SPFx: Building Accessible Web Parts</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> October 29, 2019</span>
+            <span><i class="fas fa-clock"></i> 8 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">A web part that ignores the site theme sticks out like a sore thumb — bright blue buttons on a dark-themed site, hard-coded colours that vanish on a coloured section background. Modern SharePoint pages let users apply themes and section backgrounds, and a well-built web part adapts to all of them. The tools are <code>IReadonlyTheme</code> for the colours and Fluent UI React for the components.</p>
+
+        <h2>Why hard-coded colours fail</h2>
+        <p>Modern pages support tenant and site themes, plus per-section backgrounds (including dark "emphasis" sections). If you bake <code>#0078d4</code> into your CSS, your web part looks wrong the moment someone changes the theme or drops it into a dark section. The fix is to read colours from the theme at runtime and re-render when it changes.</p>
+
+        <h2>Receiving the theme</h2>
+        <p>SPFx delivers the current theme to your web part through the <code>ThemeProvider</code>. Acquire it in <code>onInit()</code>, store the theme, and subscribe to changes:</p>
+
+        <pre><code>import { ThemeProvider, ThemeChangedEventArgs, IReadonlyTheme }
+    from '@microsoft/sp-component-base';
+
+private _themeProvider: ThemeProvider;
+private _theme: IReadonlyTheme | undefined;
+
+protected onInit(): Promise&lt;void&gt; {
+  this._themeProvider =
+    this.context.serviceScope.consume(ThemeProvider.serviceKey);
+  this._theme = this._themeProvider.tryGetTheme();
+  this._themeProvider.themeChangedEvent.add(this, this._onThemeChanged);
+  return super.onInit();
+}
+
+private _onThemeChanged(args: ThemeChangedEventArgs): void {
+  this._theme = args.theme;
+  this.render();   // re-render with new colours
+}</code></pre>
+
+        <h3>Using semantic colours</h3>
+        <p>Don't read raw palette entries — read <strong>semantic</strong> slots, which are defined for every theme including dark ones. <code>bodyText</code>, <code>bodyBackground</code>, <code>link</code>, and <code>buttonBackground</code> always resolve to a sensible value for the current theme:</p>
+
+        <pre><code>public render(): void {
+  const semantic = this._theme &amp;&amp; this._theme.semanticColors;
+  const text = semantic?.bodyText ?? '#323130';
+  const bg   = semantic?.bodyBackground ?? '#ffffff';
+  const link = semantic?.link ?? '#0078d4';
+
+  this.domElement.innerHTML = `
+    &lt;div style="color:${text};background:${bg};padding:16px"&gt;
+      &lt;h2&gt;Contracts&lt;/h2&gt;
+      &lt;a style="color:${link}" href="#"&gt;View all&lt;/a&gt;
+    &lt;/div&gt;`;
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Prefer <strong>semantic colours</strong> over palette colours. <code>palette.themePrimary</code> tells you the accent; <code>semanticColors.bodyText</code> tells you "the right text colour for this surface." Semantic slots are what keep your web part legible on a dark emphasis section automatically.</span>
+        </div>
+
+        <h2>Fluent UI: components that already theme themselves</h2>
+        <p>The bigger win is to stop styling primitives by hand and use <strong>Fluent UI React</strong> (the <code>office-ui-fabric-react</code> / <code>@fluentui/react</code> package that ships with SPFx). Its components read the ambient theme, are keyboard-accessible, and match the rest of SharePoint out of the box:</p>
+
+        <pre><code>import * as React from 'react';
+import { DefaultButton, PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
+
+export const ContractForm: React.FC = () =&gt; (
+  &lt;div&gt;
+    &lt;TextField label="Contract title" required /&gt;
+    &lt;PrimaryButton text="Save" /&gt;
+    &lt;DefaultButton text="Cancel" /&gt;
+  &lt;/div&gt;
+);</code></pre>
+
+        <p>A <code>PrimaryButton</code> picks up the site's accent colour; a <code>DetailsList</code> renders a sortable, accessible, virtualized grid that looks identical to native SharePoint lists. You get consistency and accessibility for free, instead of reinventing — and likely under-delivering — both.</p>
+
+        <h2>Accessibility isn't optional</h2>
+        <ul>
+            <li><strong>Contrast.</strong> Semantic colours guarantee readable contrast across themes; hand-picked hex values don't.</li>
+            <li><strong>Keyboard.</strong> Fluent components are fully keyboard-navigable and screen-reader labelled — re-creating that correctly with raw divs is genuinely hard.</li>
+            <li><strong>Focus &amp; ARIA.</strong> Fluent manages focus rings, roles, and ARIA attributes that manual markup routinely gets wrong.</li>
+        </ul>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>If your organisation has accessibility obligations (and most do), Fluent UI is the lowest-effort way to meet them. A custom-styled <code>&lt;div onClick&gt;</code> "button" fails keyboard and screen-reader testing; a Fluent <code>PrimaryButton</code> passes it without you writing a line of ARIA.</span>
+        </div>
+
+        <h2>Putting it together</h2>
+        <p>The recipe for a web part that feels native:</p>
+        <ol>
+            <li>Read the theme via <code>ThemeProvider</code> and subscribe to <code>themeChangedEvent</code>.</li>
+            <li>Pass the theme (or just the semantic colours) into your React component as a prop.</li>
+            <li>Build the UI from Fluent UI components and let them consume the theme.</li>
+            <li>Use semantic colours for any custom surfaces you style yourself.</li>
+        </ol>
+
+        <p>The result is a web part that looks intentional on a default site, a branded site, and a dark emphasis section alike — and that passes accessibility review. Respecting the theme is a small amount of code that separates a professional solution from an obvious bolt-on.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/theming-fluent-ui-spfx.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

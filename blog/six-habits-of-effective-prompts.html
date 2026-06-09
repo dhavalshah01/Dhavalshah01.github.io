@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Six Habits of Effective Prompts: A Practical Checklist | Dhaval Shah</title>
+    <meta name="description" content="Six repeatable habits that make any AI prompt better: clear instructions, references, breaking work into steps, letting the model think, using the right tools, and testing your results.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/six-habits-of-effective-prompts.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Six Habits of Effective Prompts: A Practical Checklist">
+    <meta property="og:description" content="Six repeatable habits that make any AI prompt better, with a before-and-after example you can copy.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/six-habits-of-effective-prompts.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Prompt Engineering</span>
+            <span class="article-tag">AI</span>
+            <span class="article-tag">Best Practices</span>
+        </div>
+        <h1>Six Habits of Effective Prompts: A Practical Checklist</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> April 9, 2026</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">In the last article we saw that specificity is the biggest lever you control when prompting an AI. This time we turn that idea into a checklist — six habits you can apply to almost any prompt, whether you're drafting an email, planning a trip, or writing code. None of them require special tools. They just take the guesswork out of what you're asking for.</p>
+
+        <h2>The six habits at a glance</h2>
+        <p>Think of these as the things a thoughtful colleague would naturally do when handing off a task. Each one removes a different kind of ambiguity:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-list-check"></i> The effective-prompt checklist</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">1</span>
+                        <div class="habit-icon"><i class="fas fa-bullseye"></i></div>
+                        <h5>Be clear and specific</h5>
+                        <p>Spell out the goal, audience, tone, and length. If you want a short answer, say so. If you want expert depth, ask for it.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">2</span>
+                        <div class="habit-icon"><i class="fas fa-book"></i></div>
+                        <h5>Provide references</h5>
+                        <p>Paste the document, data, or example you want the answer based on. Grounded answers are far less likely to be confidently wrong.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">3</span>
+                        <div class="habit-icon"><i class="fas fa-layer-group"></i></div>
+                        <h5>Break big tasks down</h5>
+                        <p>Split a large request into smaller steps. Just like in real work, several small asks beat one giant one — and error rates drop.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">4</span>
+                        <div class="habit-icon"><i class="fas fa-brain"></i></div>
+                        <h5>Let the model think</h5>
+                        <p>Ask it to reason step by step before answering. Giving it room to "show its work" leads to noticeably better conclusions.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">5</span>
+                        <div class="habit-icon"><i class="fas fa-screwdriver-wrench"></i></div>
+                        <h5>Use the right tool</h5>
+                        <p>AI isn't best at everything. For exact math, live data, or precise lookups, use the proper tool and feed the result back in.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">6</span>
+                        <div class="habit-icon"><i class="fas fa-vial"></i></div>
+                        <h5>Check the results</h5>
+                        <p>Treat every answer as a draft to verify, especially for facts, figures, and anything you'll act on. Trust, but confirm.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Six habits that remove a different flavour of ambiguity from every prompt you write.</p>
+
+        <h2>Habit 1: be clear and specific</h2>
+        <p>The model can't read your mind, so describe the output you actually want. Three small additions do most of the work: <strong>give details</strong> ("a 200-word summary for a non-technical reader"), <strong>assign a role</strong> ("answer as an experienced travel agent"), and <strong>show the shape</strong> ("reply as a bulleted list"). If a first answer comes back too long, too shallow, or in the wrong format, say exactly that — naming the problem is itself a clear instruction.</p>
+
+        <h2>Habit 2: provide references</h2>
+        <p>When you want an answer about a specific document, contract, policy, or dataset, give it to the model rather than hoping it remembers. "Using the text below, summarise the cancellation policy" almost always beats "what's a typical cancellation policy?" References are the single best defence against a confident, made-up answer — and if you ask the model to quote or cite the source, you can check the answer at a glance.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>This habit is the seed of a bigger technique called <em>retrieval-augmented generation</em> (RAG), where relevant documents are fetched and added to the prompt automatically. We'll cover it later in the series — but you can do the manual version today simply by pasting in your source material.</span>
+        </div>
+
+        <h2>Habit 3: break big tasks down</h2>
+        <p>A sprawling request like "plan my entire product launch" invites a shallow, scattered answer. Break it into stages — positioning, then channels, then a week-by-week timeline — and tackle them in turn. Smaller asks are easier for the model to get right, and easier for you to steer. It's the same reason we decompose problems in any kind of project: the whole is disproportionately harder than the sum of its parts.</p>
+
+        <h2>Habit 4: let the model think</h2>
+        <p>If you ask for a final answer immediately, you often get a rushed one. Add a phrase like "think it through step by step before giving your recommendation," and the model lays out its reasoning first — which tends to make the final answer more accurate. For anything involving logic, comparison, or trade-offs, this one line is the cheapest quality upgrade available.</p>
+
+        <h2>Habit 5: use the right tool</h2>
+        <p>Language models are remarkable, but they're not calculators, search engines, or databases. For exact arithmetic, the latest prices, or a precise record lookup, use the dedicated tool and paste the result into your prompt as context. Let each tool do what it's best at, and use the AI to interpret, summarise, or explain the result.</p>
+
+        <h2>Habit 6: check the results</h2>
+        <p>The earlier and smaller your check, the easier problems are to catch. Verify facts, re-run the numbers, and skim for claims that sound too neat. This isn't distrust — it's the same instinct that makes you proofread an important email. A two-minute review turns a plausible draft into something you can confidently stand behind.</p>
+
+        <h2>Putting it together: before and after</h2>
+        <p>Here's an everyday request rewritten with the habits applied. Notice how the "after" version isn't longer for the sake of it — every addition removes a specific guess the model would otherwise have to make:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-code-compare"></i> The same request, rewritten</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="diff-block">
+                    <div class="diff-side before">
+                        <div class="diff-tag"><i class="fas fa-circle-xmark"></i> Before</div>
+                        <div class="diff-text">"Write a message to my team about the deadline change."</div>
+                    </div>
+                    <div class="diff-side after">
+                        <div class="diff-tag"><i class="fas fa-circle-check"></i> After</div>
+                        <div class="diff-text">"Write a <mark>short, friendly</mark> email to my <mark>5-person design team</mark> letting them know the launch date moved <mark>from May 1 to May 15</mark>. <mark>Reassure them</mark> it's to improve quality, and <mark>end by inviting questions</mark>. Keep it <mark>under 120 words</mark>."</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">The highlighted phrases are the habits in action: audience, specifics, tone, intent, and a length constraint.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>You won't apply all six habits to every prompt — a quick question doesn't need a reference document. The skill is knowing which ones a given task is missing. When an answer disappoints, run down the list and you'll usually spot the gap.</span>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>Great prompting isn't about memorising clever phrases — it's a handful of habits that remove ambiguity before the model ever responds: be specific, provide references, break work down, let it think, use the right tool, and check the output. Internalise these and the quality of everything you get from AI rises. Next in the series, we'll go beyond habits into named <em>techniques</em> — from worked examples to step-by-step reasoning — that unlock even more.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/six-habits-of-effective-prompts.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

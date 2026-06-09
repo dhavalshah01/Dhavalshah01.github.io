@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securely Calling Microsoft Graph from SPFx | Dhaval Shah</title>
+    <meta name="description" content="Use MSGraphClient and AadHttpClient in SPFx to call Microsoft Graph and custom AAD-secured APIs, declare permission requests, and understand the approval flow.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/calling-microsoft-graph-from-spfx.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Securely Calling Microsoft Graph from SPFx">
+    <meta property="og:description" content="MSGraphClient, AadHttpClient, webApiPermissionRequests, and the API access approval flow.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/calling-microsoft-graph-from-spfx.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">SPFx</span>
+            <span class="article-tag">Microsoft Graph</span>
+            <span class="article-tag">AAD</span>
+        </div>
+        <h1>Securely Calling Microsoft Graph from SPFx</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 11, 2019</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The moment your web part needs more than SharePoint data — a user's manager, their calendar, Teams membership, profile photos — you're talking to Microsoft Graph. The beautiful part of SPFx is that you never handle a token yourself. The framework brokers authentication through a shared Azure AD application, and you just ask for a client. But that convenience hides an approval flow every developer must understand.</p>
+
+        <h2>The two HTTP clients</h2>
+        <p>SPFx gives you two purpose-built, pre-authenticated clients via <code>this.context</code>:</p>
+        <ul>
+            <li><strong>MSGraphClient</strong> — a wrapper around the Microsoft Graph JavaScript SDK, with a fluent <code>.api()</code> builder. Use this for Graph calls.</li>
+            <li><strong>AadHttpClient</strong> — a generic client for <em>any</em> Azure AD-secured API (Graph or your own custom API). You pass the resource/audience and it attaches the right bearer token.</li>
+        </ul>
+
+        <h2>Calling Graph with MSGraphClient</h2>
+        <p>Acquire the client from the factory, then build the request. Here we read the signed-in user's profile and manager:</p>
+
+        <pre><code>import { MSGraphClientV3 } from '@microsoft/sp-http';
+
+private async loadProfile(): Promise&lt;void&gt; {
+  const client: MSGraphClientV3 =
+    await this.context.msGraphClientFactory.getClient('3');
+
+  const me = await client.api('/me')
+    .select('displayName,jobTitle,mail')
+    .get();
+
+  const manager = await client.api('/me/manager')
+    .select('displayName,mail')
+    .get();
+
+  console.log(me.displayName, '→ reports to →', manager.displayName);
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>The Graph client uses the same OData query options you already know — <code>$select</code>, <code>$filter</code>, <code>$expand</code>, <code>$top</code> — exposed as <code>.select()</code>, <code>.filter()</code>, etc. Always <code>.select()</code> the exact fields you need; Graph endpoints often return large default property sets otherwise.</span>
+        </div>
+
+        <h2>Declaring permission requests</h2>
+        <p>SPFx web parts get their tokens from a <strong>single shared Azure AD application</strong> in your tenant (the "SharePoint Online Client Extensibility" service principal). By default it can do very little. To call <code>/me/manager</code> you must declare the permission your solution needs in <code>config/package-solution.json</code>:</p>
+
+        <pre><code>{
+  "solution": {
+    "name": "contoso-graph-webpart",
+    "id": "…",
+    "webApiPermissionRequests": [
+      { "resource": "Microsoft Graph", "scope": "User.Read.All" }
+    ]
+  }
+}</code></pre>
+
+        <p>This does <strong>not</strong> grant the permission — it requests it. When you deploy the <code>.sppkg</code>, a tenant administrator must <strong>approve</strong> the request in the SharePoint admin center under <em>Advanced → API access</em> (or via PnP PowerShell <code>Approve-PnPTenantServicePrincipalPermissionRequest</code>). Until then, your Graph call fails with a token error.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Permissions are tenant-wide and shared.</strong> The grant applies to the shared extensibility principal, so <em>any</em> SPFx solution in the tenant can use it. Request the <strong>least-privileged</strong> scope you need — prefer <code>User.Read.All</code> over <code>Directory.Read.All</code> — because you're widening the blast radius for the whole tenant, not just your web part.</span>
+        </div>
+
+        <h2>Calling a custom API with AadHttpClient</h2>
+        <p>For your own Azure-hosted API secured by Azure AD, use <code>AadHttpClient</code>. You pass your API's application ID URI as the resource, and SPFx fetches a token scoped to it:</p>
+
+        <pre><code>import { AadHttpClient, HttpClientResponse } from '@microsoft/sp-http';
+
+private async callCustomApi(): Promise&lt;void&gt; {
+  const client: AadHttpClient =
+    await this.context.aadHttpClientFactory
+      .getClient('api://contoso-orders-api');  // your AAD app's URI
+
+  const res: HttpClientResponse = await client.get(
+    'https://contoso-orders.azurewebsites.net/api/orders',
+    AadHttpClient.configurations.v1);
+
+  const orders = await res.json();
+}</code></pre>
+
+        <p>The matching permission request names your API instead of Graph:</p>
+
+        <pre><code>"webApiPermissionRequests": [
+  { "resource": "contoso-orders-api", "scope": "user_impersonation" }
+]</code></pre>
+
+        <h2>Application vs delegated permissions</h2>
+        <p>One crucial limitation: SPFx clients always run as the <strong>signed-in user</strong> (delegated permissions). There is no app-only token from SPFx. If an operation needs application permissions — acting without a user, or accessing data the user shouldn't see directly — you must front it with your own API (an Azure Function) that holds the app credential, and call <em>that</em> from SPFx with <code>AadHttpClient</code>. I cover building exactly that pattern in a later article on securing custom APIs.</p>
+
+        <h2>Practical checklist</h2>
+        <ul>
+            <li>Declare every scope in <code>webApiPermissionRequests</code> before you call.</li>
+            <li>Have an admin approve them in <em>API access</em> — and document which scopes your solution needs so reviewers can reason about them.</li>
+            <li>Request least privilege; permissions are tenant-wide and shared.</li>
+            <li>Use <code>MSGraphClientV3</code> for Graph, <code>AadHttpClient</code> for custom APIs.</li>
+            <li>For app-only scenarios, broker through your own AAD-secured API.</li>
+        </ul>
+
+        <p>Once you're comfortable acquiring tokens through these clients, the entire Microsoft 365 surface opens up to your web parts — users, groups, Teams, mail, calendars, files, and your own line-of-business APIs — all without ever touching a client secret in browser code.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/calling-microsoft-graph-from-spfx.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Explained, Part 5: Retrieval, Reranking &amp; Generation | Dhaval Shah</title>
+    <meta name="description" content="Part 5 of a beginner-friendly RAG series: choosing top-k, hybrid search and metadata filters, reranking for precision, assembling the prompt, grounded generation with citations, and how to evaluate and tune the whole system.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/rag-series-5-retrieval-reranking-generation.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="RAG Explained, Part 5: Retrieval, Reranking & Generation">
+    <meta property="og:description" content="Top-k, hybrid search, metadata filters, reranking, prompt assembly, grounded generation with citations, and evaluation.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/rag-series-5-retrieval-reranking-generation.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">RAG Series</span>
+            <span class="article-tag">Search &amp; AI</span>
+            <span class="article-tag">Part 5</span>
+        </div>
+        <h1>RAG Explained, Part 5: Retrieval, Reranking &amp; Generation</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 9, 2026</span>
+            <span><i class="fas fa-clock"></i> 15 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">This is the finale. We can already embed a question and pull the nearest chunks from our index (Parts <a href="./rag-series-3-embeddings-vectorization.html">3</a> and <a href="./rag-series-4-vector-indexing-search.html">4</a>). Now we turn that raw retrieval into a polished, trustworthy answer: how many chunks to fetch, how to combine vector and keyword search, how reranking sharpens precision, and how the model finally generates a grounded reply <em>with citations</em>. Then we'll cover the part everyone skips — how to know if it's actually any good.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Quick recap of the live query path from <a href="./rag-series-1-pipeline-overview.html">Part 1</a>: <strong>embed the query → search → augment the prompt → generate</strong>. This article expands "search → augment → generate" into the techniques that make answers reliable.</span>
+        </div>
+
+        <h2>Step 1 — Choose how many chunks: top-k</h2>
+        <p>The vector index can return its closest matches ranked by similarity. <strong>Top-k</strong> is simply how many you keep. It's a balancing act:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>k too small (e.g. 1)</th><th>k too large (e.g. 20)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>If the single chunk misses part of the answer, the model has nothing to fall back on.</td><td>You drag in loosely related chunks that distract the model and cost more tokens.</td></tr>
+                <tr><td>Risk: incomplete answers.</td><td>Risk: vague answers, higher cost, slower responses.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>A typical starting point is <strong>k = 3 to 5</strong>. Enough to cover an answer that spans a couple of passages, few enough to stay focused. Like chunk size, you tune it by watching real questions.</p>
+
+        <h2>Step 2 — Search smarter: hybrid + filters</h2>
+        <p>Pure vector search is excellent at meaning but, as we noted in Part 3, it can be fuzzy on exact tokens — order numbers, product codes, error IDs, proper names. Keyword search is the opposite. So the strongest systems run <strong>hybrid search</strong>: both at once, then merge the results.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-code-merge"></i> Hybrid search — two retrievers, merged</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-circle-question"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">User question</span><span class="flow-node-sub">"return a faulty laptop, order #A-1138?"</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-branch">
+                        <div class="flow-branch-col">
+                            <div class="flow-branch-label">Meaning</div>
+                            <div class="flow-node flow-node-action">
+                                <div class="flow-node-icon"><i class="fas fa-vector-square"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Vector search</span><span class="flow-node-sub">Finds the refund/returns policy</span></div>
+                            </div>
+                        </div>
+                        <div class="flow-branch-col">
+                            <div class="flow-branch-label">Exact words</div>
+                            <div class="flow-node flow-node-condition">
+                                <div class="flow-node-icon"><i class="fas fa-font"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Keyword search</span><span class="flow-node-sub">Matches the exact order "#A-1138"</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Merged results</span><span class="flow-node-sub">Best of both, combined into one ranked list</span></div>
+                    </div>
+                </div>
+                <p class="ui-caption">Hybrid search captures meaning <em>and</em> exact tokens — the order number and the policy both surface.</p>
+            </div>
+        </div>
+
+        <p>On top of search you add <strong>metadata filters</strong> — the metadata we attached to every chunk back in Part 2. Filters narrow the candidate pool <em>before</em> ranking, which improves both accuracy and security:</p>
+        <ul>
+            <li><strong>Freshness:</strong> only chunks where <code>status = current</code>, so you never answer from a superseded policy.</li>
+            <li><strong>Scope:</strong> only <code>department = HR</code>, or <code>language = en</code>, or <code>region = EU</code>.</li>
+            <li><strong>Security:</strong> only chunks the signed-in user is permitted to see — the most important filter of all.</li>
+        </ul>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Security trimming is non-negotiable.</strong> Apply the user's permissions as a filter at retrieval time. Without it, RAG can cheerfully quote a confidential document to someone who should never see it. Retrieval must respect the same access rules as the source system.</span>
+        </div>
+
+        <h2>Step 3 — Reranking: a smarter second opinion</h2>
+        <p>Vector search is fast but a little rough — it compares the query and each chunk independently. A <strong>reranker</strong> is a slower, more accurate model that looks at the query and a candidate chunk <em>together</em> and scores how well that chunk actually answers <em>this</em> question. The trick is to use it as a cheap-then-careful, two-stage funnel:</p>
+        <ol>
+            <li><strong>Retrieve wide, cheaply.</strong> Vector/hybrid search grabs a generous candidate set — say the top 50 — fast.</li>
+            <li><strong>Rerank narrow, carefully.</strong> The reranker re-scores just those 50 and keeps the true best 3–5 to send onward.</li>
+        </ol>
+        <p>You get the speed of approximate search over millions of chunks <em>and</em> the precision of a careful model over a small shortlist. Watch the order change once reranking is applied:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-sort"></i> Reranking promotes the genuinely best answer</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="sim-rows">
+                    <div class="sim-row match">
+                        <div class="sim-doc">Refund window: 30 days<small>after rerank — rank 1 ▲ (was 2)</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 96%;"></div></div>
+                        <div class="sim-score">0.96</div>
+                    </div>
+                    <div class="sim-row match">
+                        <div class="sim-doc">General returns overview<small>after rerank — rank 2 ▼ (was 1)</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 72%;"></div></div>
+                        <div class="sim-score">0.72</div>
+                    </div>
+                    <div class="sim-row">
+                        <div class="sim-doc">IT equipment handling<small>after rerank — rank 3</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 58%;"></div></div>
+                        <div class="sim-score">0.58</div>
+                    </div>
+                </div>
+                <p class="ui-caption">First-pass search ranked the generic "returns overview" top; the reranker recognised the specific "30 days" chunk actually answers the question and promoted it.</p>
+            </div>
+        </div>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>In Azure AI Search this careful second pass is offered as <strong>semantic ranking</strong>. The pattern is universal: cast a wide, fast net, then apply a precise reranker to the shortlist.</span>
+        </div>
+
+        <h2>Step 4 — Augment: assemble the prompt</h2>
+        <p>Now we build the actual text sent to the language model. The retrieved chunks are pasted in as <em>context</em>, wrapped with clear instructions. A good RAG prompt has three layers:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-layer-group"></i> The prompt handed to the model</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="compose-stack">
+                    <div class="compose-layer">
+                        <div class="cl-icon"><i class="fas fa-gear"></i></div>
+                        <div class="cl-text"><span class="cl-title">Instructions</span><span class="cl-sub">"Answer using only the context. If it's not there, say you don't know. Cite sources."</span></div>
+                    </div>
+                    <div class="compose-layer">
+                        <div class="cl-icon"><i class="fas fa-paperclip"></i></div>
+                        <div class="cl-text"><span class="cl-title">Retrieved context</span><span class="cl-sub">Top reranked chunks + their metadata (source, page)</span></div>
+                    </div>
+                    <div class="compose-layer">
+                        <div class="cl-icon"><i class="fas fa-circle-question"></i></div>
+                        <div class="cl-text"><span class="cl-title">The question</span><span class="cl-sub">"How many days to return a faulty laptop?"</span></div>
+                    </div>
+                    <div class="compose-merge"><i class="fas fa-arrow-down"></i></div>
+                    <div class="compose-final"><i class="fas fa-robot"></i> Sent to the language model</div>
+                </div>
+            </div>
+        </div>
+
+        <p>That instruction layer is doing heavy lifting. Phrases like <em>"answer only from the context"</em> and <em>"if the answer isn't in the context, say you don't know"</em> are what keep the model honest — they tell it to ground itself in your documents rather than improvise from memory.</p>
+
+        <h2>Step 5 — Generate: a grounded, cited answer</h2>
+        <p>Finally the model reads the assembled prompt and writes the reply. Because the relevant passages are right there and the instructions demand grounding, the answer is accurate and traceable:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-comments"></i> The grounded answer</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="chat-mock">
+                    <div class="chat-bubble user">How many days do I get to return a faulty laptop?</div>
+                    <div class="chat-bubble bot">Faulty equipment can be returned within <strong>30 days</strong> of delivery for a full refund to the original payment method.<br><br><small>Source: Employee Handbook, p.12 (Refunds &amp; Returns)</small></div>
+                </div>
+                <p class="ui-caption">Grounded in the retrieved chunk, with a citation the user can verify — the opposite of a confident guess.</p>
+            </div>
+        </div>
+
+        <p>The citation comes straight from the chunk's metadata (Part 2). This is a defining advantage of RAG over a bare language model: every claim can point back to a source, which is exactly what enterprises need for trust and compliance.</p>
+
+        <h2>The complete picture</h2>
+        <p>Here's the full end-to-end flow we've built across all five parts — indexing once, then this live path per question:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-diagram-project"></i> The full RAG query pipeline</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="rag-pipe">
+                    <div class="rag-step">
+                        <span class="rag-num">1</span>
+                        <div class="rag-icon"><i class="fas fa-hashtag"></i></div>
+                        <h5>Embed query</h5>
+                        <p>Same model as indexing.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">2</span>
+                        <div class="rag-icon"><i class="fas fa-code-merge"></i></div>
+                        <h5>Hybrid search</h5>
+                        <p>Vector + keyword + filters.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">3</span>
+                        <div class="rag-icon"><i class="fas fa-sort"></i></div>
+                        <h5>Rerank</h5>
+                        <p>Keep the true top 3–5.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">4</span>
+                        <div class="rag-icon"><i class="fas fa-paperclip"></i></div>
+                        <h5>Augment</h5>
+                        <p>Build the grounded prompt.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">5</span>
+                        <div class="rag-icon"><i class="fas fa-comment-dots"></i></div>
+                        <h5>Generate</h5>
+                        <p>Cited answer.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>How do you know it's any good? Evaluation</h2>
+        <p>You can't improve what you don't measure, and "it looked fine in a demo" isn't measurement. RAG quality splits neatly into two halves — and knowing which half is failing tells you exactly what to fix:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Half</th><th>Question it answers</th><th>If it's weak, fix…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Retrieval quality</td><td>Did we fetch the right chunks at all?</td><td>Chunking, embedding model, k, hybrid, reranking.</td></tr>
+                <tr><td>Generation quality</td><td>Given good chunks, was the answer faithful and complete?</td><td>The prompt/instructions, and the generation model.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>The metrics you'll hear most often, in plain terms:</p>
+        <ul>
+            <li><strong>Context recall</strong> — of the chunks needed to answer, how many did retrieval actually find? Low recall means the answer wasn't even in the context.</li>
+            <li><strong>Context precision</strong> — of the chunks we retrieved, how many were actually relevant? Low precision means we're feeding the model noise.</li>
+            <li><strong>Faithfulness / groundedness</strong> — does the answer stick to the provided context, or did the model invent things? This is your hallucination check.</li>
+            <li><strong>Answer relevance</strong> — does the response actually address what the user asked?</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>A practical first step: build a small set of real question-and-correct-answer pairs from your own content, then check retrieval and answers against it whenever you change anything. Microsoft Foundry and open tools like RAGAS can automate scoring once you have that set.</span>
+        </div>
+
+        <h2>A tuning cheat-sheet</h2>
+        <p>When something's off, this maps symptoms to the dial to turn — and to the part of the series that explains it:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Symptom</th><th>Likely fix</th><th>See</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Answer misses context that exists</td><td>Increase chunk overlap or k; check chunking boundaries</td><td>Parts 2, 5</td></tr>
+                <tr><td>Answers are vague or unfocused</td><td>Smaller chunks; lower k; add reranking</td><td>Parts 2, 5</td></tr>
+                <tr><td>Misses exact codes / names</td><td>Add hybrid (keyword) search</td><td>Part 5</td></tr>
+                <tr><td>Surfaces outdated or wrong-scope info</td><td>Add metadata filters</td><td>Parts 2, 5</td></tr>
+                <tr><td>Model invents facts</td><td>Strengthen "use only the context" instruction</td><td>Part 5</td></tr>
+                <tr><td>Relevance dropped after a change</td><td>Did the embedding model change? Re-index everything</td><td>Parts 3, 4</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>The takeaway — the whole series in a breath</h2>
+        <p>RAG is a pipeline, not a model. <strong>Index once:</strong> load → chunk → embed → store. <strong>Answer per question:</strong> embed the query → search (hybrid + filters) → rerank → augment → generate with citations. Chunking sets the ceiling on quality; embeddings let you search by meaning; the vector index makes that search instant at scale; retrieval, reranking, and a disciplined prompt turn matches into a grounded, traceable answer. Get each box roughly right, measure both retrieval and generation, and tune from real questions — that's how a "chat with your documents" demo becomes something you can trust in production.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>That's the series. If you want the gentler, conceptual companion to this deep dive, see <a href="./grounding-ai-with-rag.html">Grounding AI with RAG</a>; for the Microsoft-search angle, <a href="./sharepoint-search-to-rag.html">From SharePoint Search to RAG</a> shows where this lands in a real workplace.</span>
+        </div>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/rag-series-5-retrieval-reranking-generation.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

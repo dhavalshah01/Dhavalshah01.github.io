@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Column & View Formatting with JSON — No Code Required | Dhaval Shah</title>
+    <meta name="description" content="Transform how modern SharePoint lists look using declarative JSON column and view formatting: elmType, style, conditional expressions, buttons, and data bars.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/column-view-formatting-json.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Column & View Formatting with JSON — No Code Required">
+    <meta property="og:description" content="Declarative JSON formatting: elmType, style, conditional expressions, buttons, and data bars.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/column-view-formatting-json.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Column Formatting</span>
+            <span class="article-tag">JSON</span>
+            <span class="article-tag">Modern UI</span>
+        </div>
+        <h1>Column &amp; View Formatting with JSON — No Code Required</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> November 17, 2020</span>
+            <span><i class="fas fa-clock"></i> 8 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">JSLink let developers restyle classic list views with JavaScript. Its modern successor is even better for most cases because it needs no code at all: declarative JSON column and view formatting. You describe the markup you want, bind it to field values, and SharePoint renders it safely — colour-coded statuses, progress bars, action buttons, and rich cards, all from a JSON snippet a power user can maintain.</p>
+
+        <h2>The model</h2>
+        <p>Formatting JSON describes a small DOM tree. The key properties:</p>
+        <ul>
+            <li><code>elmType</code> — the HTML element to render (<code>div</code>, <code>span</code>, <code>a</code>, <code>img</code>, <code>button</code>, <code>svg</code>).</li>
+            <li><code>txtContent</code> — the text inside it, often a field reference like <code>"@currentField"</code> or <code>"[$Title]"</code>.</li>
+            <li><code>style</code> / <code>attributes</code> — CSS and HTML attributes, each value either literal or an expression.</li>
+            <li><code>children</code> — nested elements.</li>
+            <li><code>$schema</code> — points at the formatting schema for editor IntelliSense.</li>
+        </ul>
+
+        <h2>A colour-coded status column</h2>
+        <p>Select the column → <em>Column settings → Format this column → Advanced mode</em>, and paste JSON. This pill changes colour by value using a nested conditional expression in <code>style</code>:</p>
+
+        <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "div",
+  "txtContent": "@currentField",
+  "style": {
+    "padding": "2px 10px",
+    "border-radius": "12px",
+    "color": "#ffffff",
+    "background-color": "=if(@currentField == 'Approved', '#107c10', if(@currentField == 'In Review', '#d87d00', if(@currentField == 'Draft', '#797775', '#a4262c')))"
+  }
+}</code></pre>
+        <p class="code-caption">Expressions start with <code>=</code> (Excel-style) or use the equivalent <code>{ "operator": … }</code> Abstract Syntax Tree form.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Two expression dialects exist: the <strong>Excel-style</strong> string form (<code>"=if(@currentField &gt; 0, 'green', 'red')"</code>) and the verbose <strong>AST</strong> form using <code>operator</code>/<code>operands</code>. The Excel style is far more readable for simple logic; reach for the AST form only when expressions get deeply nested.</span>
+        </div>
+
+        <h2>Field reference tokens</h2>
+        <ul>
+            <li><code>@currentField</code> — the value of the column you're formatting.</li>
+            <li><code>[$InternalName]</code> — any other field by internal name, e.g. <code>[$DueDate]</code>.</li>
+            <li><code>@me</code> — the current user's email; <code>@now</code> — the current date/time.</li>
+            <li>For people/lookup fields, drill in: <code>[$Author.title]</code>, <code>[$Author.email]</code>.</li>
+        </ul>
+
+        <h2>A data bar from a number</h2>
+        <p>Render a proportional bar by binding the width to the field value — great for percentages or scores:</p>
+
+        <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "div",
+  "style": { "background-color": "#e1dfdd", "border-radius": "4px" },
+  "children": [
+    {
+      "elmType": "div",
+      "txtContent": "=@currentField + '%'",
+      "style": {
+        "background-color": "#0078d4",
+        "color": "#ffffff",
+        "text-align": "center",
+        "border-radius": "4px",
+        "width": "=@currentField + '%'"
+      }
+    }
+  ]
+}</code></pre>
+
+        <h2>An action button</h2>
+        <p>The <code>button</code> element with a <code>customRowAction</code> lets a column trigger actions — open a form, run a Power Automate flow, or execute a default command — without any code:</p>
+
+        <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "button",
+  "txtContent": "Approve",
+  "customRowAction": {
+    "action": "setValue",
+    "actionInput": { "ContractStatus": "Approved" }
+  },
+  "style": { "background-color": "#107c10", "color": "#fff", "border": "none", "padding": "4px 12px" }
+}</code></pre>
+        <p>Other actions include <code>defaultClick</code>, <code>share</code>, <code>editProps</code>, and <code>executeFlow</code> (to launch a specific flow by id).</p>
+
+        <h2>View formatting: the whole row and beyond</h2>
+        <p>Column formatting styles a single cell. <strong>View formatting</strong> (<em>Format current view</em>) styles entire rows or switches the view to a <strong>Gallery</strong> of cards. <code>rowFormatter</code> takes over the full row; <code>additionalRowClass</code> applies built-in classes conditionally — for example, tint overdue rows red:</p>
+
+        <pre><code>{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/view-formatting.schema.json",
+  "additionalRowClass": "=if([$DueDate] &lt;= @now &amp;&amp; [$ContractStatus] != 'Approved', 'sp-field-severity--severeWarning', '')"
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Lean on the built-in <code>sp-field-severity--*</code> and <code>sp-css-backgroundColor-*</code> classes instead of hand-rolling colours. They're theme-aware, accessible, and consistent with the rest of SharePoint — your formatting then adapts to dark mode and custom themes for free.</span>
+        </div>
+
+        <h2>Deploying formatting at scale</h2>
+        <p>Clicking JSON into a column doesn't scale across sites. Store your JSON in source control and apply it with PnP PowerShell so it's repeatable:</p>
+
+        <pre><code>$json = Get-Content "status-format.json" -Raw
+Set-PnPField -List "Contracts" -Identity "ContractStatus" `
+  -Values @{ CustomFormatter = $json }</code></pre>
+
+        <h2>JSON formatting vs SPFx field customizers</h2>
+        <table>
+            <thead><tr><th>Need</th><th>Reach for</th></tr></thead>
+            <tbody>
+                <tr><td>Colour, bars, icons, simple buttons</td><td>JSON formatting (no code)</td></tr>
+                <tr><td>Calls to APIs, complex logic, external data</td><td>SPFx field customizer</td></tr>
+                <tr><td>Power-user maintainable</td><td>JSON formatting</td></tr>
+                <tr><td>Reusable component with tests</td><td>SPFx</td></tr>
+            </tbody>
+        </table>
+
+        <p>For the large majority of "make this list easier to read at a glance" requests, JSON formatting is faster to build, safer (SharePoint sanitises the output, so no XSS surface), and maintainable by the business itself. Save SPFx for when you genuinely need code. Knowing exactly where that line sits is what makes you efficient on modern SharePoint.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/column-view-formatting-json.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

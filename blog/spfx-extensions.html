@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPFx Extensions: Customizers, Command Sets & Field Customizers | Dhaval Shah</title>
+    <meta name="description" content="Go beyond web parts with SPFx extensions: inject persistent UI with application customizers, add list commands, and customize field rendering on modern pages.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/spfx-extensions.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="SPFx Extensions: Application Customizers, Command Sets & Field Customizers">
+    <meta property="og:description" content="Inject persistent UI, add list commands, and customize field rendering on modern pages.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/spfx-extensions.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">SPFx</span>
+            <span class="article-tag">Extensions</span>
+            <span class="article-tag">Modern UI</span>
+        </div>
+        <h1>SPFx Extensions: Application Customizers, Command Sets &amp; Field Customizers</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> January 15, 2019</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Web parts live <em>inside</em> the canvas. But plenty of customizations need to live <em>outside</em> it — a global header and footer on every page, a custom button on the list command bar, a special renderer for a column in a list view. SPFx extensions are how you do all of that on modern pages, the supported successor to the master-page edits and JSLink tricks of the classic era.</p>
+
+        <h2>Three kinds of extension</h2>
+        <ul>
+            <li><strong>Application Customizer</strong> — injects script and UI into well-known placeholders (Top and Bottom) on every page in a scope. Use it for headers, footers, banners, and global behaviours.</li>
+            <li><strong>Command Set</strong> — adds buttons to a list or library command bar and context menu, with access to the selected rows.</li>
+            <li><strong>Field Customizer</strong> — overrides how a column renders in a modern list view (the modern answer to JSLink field overrides).</li>
+        </ul>
+        <p>All three are scaffolded by the same generator — choose <strong>Extension</strong> instead of WebPart — and all three share the SPFx toolchain, context object, and packaging you already know.</p>
+
+        <h2>Application Customizer: a global footer</h2>
+        <p>An application customizer's entry point is <code>onInit()</code>. You acquire a placeholder and render into it. Placeholders are created once and you should guard against re-creating them:</p>
+
+        <pre><code>import { override } from '@microsoft/decorators';
+import { BaseApplicationCustomizer,
+         PlaceholderContent, PlaceholderName }
+    from '@microsoft/sp-application-base';
+import { escape } from '@microsoft/sp-lodash-subset';
+
+export interface IFooterProps { message: string; }
+
+export default class SiteFooterApplicationCustomizer
+    extends BaseApplicationCustomizer&lt;IFooterProps&gt; {
+
+  private _bottom: PlaceholderContent | undefined;
+
+  @override
+  public onInit(): Promise&lt;void&gt; {
+    this.context.placeholderProvider.changedEvent.add(this, this._render);
+    this._render();
+    return Promise.resolve();
+  }
+
+  private _render(): void {
+    if (!this._bottom) {
+      this._bottom = this.context.placeholderProvider.tryCreateContent(
+        PlaceholderName.Bottom, { onDispose: () =&gt; {} });
+    }
+    if (this._bottom &amp;&amp; this._bottom.domElement) {
+      this._bottom.domElement.innerHTML =
+        `&lt;div class="appFooter"&gt;${escape(this.properties.message)}&lt;/div&gt;`;
+    }
+  }
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Subscribe to <code>placeholderProvider.changedEvent</code> and re-render. Modern pages can recreate placeholders during navigation, and without that subscription your footer disappears the first time a user clicks to another page. Also <strong>cache the placeholder</strong> and only create it once — repeatedly calling <code>tryCreateContent</code> causes flicker.</span>
+        </div>
+
+        <h2>Command Set: a list button</h2>
+        <p>A command set declares its commands in the extension manifest (with a title and icon) and implements <code>onExecute</code>. The <code>onListViewUpdated</code> hook lets you enable/disable a command based on selection — for example, only allow "Approve" when exactly one row is selected:</p>
+
+        <pre><code>import { BaseListViewCommandSet,
+         IListViewCommandSetExecuteEventParameters,
+         ListViewStateChangedEventArgs }
+    from '@microsoft/sp-listview-extensibility';
+import { Dialog } from '@microsoft/sp-dialog';
+
+export default class ContractCommandSet
+    extends BaseListViewCommandSet&lt;{}&gt; {
+
+  public onListViewUpdated(args: ListViewStateChangedEventArgs): void {
+    const approve = this.tryGetCommand('CMD_APPROVE');
+    if (approve) {
+      approve.visible = this.context.listView.selectedRows?.length === 1;
+    }
+  }
+
+  public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
+    if (event.itemId === 'CMD_APPROVE') {
+      const row = event.selectedRows[0];
+      const id = row.getValueByName('ID');
+      // call PnPjs / REST to update the item
+      Dialog.alert(`Approving contract ${id}`);
+    }
+  }
+}</code></pre>
+
+        <h2>Field Customizer: rendering a column</h2>
+        <p>The field customizer is the modern, supported replacement for JSLink field overrides. <code>onRenderCell</code> hands you the cell DOM element and the field value, and you render into it — typically a small React component or a styled span:</p>
+
+        <pre><code>import { BaseFieldCustomizer,
+         IFieldCustomizerCellEventParameters }
+    from '@microsoft/sp-listview-extensibility';
+
+export default class StatusFieldCustomizer
+    extends BaseFieldCustomizer&lt;{}&gt; {
+
+  public onRenderCell(event: IFieldCustomizerCellEventParameters): void {
+    const status = event.fieldValue;
+    const colors: { [k: string]: string } = {
+      'Draft': '#9e9e9e', 'In Review': '#f0ad4e',
+      'Approved': '#5cb85c', 'Archived': '#777'
+    };
+    const span = document.createElement('span');
+    span.textContent = status;            // textContent = safe, no XSS
+    span.style.cssText =
+      `padding:2px 8px;border-radius:4px;color:#fff;background:${colors[status] || '#333'}`;
+    event.domElement.appendChild(span);
+  }
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Use <code>textContent</code> (or React) rather than <code>innerHTML</code> when injecting field values. The data in a cell is user-controlled; <code>textContent</code> renders it as text and closes the XSS door that string-built HTML leaves open.</span>
+        </div>
+
+        <h2>Deploying &amp; binding extensions</h2>
+        <p>Extensions aren't dropped onto a page like web parts — they're <strong>bound</strong> to a site, list, or field, usually via a <strong>custom action</strong>. The cleanest way to declare those bindings is in the package's <code>elements.xml</code> feature framework file, so installing the app provisions them automatically. You can also bind at scale with PnP PowerShell using <code>Add-PnPCustomAction</code> (application customizers) or by setting a field's client-side component id.</p>
+
+        <pre><code># Bind an application customizer to a site with PnP PowerShell
+Add-PnPCustomAction -Title "SiteFooter" -Name "SiteFooter" `
+  -Location "ClientSideExtension.ApplicationCustomizer" `
+  -ClientSideComponentId "&lt;guid-from-manifest&gt;" `
+  -ClientSideComponentProperties '{"message":"Contoso Confidential"}'</code></pre>
+
+        <h2>When to reach for an extension</h2>
+        <ul>
+            <li><strong>Application customizer</strong> — anything that must appear on every page: branding header/footer, a compliance banner, analytics, global navigation.</li>
+            <li><strong>Command set</strong> — list/library actions that operate on selected items.</li>
+            <li><strong>Field customizer</strong> — per-column visual formatting too complex for JSON column formatting.</li>
+        </ul>
+
+        <p>Extensions complete the SPFx picture: web parts for in-canvas content, extensions for everything around it. Combined with the AAD/Graph clients in the next article, they let you build experiences that feel native to SharePoint and Teams while staying fully within the supported, future-proof model.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/spfx-extensions.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

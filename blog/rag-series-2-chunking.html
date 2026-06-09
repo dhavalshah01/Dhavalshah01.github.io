@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Explained, Part 2: Chunking — Cutting Documents the Right Way | Dhaval Shah</title>
+    <meta name="description" content="Part 2 of a beginner-friendly RAG series: what chunking is, why chunk size and overlap make or break retrieval, fixed vs recursive vs semantic chunking, and practical defaults — all with worked examples and visuals.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/rag-series-2-chunking.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="RAG Explained, Part 2: Chunking — Cutting Documents the Right Way">
+    <meta property="og:description" content="Why chunk size and overlap make or break retrieval — fixed, recursive, and semantic chunking explained with examples.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/rag-series-2-chunking.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">RAG Series</span>
+            <span class="article-tag">Search &amp; AI</span>
+            <span class="article-tag">Part 2</span>
+        </div>
+        <h1>RAG Explained, Part 2: Chunking — Cutting Documents the Right Way</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 27, 2026</span>
+            <span><i class="fas fa-clock"></i> 13 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">In <a href="./rag-series-1-pipeline-overview.html">Part 1</a> we saw the eight-step RAG pipeline. This part zooms into the second box — <strong>chunking</strong> — and it's the one I'd urge you to take most seriously. Chunking is where a lot of "our RAG just isn't accurate" problems are actually born. The good news: the ideas are intuitive once you see them, and getting them roughly right takes you most of the way.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>Chunking</strong> means splitting your documents into small, self-contained passages before you embed and store them. The chunk — not the whole document — is the unit your system retrieves. So the quality of your chunks sets a ceiling on the quality of every answer.</span>
+        </div>
+
+        <h2>Why we can't just store whole documents</h2>
+        <p>Imagine your knowledge base is a 40-page employee handbook. Why not embed the entire document as one searchable item? Two problems:</p>
+        <ul>
+            <li><strong>A whole document is about too many things.</strong> The handbook covers refunds, leave, security, expenses, dress code… If you squeeze all of that into one "meaning summary," it becomes a vague blur that matches everything weakly and nothing strongly.</li>
+            <li><strong>You'd hand the model far too much.</strong> Even if you found the right document, pasting 40 pages into the prompt is slow, expensive, and distracting. You want to hand over the one relevant <em>paragraph</em>, not the whole book.</li>
+        </ul>
+        <p>So we slice the document into focused passages. Each chunk should ideally be about <em>one</em> thing, so that when someone asks about refunds, the refund chunk lights up clearly:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-scissors"></i> One document → several focused chunks</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="chunk-doc">
+                    <div class="chunk-source">
+                        <span class="cs-label">Source document — employee-handbook.pdf (40 pages)</span>
+                        …refund and returns policy… parental leave entitlement… expense reimbursement rules… acceptable-use and security policy… annual leave accrual…
+                    </div>
+                    <div class="chunk-strip">
+                        <div class="chunk-block">
+                            <span class="cb-tag">chunk_01</span>
+                            <span class="cb-text">Refunds &amp; returns: faulty items may be returned within 30 days…</span>
+                        </div>
+                        <div class="chunk-block">
+                            <span class="cb-tag">chunk_02</span>
+                            <span class="cb-text">Parental leave: eligible employees receive up to 26 weeks…</span>
+                        </div>
+                        <div class="chunk-block">
+                            <span class="cb-tag">chunk_03</span>
+                            <span class="cb-text">Expenses: submit claims within 60 days with receipts…</span>
+                        </div>
+                        <div class="chunk-block">
+                            <span class="cb-tag">chunk_04</span>
+                            <span class="cb-text">Security: company devices must use full-disk encryption…</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="ui-caption">Each chunk is about a single topic, so it can match a question crisply.</p>
+            </div>
+        </div>
+
+        <h2>The two dials: chunk size and overlap</h2>
+        <p>Almost every chunking decision comes down to two numbers. Understand these and you understand chunking.</p>
+
+        <h3>Dial 1 — chunk size</h3>
+        <p>How much text goes in each chunk (usually measured in <em>tokens</em> — roughly ¾ of a word each, but you can think "words" for intuition). This is a genuine trade-off with no free lunch:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th></th><th>Chunks too small</th><th>Chunks too large</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>What happens</td><td>A single idea gets split across pieces; each piece lacks context.</td><td>Many unrelated ideas share one chunk; its "meaning" gets muddy.</td></tr>
+                <tr><td>Retrieval effect</td><td>The right answer is fragmented — you may retrieve half of it.</td><td>Matches are vague; you drag in irrelevant text alongside the answer.</td></tr>
+                <tr><td>Example</td><td>"Faulty items may be returned" and "within 30 days" land in different chunks.</td><td>The refund rule is buried in a chunk that also covers leave and expenses.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>A common, sensible starting range is roughly <strong>200–500 tokens per chunk</strong> (about 150–400 words). It's big enough to hold one complete thought, small enough to stay focused. You tune from there based on your content.</p>
+
+        <h3>Dial 2 — overlap</h3>
+        <p>If you cut a document into hard, non-overlapping slices, you'll sometimes slice <em>through the middle of a sentence or idea</em> — and the answer to a question ends up split across the boundary. <strong>Overlap</strong> fixes this by repeating a little text from the end of one chunk at the start of the next, so important sentences are never orphaned at a cut line.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-arrows-left-right-to-line"></i> Overlap keeps ideas intact across a cut</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="chunk-strip">
+                    <div class="chunk-block">
+                        <span class="cb-tag">chunk_07 · 0–300 tokens</span>
+                        <span class="cb-text">…to request a refund, contact support with your order number. <span class="cb-overlap">Refunds are processed within 30 days of approval and</span></span>
+                    </div>
+                    <div class="chunk-block">
+                        <span class="cb-tag">chunk_08 · 250–550 tokens</span>
+                        <span class="cb-text"><span class="cb-overlap">Refunds are processed within 30 days of approval and</span> issued to the original payment method. Faulty items…</span>
+                    </div>
+                </div>
+                <p class="ui-caption">The highlighted sentence appears at the end of chunk 7 <em>and</em> the start of chunk 8, so whichever one is retrieved, the "30 days" rule travels with it.</p>
+            </div>
+        </div>
+
+        <p>A typical overlap is about <strong>10–20% of the chunk size</strong> — e.g. a 50-token overlap on a 300-token chunk. Too little and you risk severed ideas; too much and you store a lot of duplicate text, inflating cost and index size. Modest overlap is cheap insurance.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>A safe default to <em>start</em> with: <strong>chunk size ≈ 300 tokens, overlap ≈ 50 tokens</strong>. Don't agonise over the exact numbers — get into this range, then adjust after testing real questions against your real content.</span>
+        </div>
+
+        <h2>The four chunking strategies</h2>
+        <p>How you decide <em>where</em> to cut matters as much as the size. There's a ladder of strategies, from naive to smart.</p>
+
+        <h3>1. Fixed-size chunking</h3>
+        <p>The simplest approach: cut every N tokens regardless of what the text says. Count to 300, cut, repeat. It's fast and predictable, but blind — it happily slices mid-sentence or mid-table because it doesn't understand structure. With overlap it's a perfectly reasonable baseline, and it's where many people start.</p>
+
+        <h3>2. Recursive (structure-aware) chunking</h3>
+        <p>The workhorse of real systems. Instead of cutting blindly, it tries to split on <em>natural boundaries</em> in priority order: first paragraphs (double newlines), then single newlines, then sentences, then — only if a piece is still too big — words. It "recurses" down to finer boundaries until each chunk fits the target size. The result respects the document's natural seams, so chunks rarely break mid-thought.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Recursive splitting on the separators <code>["\n\n", "\n", ". ", " "]</code> is the sensible default for most documents — prose, wikis, policies, manuals. If you're unsure which strategy to pick, start here.</span>
+        </div>
+
+        <h3>3. Document-structure (layout-aware) chunking</h3>
+        <p>For richly formatted content — Markdown, HTML, PDFs with headings and tables — you can split along the <em>real structure</em>: by heading section, by table, by list. A Markdown splitter might keep each <code>##</code> section as a chunk and even attach the heading text to the chunk so its topic is explicit. This preserves meaning beautifully, but needs content that actually has clean structure to exploit.</p>
+
+        <h3>4. Semantic chunking</h3>
+        <p>The most advanced: instead of using size or punctuation, it uses <em>meaning</em>. It embeds sentences and starts a new chunk whenever the topic visibly shifts (when consecutive sentences stop being similar). Chunks then align with ideas rather than arbitrary lengths. It's powerful for messy, unstructured text — but it's slower and costs more, because you're running an embedding model just to decide the cut points.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-ranking-star"></i> Choosing a strategy</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">1</span>
+                        <div class="habit-icon"><i class="fas fa-ruler"></i></div>
+                        <h5>Fixed-size</h5>
+                        <p>Simple &amp; fast. Good baseline with overlap. Risks blind cuts.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">2</span>
+                        <div class="habit-icon"><i class="fas fa-sitemap"></i></div>
+                        <h5>Recursive</h5>
+                        <p>Splits on natural boundaries. The pragmatic default for most text.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">3</span>
+                        <div class="habit-icon"><i class="fas fa-heading"></i></div>
+                        <h5>Structure-aware</h5>
+                        <p>By heading, table, or list. Best for Markdown, HTML, structured PDFs.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">4</span>
+                        <div class="habit-icon"><i class="fas fa-brain"></i></div>
+                        <h5>Semantic</h5>
+                        <p>Cuts where the topic shifts. Most accurate, slowest, costs more.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>Don't forget metadata</h2>
+        <p>A chunk shouldn't travel alone. Alongside its text, store useful <strong>metadata</strong>: the source file name, page number, heading, author, date, and security/permission tags. This pays off later in two big ways. First, you can <em>filter</em> retrieval ("only chunks from current HR policies") — we'll use this in Part 5. Second, you can show <em>citations</em>, so the model's answer links back to "Handbook, p.12." Metadata is what turns a black-box answer into a trustworthy, traceable one.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Carry permissions on the chunk.</strong> If a document is restricted, its chunks must inherit that restriction, so retrieval never surfaces text a user isn't allowed to see. Security lives at the chunk level, not just the document level.</span>
+        </div>
+
+        <h2>A worked before-and-after</h2>
+        <p>To make the payoff concrete, here's the same question against badly and well chunked content.</p>
+
+        <div class="diff-block">
+            <div class="diff-side before">
+                <span class="diff-tag">Poorly chunked</span>
+                <div class="diff-text">Whole 40-page handbook stored as <strong>one</strong> chunk. Query "return a faulty laptop?" matches it weakly (the document is about everything). The model receives 40 pages and answers vaguely, or misses the 30-day rule entirely.</div>
+            </div>
+            <div class="diff-side after">
+                <span class="diff-tag">Well chunked</span>
+                <div class="diff-text">Handbook split into ~120 topic chunks with overlap and metadata. The refund chunk matches "return a faulty laptop" <mark>strongly</mark>. The model receives one tight passage and answers: <em>"within 30 days (Handbook, p.12)."</em></div>
+            </div>
+        </div>
+
+        <h2>Practical defaults to start with</h2>
+        <ol>
+            <li><strong>Strategy:</strong> recursive splitting on paragraphs → sentences. Upgrade to structure-aware if your content has clean headings.</li>
+            <li><strong>Size:</strong> ~300 tokens (try 256–512 depending on how dense your text is).</li>
+            <li><strong>Overlap:</strong> ~10–20% (e.g. 50 tokens).</li>
+            <li><strong>Metadata:</strong> source, page/section, date, and permissions on every chunk.</li>
+            <li><strong>Then test:</strong> run real user questions and read what got retrieved. If answers miss context, increase size or overlap; if they're vague, decrease size. Chunking is iterative, not one-and-done.</li>
+        </ol>
+
+        <h2>What's next</h2>
+        <p>Now that our document is sliced into clean chunks, we need to make them <em>searchable by meaning</em>. That's the job of <strong>Part 3: Embeddings &amp; Vectorization</strong> — how a piece of text becomes a list of numbers, why similar meanings end up with similar numbers, and how that quietly powers the whole "search without keywords" trick. We'll visualise it, promise.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/rag-series-2-chunking.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

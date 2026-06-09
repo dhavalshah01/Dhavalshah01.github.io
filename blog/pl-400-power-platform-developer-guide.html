@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-400 Field Notes: A Developer's Guide to the Power Platform Developer Exam | Dhaval Shah</title>
+    <meta name="description" content="A practical study guide for the PL-400 Microsoft Power Platform Developer exam: the four skill areas, configure-before-code, choosing plug-ins vs Power Automate vs Azure Functions, PCF components, the plug-in pipeline, ALM and solutions, and integrations.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/pl-400-power-platform-developer-guide.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="PL-400 Field Notes: A Developer's Guide to the Power Platform Developer Exam">
+    <meta property="og:description" content="The four skill areas, configure-before-code, plug-ins vs flows vs Azure Functions, PCF, the plug-in pipeline, ALM, and integrations.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/pl-400-power-platform-developer-guide.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Power Platform</span>
+            <span class="article-tag">Certification</span>
+            <span class="article-tag">PL-400</span>
+        </div>
+        <h1>PL-400 Field Notes: A Developer's Guide to the Power Platform Developer Exam</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 13, 2026</span>
+            <span><i class="fas fa-clock"></i> 14 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The <strong>PL-400: Microsoft Power Platform Developer</strong> exam sits at an interesting crossroads. It's a <em>developer</em> certification — there's real C#, JavaScript, and TypeScript in scope — but its guiding philosophy is that you should reach for code <em>last</em>, not first. Pass it and you've proven you can extend the Power Platform responsibly: knowing when configuration is enough, and when a plug-in, a custom connector, or an Azure Function is the right tool. These are my field notes, reorganised around how the exam actually thinks.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Before you study anything, read the official <strong>skills measured</strong> document for PL-400 and take the free practice assessment on Microsoft Learn. Knowing the weighting of each area is half the battle — and as the old saying goes, work expands to fill the time you give it, so <em>book the exam</em> to focus your prep.</span>
+        </div>
+
+        <h2>The five skill areas at a glance</h2>
+        <p>PL-400 is organised into weighted domains. The single biggest one — extending the platform with code — is where most of your hands-on practice should go:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-list-check"></i> PL-400 skills measured (approximate weighting)</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">10-15%</span>
+                        <div class="habit-icon"><i class="fas fa-compass-drafting"></i></div>
+                        <h5>Create a technical design</h5>
+                        <p>Architecture, auth strategy, and deciding whether out-of-the-box features can meet a requirement before any code is written.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">10-15%</span>
+                        <div class="habit-icon"><i class="fas fa-cubes-stacked"></i></div>
+                        <h5>Build solutions</h5>
+                        <p>Environments, solutions, environment variables, layers, Pipelines, and ALM with source control.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">10-15%</span>
+                        <div class="habit-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+                        <h5>Power Apps improvements</h5>
+                        <p>Advanced canvas features, complex Power Fx, reusable component libraries, and performance tuning.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">10-15%</span>
+                        <div class="habit-icon"><i class="fas fa-code"></i></div>
+                        <h5>Extend the UX</h5>
+                        <p>Client scripting against the Client API, command bar customisation, and building PCF code components.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">30-35%</span>
+                        <div class="habit-icon"><i class="fas fa-plug-circle-bolt"></i></div>
+                        <h5>Extend the platform</h5>
+                        <p>The heavyweight: Dataverse plug-ins, custom APIs, custom connectors, Azure Functions, and cloud flows.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">10-15%</span>
+                        <div class="habit-icon"><i class="fas fa-arrows-left-right"></i></div>
+                        <h5>Develop integrations</h5>
+                        <p>Publishing and consuming Dataverse events, and synchronising data with change tracking and upserts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">"Extend the platform" is roughly a third of the exam — weight your hands-on time accordingly.</p>
+
+        <h2>Design first: authentication and authorization</h2>
+        <p>A surprising amount of PL-400 is design judgement, and it starts with identity. Two words that sound alike but mean different things:</p>
+        <ul>
+            <li><strong>Authentication</strong> — proving <em>who</em> you are. The Power Platform uses <strong>Microsoft Entra ID</strong>; users sign in with their tenant credentials. For system-to-system integrations you register an app in Entra ID and add a server-to-server (S2S) account so an external system can reach Dataverse. When you call out to Azure or third-party services, you typically authenticate with <strong>OAuth 2.0</strong>.</li>
+            <li><strong>Authorization</strong> — deciding <em>what</em> you're allowed to do. Access to an <em>environment</em> is gated by Entra ID security groups; access to resources <em>within</em> it is governed by Dataverse <strong>security roles</strong> plus record sharing.</li>
+        </ul>
+
+        <h2>Configure before you code</h2>
+        <p>This is the mantra the whole exam is built on: treat writing code as the <em>exception</em>, not the default. Many requirements are met entirely with platform features, and the exam loves to check that you know them — and their limits.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Feature</th><th>How it behaves</th><th>Good to remember</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Calculated columns</strong></td>
+                    <td>Computed on retrieve.</td>
+                    <td>Can use columns on the row and across many-to-one relationships.</td>
+                </tr>
+                <tr>
+                    <td><strong>Formula columns</strong></td>
+                    <td>Computed on retrieve, powered by Power Fx.</td>
+                    <td>Wide range of Power Fx functions; limited support for currency columns.</td>
+                </tr>
+                <tr>
+                    <td><strong>Rollup columns</strong></td>
+                    <td>Aggregated on a schedule (recalculated roughly hourly).</td>
+                    <td>Need a one-to-many relationship; max 100 per environment, 10 per table; supports hierarchies.</td>
+                </tr>
+                <tr>
+                    <td><strong>Business rules</strong></td>
+                    <td>Declarative validation and logic on forms and server-side.</td>
+                    <td>Often remove the need for JavaScript on model-driven forms.</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>A key nuance the exam probes: <strong>client scripting reacts immediately</strong> as a user leaves a field, whereas <strong>calculated and formula columns only update on retrieve</strong> — so a freshly typed value won't reflect in a calculated column until the data is reloaded. And when a configured feature falls short, the fallbacks are themselves worth knowing: business rules, client script (JavaScript), real-time workflows, plug-ins, and Power Automate cloud flows can stand in for calculated/formula columns, while plug-ins and cloud flows can replace rollups. A cloud flow can even cascade changes down a one-to-many relationship — pushing a changed address from an account to all its contacts, for instance.</p>
+
+        <h2>Where should the logic live?</h2>
+        <p>The most exam-critical decision you'll make repeatedly: given a requirement, <em>which</em> extensibility point runs the logic? This comparison is the heart of it:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Capability</th><th>Power Automate cloud flow</th><th>Dataverse plug-in</th><th>Client scripting</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Sync / async</strong></td><td>Asynchronous</td><td>Either</td><td>Synchronous</td></tr>
+                <tr><td><strong>External data</strong></td><td>Yes, via connectors</td><td>Yes, via APIs</td><td>Yes, with limits</td></tr>
+                <tr><td><strong>Maintained by</strong></td><td>Makers</td><td>Developers</td><td>Developers</td></tr>
+                <tr><td><strong>Runs on demand</strong></td><td>Yes</td><td>No</td><td>No</td></tr>
+                <tr><td><strong>Execution stage</strong></td><td>After</td><td>Before / after</td><td>Before / after</td></tr>
+                <tr><td><strong>Triggers</strong></td><td>Create, change, delete, on-demand, scheduled</td><td>Create, change, delete + many other messages</td><td>Column change or form load/save</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>And when the work is heavier or longer-running, the choice widens to serverless. The trade-off between a plug-in and an Azure Function comes up often:</p>
+        <ul>
+            <li><strong>Dataverse plug-in</strong> — event-driven only (it can't be scheduled), authenticated automatically in-platform, but bound by a <strong>2-minute</strong> execution limit.</li>
+            <li><strong>Azure Functions</strong> — a 5-minute default on the Consumption plan (raisable to 10; longer on Premium/Dedicated), Durable Functions for chaining long operations, but you must handle authentication yourself.</li>
+        </ul>
+
+        <h2>The plug-in execution pipeline</h2>
+        <p>If you take one diagram into the exam, make it this one. A Dataverse plug-in is registered against a <em>message</em> (Create, Update, etc.) and runs at a particular <em>stage</em>. Pre/Post <strong>Images</strong> let you see the row's values before and after the operation:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-diagram-project"></i> Dataverse event execution pipeline</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Message raised</span><span class="flow-node-sub">e.g. Update on Account</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-1"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Pre-validation (stage 10)</span><span class="flow-node-sub">Outside the database transaction</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-2"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Pre-operation (stage 20)</span><span class="flow-node-sub">In transaction, before the core write &mdash; tweak input values</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-database"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Core platform operation</span><span class="flow-node-sub">The row is written</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-3"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Post-operation (stage 40)</span><span class="flow-node-sub">React to the saved row &mdash; use a Post Image</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Response returned</span><span class="flow-node-sub">Sync plug-ins can block the operation by throwing</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Register on the right stage: change inputs in <em>pre-operation</em>; act on the saved record in <em>post-operation</em>.</p>
+
+        <p>Other "extend the platform" essentials: develop plug-ins against the <strong>execution context</strong>, talk to data through the <strong>Organization service</strong>, register everything with the <strong>Plug-in Registration Tool</strong>, and expose reusable server logic as a <strong>custom API</strong> message. For outbound work, you can publish Dataverse events to <strong>webhooks</strong>, <strong>Azure Service Bus</strong>, or <strong>Azure Event Hubs</strong> — Service Bus is asynchronous and queueable, while a webhook is an HTTP call that depends on the endpoint being available and can run synchronously.</p>
+
+        <h2>PCF: the Power Apps component framework</h2>
+        <p>PCF lets developers build <strong>reusable, rich UI controls</strong> in HTML, CSS, and TypeScript, package them as solutions, and drop them into model-driven apps, canvas apps, and Power Pages. There are three component types — a <strong>field</strong> control (one column on a form), a <strong>dataset</strong> control (a custom grid/subgrid), and a control that surfaces content from external services.</p>
+        <p>The exam expects you to know the component <strong>lifecycle methods</strong> cold:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Method</th><th>When it runs &amp; what it's for</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>init</strong></td><td>Initialises the component; kick off remote calls here. Note: dataset values aren't available yet — use <code>updateView</code> for those.</td></tr>
+                <tr><td><strong>updateView</strong></td><td>Called whenever a value in the component's property bag changes.</td></tr>
+                <tr><td><strong>getOutputs</strong></td><td>Optional. Called before new data is received; use it to manage bound properties.</td></tr>
+                <tr><td><strong>destroy</strong></td><td>Runs when the component leaves the DOM. Clean up and release memory here.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Security gotcha:</strong> PCF controls are app-agnostic, so when one uses the Web API (or runs in a canvas app via the Dataverse connector, or on a Power Pages site), grant access with <em>least-privilege custom security roles</em> — don't reach for System Administrator. Power Pages additionally needs Web roles and table permissions. Always weigh the privilege type (Create/Read/Update/Delete/Append/Append&nbsp;To/Assign/Share) and whether organization-level depth is really required.</span>
+        </div>
+
+        <h2>Solutions and ALM</h2>
+        <p>Solutions are the containers that move your work between environments — the backbone of application lifecycle management. The classic path runs Dev → Test → Production:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-cubes"></i> Solutions move customisations along the ALM path</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="pipe-mock">
+                    <div class="pipe-stage dev">
+                        <div class="pipe-icon"><i class="fas fa-screwdriver-wrench"></i></div>
+                        <h5>Development</h5>
+                        <p>Unmanaged solution; author and edit</p>
+                    </div>
+                    <div class="pipe-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipe-stage test">
+                        <div class="pipe-icon"><i class="fas fa-flask"></i></div>
+                        <h5>Test</h5>
+                        <p>Managed solution; validate in isolation</p>
+                    </div>
+                    <div class="pipe-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipe-stage prod">
+                        <div class="pipe-icon"><i class="fas fa-circle-check"></i></div>
+                        <h5>Production</h5>
+                        <p>Managed solution; deploy to users</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Unmanaged while you build; managed everywhere downstream.</p>
+
+        <p>The distinction matters on the exam: <strong>unmanaged</strong> solutions are for development and moving work between dev environments; <strong>managed</strong> solutions are for distributing to non-dev environments. A few more points that come up:</p>
+        <ul>
+            <li><strong>Solution components</strong> are tracked items — tables, apps, flows, security roles, developer assets. Some are sub-components (forms, views, charts, and columns belong to a table). <em>Reference data is not a solution component.</em></li>
+            <li><strong>Environment variables</strong> externalise per-environment config (a sender email, a portal URL) so flows aren't hard-coded; they ship as solution components with optional default values overridable per environment, and don't require a Dataverse license to consume.</li>
+            <li><strong>Solution layers</strong> stack managed solutions under a single unmanaged (active) layer — and note that simply editing, or even <em>testing</em>, a managed flow without saving creates an unmanaged layer that can mask the managed behaviour until you delete the active layer.</li>
+        </ul>
+
+        <h2>Automating the pipeline</h2>
+        <p>You're expected to know the spectrum of automation tooling and when each fits:</p>
+        <ul>
+            <li><strong>Power Platform Pipelines</strong> — the low-friction starting point for straightforward deployments, with approvals/gating and the ability to redeploy previous versions. <em>Personal</em> pipelines target developer environments; <em>Standard</em> pipelines need Managed Environments (premium licensing).</li>
+            <li><strong>Source control (Git on Azure DevOps or GitHub)</strong> — version your solutions and code, unpack solutions with the Power Platform CLI (the recommended tooling) or SolutionPackager, and mind your <code>.gitignore</code>.</li>
+            <li><strong>Power Platform CLI (<code>pac</code>)</strong> — command-line automation for every part of a deployment.</li>
+            <li><strong>Power Platform Build Tools</strong> — Azure DevOps pipeline tasks (built on the CLI) for more complex scenarios, at the cost of some YAML expertise.</li>
+        </ul>
+
+        <h2>Dataverse, the data backbone</h2>
+        <p>Underneath all of this is Dataverse — an API-first, secure, low-code data platform. Know the three <strong>table types</strong>: <strong>standard</strong> (create and edit rows), <strong>activity</strong> (track time-bound interactions like emails, phone calls, and tasks — and remember all activities share one set of security privileges), and <strong>virtual</strong> (surface external data as Dataverse tables without copying it). Server-side logic and validation come from business rules, business process flows (model-driven only), classic workflows, and code.</p>
+
+        <h2>Integrations and the platform APIs</h2>
+        <p>Finally, you interact with Dataverse two main ways, and the exam wants you to pick correctly:</p>
+        <ul>
+            <li><strong>Web API</strong> — an OData 4.0 / REST endpoint, ideal from non-.NET clients and modern web/JavaScript scenarios.</li>
+            <li><strong>Organization service</strong> — the .NET SDK path, the natural choice inside plug-ins and custom workflow activities.</li>
+        </ul>
+        <p>For data synchronisation, lean on <strong>change tracking</strong> to pull only what's changed, <strong>alternate keys</strong> to reference rows by a natural business key, and the <strong>UpsertRequest</strong> message to insert-or-update in one call. When you build <strong>custom connectors</strong>, you'll create an OpenAPI definition, implement authentication, optionally wrap an Azure service or Function, and use policy templates to reshape runtime behaviour. And across all API work, design for <strong>retry policies, concurrency, bulk operations, and OAuth</strong>.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>For choosing between Azure integration services, anchor on intent: <strong>Logic Apps</strong> to orchestrate workflows across many services, <strong>Service Bus</strong> for enterprise messaging, <strong>API Management</strong> to publish APIs, <strong>Event Grid</strong> for managed publish-subscribe event routing, and <strong>Event Hubs</strong> for high-volume real-time ingestion.</span>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>PL-400 rewards a particular instinct: reach for configuration first, understand exactly where the platform's declarative features stop, and only then choose the right code-based extension — a business rule, a cloud flow, a plug-in on the correct pipeline stage, a PCF control, or an Azure Function. Pair that judgement with solid ALM hygiene (solutions, environment variables, layers, source control) and a working knowledge of the Web API versus the Organization service, and the heavyweight "extend the platform" domain stops being intimidating. Study the scenarios, get hands-on in a developer environment, and let the configure-before-code mindset guide every answer.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/pl-400-power-platform-developer-guide.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

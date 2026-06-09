@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Platform Governance & ALM: Environments, Solutions, Pipelines | Dhaval Shah</title>
+    <meta name="description" content="Run Power Platform like a pro: environment strategy, managed vs unmanaged solutions, environment variables and connection references, Pipelines, and DLP policies.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/power-platform-governance-alm.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Power Platform Governance & ALM: Environments, Solutions, Pipelines">
+    <meta property="og:description" content="Environment strategy, managed solutions, environment variables, connection references, Pipelines, and DLP.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/power-platform-governance-alm.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Governance</span>
+            <span class="article-tag">ALM</span>
+            <span class="article-tag">Solutions</span>
+        </div>
+        <h1>Power Platform Governance &amp; ALM: Environments, Solutions, Pipelines</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> November 7, 2024</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The fastest way to turn Power Platform from an asset into a liability is to let everyone build whatever they like in the default environment, edit it live, and call that "agile." Low-code doesn't exempt you from application lifecycle management — it makes ALM <em>more</em> important, because the people building are often not developers. Here's the governance and ALM model that keeps a tenant healthy.</p>
+
+        <h2>Environments: your first governance lever</h2>
+        <p>An <strong>environment</strong> is an isolated container for apps, flows, connections, and (optionally) a Dataverse database. Treat environments as your dev/test/prod boundary:</p>
+        <ul>
+            <li><strong>Default environment</strong> — every tenant has one, everyone can create in it, and it can't be deleted. Great for personal productivity; <em>wrong</em> for anything business-critical.</li>
+            <li><strong>Developer / Sandbox</strong> — non-production, used for building and testing. Sandboxes can be reset and copied.</li>
+            <li><strong>Production</strong> — backed by Dataverse, governed access, the home of released solutions.</li>
+        </ul>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Stop building business apps in the default environment.</strong> It has no separation of duties, broad maker access, and no clean promotion path. Create dedicated Dev / Test / Prod environments and restrict who can create environments at the tenant level.</span>
+        </div>
+
+        <h2>Solutions: the unit of deployment</h2>
+        <p>A <strong>solution</strong> is the package that carries your apps, flows, tables, and choices between environments. This is the heart of Power Platform ALM, and the managed/unmanaged distinction is the part everyone gets wrong at first:</p>
+        <table>
+            <thead><tr><th></th><th>Unmanaged</th><th>Managed</th></tr></thead>
+            <tbody>
+                <tr><td>Where it belongs</td><td>Dev only</td><td>Test &amp; Prod</td></tr>
+                <tr><td>Editable in place</td><td>Yes</td><td>No (locked)</td></tr>
+                <tr><td>Clean uninstall</td><td>No</td><td>Yes — removes its components</td></tr>
+                <tr><td>Think of it as</td><td>Source code</td><td>The compiled build</td></tr>
+            </tbody>
+        </table>
+        <p>You <em>author</em> in an unmanaged solution in Dev, <strong>export it as managed</strong>, and import that managed build into Test and Prod. Never develop directly in downstream environments.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-arrow-right-arrow-left"></i> Solution promotion pipeline</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="pipe-mock">
+                    <div class="pipe-stage dev">
+                        <div class="pipe-icon"><i class="fas fa-code"></i></div>
+                        <h5>Dev</h5>
+                        <p>Unmanaged · author here</p>
+                    </div>
+                    <div class="pipe-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipe-stage test">
+                        <div class="pipe-icon"><i class="fas fa-vial"></i></div>
+                        <h5>Test</h5>
+                        <p>Managed · validate</p>
+                    </div>
+                    <div class="pipe-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipe-stage prod">
+                        <div class="pipe-icon"><i class="fas fa-rocket"></i></div>
+                        <h5>Prod</h5>
+                        <p>Managed · release</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>The golden path:</strong> author unmanaged in Dev, export <em>managed</em>, import to Test then Prod.</p>
+
+        <h2>Publishers and prefixes</h2>
+        <p>Every solution belongs to a <strong>publisher</strong>, which stamps a <strong>customization prefix</strong> (e.g. <code>contoso_</code>) onto the schema names of everything you create — <code>contoso_contract</code>, <code>contoso_status</code>. Set a meaningful publisher up front; the default <code>cr<em>xxx</em>_</code> prefix is ugly and permanent once components are created under it.</p>
+
+        <h2>Environment variables &amp; connection references</h2>
+        <p>The reason "it works in Dev but breaks in Prod" is almost always hard-coded, environment-specific values. Two solution components fix this:</p>
+        <ul>
+            <li><strong>Environment variables</strong> — parameterise values that differ per environment (a site URL, an API endpoint, a config flag). Set the value per environment at import time instead of editing the app.</li>
+            <li><strong>Connection references</strong> — abstract <em>which connection</em> a flow uses, so the same managed flow binds to the right SharePoint/SQL connection in each environment without being edited.</li>
+        </ul>
+
+        <pre><code>// In Dev — define, don't hard-code:
+Environment variable  "ContractsSiteUrl"  = https://contoso.sharepoint.com/sites/dev
+// At Prod import — supply the prod value:
+Environment variable  "ContractsSiteUrl"  = https://contoso.sharepoint.com/sites/contracts</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Connection references and environment variables are what make a managed solution truly portable. Without them, every promotion means manually re-pointing connections and editing URLs — exactly the error-prone, "who changed prod?" work ALM exists to eliminate.</span>
+        </div>
+
+        <h2>Automating promotion</h2>
+        <p>Two supported ways to move solutions, depending on maturity:</p>
+        <ul>
+            <li><strong>Power Platform Pipelines</strong> — a low-code, in-product deployment pipeline. Define Dev → Test → Prod stages once and makers promote with a button (and optional approvals), no DevOps knowledge required.</li>
+            <li><strong>Azure DevOps / GitHub with the Power Platform Build Tools</strong> — full CI/CD: export the unmanaged solution, commit it to source control (unpacked into files), build the managed artifact, and deploy with gated releases.</li>
+        </ul>
+
+        <pre><code># Power Platform CLI — the building blocks behind a pipeline
+pac solution export   --name ContractMgmt --managed false --path ./src
+pac solution unpack   --zipfile ./src/ContractMgmt.zip --folder ./src/ContractMgmt
+# ...commit ./src to Git, then in the pipeline:
+pac solution pack     --folder ./src/ContractMgmt --zipfile ./out/ContractMgmt_managed.zip --packagetype Managed
+pac solution import   --path ./out/ContractMgmt_managed.zip --environment {prod-url}</code></pre>
+
+        <h2>Guardrails: DLP and managed environments</h2>
+        <p>Governance isn't only about promotion — it's about what makers <em>can</em> do:</p>
+        <ul>
+            <li><strong>Data Loss Prevention (DLP) policies</strong> — classify connectors as <em>Business</em>, <em>Non-business</em>, or <em>Blocked</em>. Connectors in different groups can't be used together in one app/flow, stopping (say) corporate SharePoint data from flowing to a personal Twitter connector.</li>
+            <li><strong>Managed Environments</strong> — a premium governance layer adding maker controls, sharing limits, usage insights, and weekly digests across your production environments.</li>
+            <li><strong>CoE Starter Kit</strong> — Microsoft's free Center of Excellence toolkit that inventories every app, flow, and maker in the tenant so you can actually <em>see</em> what's been built.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Start governance on day one, not after the sprawl. A simple baseline — dedicated Dev/Test/Prod environments, one tenant-wide DLP policy, solutions for everything, and the CoE kit for visibility — prevents 90% of the messes I get called in to untangle.</span>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>Power Platform ALM is the same discipline you'd apply to any software: isolate environments, package work in solutions, author unmanaged in Dev and ship managed to Prod, parameterise the environment-specific bits, and automate promotion. Layer on DLP, Managed Environments, and the CoE kit for guardrails and visibility. None of it requires heavy code — but all of it requires the engineering mindset that "it works on my screen" is the beginning of the job, not the end.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/power-platform-governance-alm.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

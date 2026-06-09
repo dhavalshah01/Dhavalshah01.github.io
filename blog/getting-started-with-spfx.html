@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started with the SharePoint Framework (SPFx) | Dhaval Shah</title>
+    <meta name="description" content="Set up the SPFx toolchain, scaffold your first client-side web part with Yeoman, understand the BaseClientSideWebPart lifecycle, and debug in the workbench.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/getting-started-with-spfx.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Getting Started with the SharePoint Framework (SPFx)">
+    <meta property="og:description" content="Toolchain setup, scaffolding with Yeoman, the web part lifecycle, and the workbench.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/getting-started-with-spfx.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">SPFx</span>
+            <span class="article-tag">Yeoman</span>
+            <span class="article-tag">Toolchain</span>
+        </div>
+        <h1>Getting Started with the SharePoint Framework (SPFx)</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> April 17, 2018</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The SharePoint Framework is the biggest shift in SharePoint development since the move to the cloud. No more server-side trust, no more iframes — SPFx web parts are first-class citizens that run in the page's own context, in both classic and modern pages, on a modern open-source toolchain. If you come from farm solutions and add-ins, the technology stack will feel unfamiliar at first. This is the orientation I wish I'd had on day one.</p>
+
+        <h2>The toolchain</h2>
+        <p>SPFx is built on standard web tooling rather than Visual Studio and MSBuild. You'll install:</p>
+        <ul>
+            <li><strong>Node.js (LTS)</strong> — the runtime everything runs on. SPFx is picky about Node versions; match the version your SPFx generator release supports.</li>
+            <li><strong>Yeoman</strong> + the SharePoint generator — scaffolds projects.</li>
+            <li><strong>Gulp</strong> — the task runner that builds, bundles, and serves.</li>
+            <li><strong>A code editor</strong> — Visual Studio Code is the community default, with great TypeScript support.</li>
+        </ul>
+
+        <pre><code># Install the global tooling (one time)
+npm install -g yo gulp @microsoft/generator-sharepoint
+
+# Scaffold a new solution
+md contoso-webparts
+cd contoso-webparts
+yo @microsoft/sharepoint</code></pre>
+
+        <p>The generator interviews you: solution name, whether to deploy tenant-wide, component type (WebPart, Extension, Library), framework (None, React, or Knockout), and the web part name. Pick <strong>WebPart</strong> + <strong>No JavaScript framework</strong> for your first run so nothing hides the fundamentals.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>SPFx is strict about Node and generator versions. Keep projects isolated with a Node version manager (nvm) so a project built on one SPFx release isn't broken by a newer global Node. "Works on my machine" in SPFx is almost always a version-mismatch story.</span>
+        </div>
+
+        <h2>The workbench</h2>
+        <p>SPFx ships with a <strong>local workbench</strong> — a stand-alone HTML page that hosts your web part with mock data, no SharePoint required — and a <strong>hosted workbench</strong> that runs inside your real tenant at <code>/_layouts/15/workbench.aspx</code>, where your web part talks to real SharePoint data.</p>
+
+        <pre><code># Trust the dev certificate (one time per machine)
+gulp trust-dev-cert
+
+# Build and serve with live reload
+gulp serve</code></pre>
+
+        <p>The dev server bundles your code locally and serves it over HTTPS; the workbench loads it from <code>localhost</code>. Edit a file, save, and the workbench hot-reloads. That tight loop — no packaging, no deployment — is the single biggest productivity gain over the old models.</p>
+
+        <h2>Anatomy of a web part</h2>
+        <p>Your web part class extends <code>BaseClientSideWebPart&lt;TProps&gt;</code>. The two members you care about first are the <code>render()</code> method and the property pane:</p>
+
+        <pre><code>import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
+import { IPropertyPaneConfiguration, PropertyPaneTextField }
+    from '@microsoft/sp-property-pane';
+import { escape } from '@microsoft/sp-lodash-subset';
+
+export interface IHelloWorldWebPartProps {
+  description: string;
+}
+
+export default class HelloWorldWebPart
+    extends BaseClientSideWebPart&lt;IHelloWorldWebPartProps&gt; {
+
+  public render(): void {
+    this.domElement.innerHTML = `
+      &lt;div&gt;
+        &lt;h2&gt;Hello from SPFx&lt;/h2&gt;
+        &lt;p&gt;${escape(this.properties.description)}&lt;/p&gt;
+        &lt;p&gt;Site: ${escape(this.context.pageContext.web.title)}&lt;/p&gt;
+      &lt;/div&gt;`;
+  }
+
+  protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
+    return {
+      pages: [{
+        groups: [{
+          groupFields: [
+            PropertyPaneTextField('description', { label: 'Description' })
+          ]
+        }]
+      }]
+    };
+  }
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Note the <code>escape()</code> around every property value before it touches <code>innerHTML</code>. SPFx gives you the raw string; <strong>you</strong> own output encoding. The SPFx linter flags unescaped interpolation for exactly this reason — don't suppress it.</span>
+        </div>
+
+        <h3>The web part lifecycle</h3>
+        <ul>
+            <li><code>onInit()</code> — async setup before first render: read context, fetch tokens, initialise services. Return a Promise and SPFx waits for it.</li>
+            <li><code>render()</code> — called on first display and whenever a property changes; paint your UI into <code>this.domElement</code>.</li>
+            <li><code>onPropertyPaneFieldChanged()</code> / <code>onDispose()</code> — react to property edits and clean up.</li>
+        </ul>
+        <p>The <code>this.context</code> object is your gateway to everything: <code>pageContext</code> (site/web/user info), <code>spHttpClient</code> for REST calls, and the AAD/Graph client factories covered in later articles.</p>
+
+        <h2>From dev to deployment</h2>
+        <p>When you're ready to ship, you build a production bundle and a deployment package:</p>
+
+        <pre><code>gulp bundle --ship
+gulp package-solution --ship</code></pre>
+
+        <p>That produces a <code>.sppkg</code> in <code>sharepoint/solution/</code>. You upload it to the tenant <strong>App Catalog</strong>, approve any API permissions, and the web part becomes available to add to pages. With <code>includeClientSideAssets</code> set (the default), the JavaScript bundle is hosted by SharePoint itself — no separate CDN required, though you can use one for scale.</p>
+
+        <h2>Where to go next</h2>
+        <p>This gets you a working "no framework" web part and a feel for the loop. From here the real productivity comes from <strong>React + PnPjs</strong> for data-driven UIs, the <strong>property pane</strong> for configuration, and the <strong>AAD/Graph clients</strong> for talking to Microsoft 365 securely — each of which I cover in its own article. SPFx has a learning curve if you're coming from .NET, but it's modern, supported, and the only forward-looking way to extend SharePoint and Teams. The investment pays off quickly.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/getting-started-with-spfx.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

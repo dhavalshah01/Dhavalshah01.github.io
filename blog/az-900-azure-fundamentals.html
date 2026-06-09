@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AZ-900: A Practical Guide to Microsoft Azure Fundamentals | Dhaval Shah</title>
+    <meta name="description" content="A practical guide to passing AZ-900: cloud concepts, core Azure services, security and identity, governance, pricing and cost management, SLAs, support plans, and a structured study plan.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/az-900-azure-fundamentals.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="AZ-900: A Practical Guide to Microsoft Azure Fundamentals">
+    <meta property="og:description" content="Cloud concepts, core Azure services, security and identity, governance, pricing, SLAs, and a structured study plan for the AZ-900 exam.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/az-900-azure-fundamentals.html">
+    <meta property="og:image" content="https://dhavalshah01.github.io/blog/az-900-visual.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Azure</span>
+            <span class="article-tag">Certification</span>
+            <span class="article-tag">AZ-900</span>
+        </div>
+        <h1>AZ-900: A Practical Guide to Microsoft Azure Fundamentals</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 8, 2026</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The <strong>AZ-900 Microsoft Azure Fundamentals</strong> certification is the cleanest on-ramp to the cloud. It's built for anyone who works around Azure but isn't necessarily hands-on with architecture — technical staff finding their footing, but also project managers, business stakeholders, sales teams, and analysts. The exam rewards <em>understanding</em> over implementation: cloud concepts, what Azure's major services do, and how security, governance, pricing, and support fit together. This guide lays out what to focus on and a practical way to think about each topic.</p>
+
+        <figure class="article-figure">
+            <img src="./az-900-visual.svg" alt="AZ-900 Azure Fundamentals roadmap showing four focus areas: cloud concepts, Azure services, security and governance, and pricing and support" loading="lazy">
+            <figcaption>The four pillars of AZ-900 — master these and the exam becomes a matter of recognising scenarios.</figcaption>
+        </figure>
+
+        <h2>Why AZ-900 is worth your time</h2>
+        <p>Cloud adoption long ago stopped being an infrastructure-team concern. Applications, analytics, AI, security operations, and core business systems are increasingly built on cloud services, and that means a lot of people need a shared vocabulary for how it all works. AZ-900 provides exactly that common language.</p>
+        <p>Its value is the <em>breadth</em>. Rather than drilling into how to deploy a single virtual machine, it explains <strong>why</strong> organisations move to the cloud, how Microsoft organises Azure's services, and how cost, security, compliance, and reliability shape real decisions. That perspective is useful whether or not you ever touch the portal in anger — and it's a natural stepping stone toward role-based certifications later.</p>
+
+        <h2>1. Core cloud concepts</h2>
+        <p>Start with cloud computing in general. You'll want to be comfortable explaining what the cloud <em>is</em> and how it differs from traditional on-premises infrastructure — including the ideas that come up again and again: <strong>scalability</strong>, <strong>elasticity</strong>, <strong>high availability</strong>, <strong>disaster recovery</strong>, and the <strong>shared responsibility model</strong>.</p>
+        <p>One distinction the exam loves is <strong>capital expenditure (CapEx) versus operational expenditure (OpEx)</strong>. On-premises means large upfront spend on hardware, space, and maintenance; the cloud lets you pay for what you use, when you use it. That shift is what gives businesses flexibility when demand spikes or shrinks unpredictably.</p>
+        <p>You should also know the three service models cold — and crucially, when each one fits:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-layer-group"></i> Cloud service models — who manages what</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">IaaS</span>
+                        <div class="habit-icon"><i class="fas fa-server"></i></div>
+                        <h5>Infrastructure as a Service</h5>
+                        <p>You control the VMs, networking, and storage. Most flexibility, most responsibility. <em>Example: Azure Virtual Machines.</em></p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">PaaS</span>
+                        <div class="habit-icon"><i class="fas fa-cubes"></i></div>
+                        <h5>Platform as a Service</h5>
+                        <p>Deploy your app; Microsoft manages the servers beneath it. <em>Example: Azure App Service.</em></p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">SaaS</span>
+                        <div class="habit-icon"><i class="fas fa-cloud"></i></div>
+                        <h5>Software as a Service</h5>
+                        <p>A finished application the provider runs end to end. <em>Example: Microsoft 365.</em></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">As you move IaaS &rarr; PaaS &rarr; SaaS, you hand more management to Microsoft and keep less yourself.</p>
+
+        <p>Finally, know the deployment models — <strong>public, private, and hybrid</strong>. Azure shows up constantly in hybrid scenarios, where on-premises systems connect to cloud services rather than being replaced wholesale.</p>
+
+        <h2>2. The core Azure services</h2>
+        <p>Azure has hundreds of services, but AZ-900 only asks you to recognise the major categories and know when each is used. Don't try to become an expert in everything — aim to explain the <em>purpose</em> of the headline services in each group.</p>
+        <ul>
+            <li><strong>Compute</strong> — Virtual Machines (full control of the OS), App Service (managed app hosting), Azure Functions (serverless, event-driven), and containers. The skill is knowing why you'd pick a serverless function over a VM, or App Service over either.</li>
+            <li><strong>Storage</strong> — Blob Storage (unstructured data: images, documents, backups, logs), Azure Files (managed file shares over standard protocols), plus Queue and Table storage. Blob is the one that comes up most.</li>
+            <li><strong>Networking</strong> — virtual networks and subnets, VPN Gateway, ExpressRoute, Azure DNS, and load balancing. These connect resources securely, distribute traffic, and bridge cloud and on-premises. Knowing when ExpressRoute beats a VPN is a classic exam beat.</li>
+            <li><strong>Data &amp; analytics</strong> — Azure SQL Database and Cosmos DB, plus Synapse Analytics, Microsoft Fabric, and Azure Databricks. For AZ-900, focus on relational vs non-relational data and the idea that different workloads need different data services.</li>
+        </ul>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>A reliable exam pattern: you'll be handed a <em>scenario</em> ("a team needs to run a small piece of code only when a file is uploaded") and asked to choose the right service. Practising that "which service fits?" reasoning is worth more than memorising feature lists.</span>
+        </div>
+
+        <h2>3. Security, identity, and governance</h2>
+        <p>Security is a heavy slice of the exam. Anchor it on the <strong>shared responsibility model</strong>: Microsoft secures the cloud platform itself, while you remain responsible for your data, identities, access, and configuration — with the exact split depending on whether you're using IaaS, PaaS, or SaaS.</p>
+        <p>Three pieces work together, and the exam likes to test that they're related rather than isolated:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-shield-halved"></i> How identity, access, and policy fit together</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-id-badge"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Microsoft Entra ID &mdash; who you are</span><span class="flow-node-sub">Authentication, SSO, MFA, conditional access</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-user-lock"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">RBAC &mdash; what you can do</span><span class="flow-node-sub">Least-privilege permissions for users, groups &amp; identities</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-scale-balanced"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Azure Policy &mdash; the rules of the environment</span><span class="flow-node-sub">Allowed regions, required tags, restricted resource types</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-lock"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">A secure, governed environment</span><span class="flow-node-sub">Identity + access + policy working together</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Identity controls <em>who</em> gets in, RBAC controls <em>what</em> they can do, and policy controls the <em>rules</em> the whole environment must follow.</p>
+
+        <ul>
+            <li><strong>Microsoft Entra ID</strong> is the heart of identity and access — authentication, single sign-on, multifactor authentication, conditional access, and RBAC. Remember that identity is usually the <em>first</em> security boundary in the cloud.</li>
+            <li><strong>Role-Based Access Control (RBAC)</strong> assigns permissions to users, groups, service principals, or managed identities, following the principle of <strong>least privilege</strong> — only the access needed to do the job.</li>
+            <li><strong>Governance</strong> tools include Azure Policy (enforce standards like allowed regions or mandatory tags), resource locks (prevent accidental deletion or change), and Microsoft Purview plus the compliance offerings and Trust Center for privacy and regulatory needs.</li>
+        </ul>
+
+        <h2>4. Pricing, cost management, and support</h2>
+        <p>Expect questions on how Azure billing works. Costs are driven by resource type, how long you run things, region, storage consumed, bandwidth, licensing, and your support plan. Just as important is knowing the <em>tools</em> that estimate and control spend:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-wallet"></i> The cost-management toolkit</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <div class="habit-icon"><i class="fas fa-calculator"></i></div>
+                        <h5>Pricing Calculator</h5>
+                        <p>Estimate the cost of Azure services <em>before</em> you deploy them.</p>
+                    </div>
+                    <div class="habit-card">
+                        <div class="habit-icon"><i class="fas fa-scale-unbalanced"></i></div>
+                        <h5>TCO Calculator</h5>
+                        <p>Compare the cost of on-premises infrastructure against Azure.</p>
+                    </div>
+                    <div class="habit-card">
+                        <div class="habit-icon"><i class="fas fa-chart-line"></i></div>
+                        <h5>Cost Management</h5>
+                        <p>Monitor, analyse, and optimise your <em>actual</em> Azure spend.</p>
+                    </div>
+                    <div class="habit-card">
+                        <div class="habit-icon"><i class="fas fa-bell"></i></div>
+                        <h5>Budgets &amp; alerts</h5>
+                        <p>Notify teams when spending approaches a defined threshold.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Two calculators to plan, plus Cost Management and budgets to keep real spend in check.</p>
+
+        <p>Round it out with <strong>service level agreements (SLAs)</strong> — Microsoft's availability commitment for a service. Higher availability usually means designing for redundancy across availability zones or regions. And know the <strong>support plans</strong>: from free documentation and community support up to paid tiers with faster response times and dedicated technical help.</p>
+
+        <h2>How to prepare</h2>
+        <p>The most effective prep pairs concepts with a little hands-on exploration. Work through the official Microsoft Learn AZ-900 paths, then poke around the Azure portal to see how services are grouped — even light exposure makes the purpose of each service stick. And study <em>scenarios</em>, not definitions: don't just memorise "Functions is serverless," understand <em>when</em> serverless beats a VM or App Service.</p>
+        <p>A simple plan that works:</p>
+        <ol>
+            <li>Review cloud concepts and the service models.</li>
+            <li>Learn the core compute, storage, networking, and database services.</li>
+            <li>Study identity, security, governance, compliance, and monitoring.</li>
+            <li>Cover pricing, SLAs, lifecycle, and support options.</li>
+            <li>Drill practice questions and circle back to weak spots.</li>
+        </ol>
+
+        <h2>Common mistakes to avoid</h2>
+        <ul>
+            <li><strong>Going too deep.</strong> AZ-900 is a fundamentals exam — you don't need configuration steps or deployment scripts. It's about picking the right concept or service for a scenario.</li>
+            <li><strong>Skimping on pricing, governance, and support.</strong> Many candidates over-invest in compute and storage and then drop easy points on cost management, SLAs, support plans, and compliance. Those topics matter on the exam <em>and</em> in real decisions.</li>
+            <li><strong>Treating Entra ID, RBAC, and Policy as separate islands.</strong> They're a team: identity decides who gets in, RBAC decides what they can do, and policy sets the rules. Expect questions that hinge on how they combine.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>If you can explain, for each major service, <em>what problem it solves, when to use it, and how it fits into secure and cost-effective cloud adoption</em>, you're ready. The exam rewards the "why" far more than the "what."</span>
+        </div>
+
+        <h2>Final takeaway</h2>
+        <p>AZ-900 is a confidence-builder. It gives you a clear, well-rounded picture of cloud concepts, Azure services, security, governance, pricing, and support — the foundation everything else in Azure is built on. Approach it with a structured plan and a focus on real-world scenarios, and it becomes both an easy first certification and a genuine stepping stone toward deeper Azure roles. Learn the <em>why</em> behind each service, and the exam takes care of itself.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/az-900-azure-fundamentals.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

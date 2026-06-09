@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrating SharePoint with Power Automate: Patterns & Pitfalls | Dhaval Shah</title>
+    <meta name="description" content="Build reliable SharePoint flows in Power Automate: trigger conditions, concurrency control, the Send an HTTP request to SharePoint action, and avoiding infinite loops.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/sharepoint-power-automate.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Integrating SharePoint with Power Automate: Patterns & Pitfalls">
+    <meta property="og:description" content="Trigger conditions, concurrency, the Send an HTTP request to SharePoint action, and loop avoidance.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/sharepoint-power-automate.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Power Automate</span>
+            <span class="article-tag">Workflows</span>
+            <span class="article-tag">REST</span>
+        </div>
+        <h1>Integrating SharePoint with Power Automate: Patterns &amp; Pitfalls</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> April 6, 2021</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Power Automate replaced SharePoint Designer workflows, and for most "when something happens in a list, do something" automation it's the right tool. But the easy on-ramp hides traps that bite in production: flows that trigger themselves into infinite loops, race conditions on concurrent edits, and the wall you hit when the standard SharePoint actions can't do what you need. Here's how to build flows that survive contact with real users.</p>
+
+        <h2>Triggers, and why they fire too often</h2>
+        <p>The SharePoint connector offers <em>When an item is created</em>, <em>When an item is created or modified</em>, and <em>When an item is deleted</em>. The "created or modified" trigger is the workhorse — and the source of the most pain, because it fires on <strong>every</strong> change, including changes your own flow makes.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>The infinite loop.</strong> A flow triggered on "modified" that updates the same item re-triggers itself, which updates the item, which re-triggers… Power Automate has loop-protection that eventually halts a flow that triggers itself in a tight cycle, but you should never rely on it. Design the loop out.</span>
+        </div>
+
+        <h3>Breaking the loop with a trigger condition</h3>
+        <p>The clean fix is a <strong>trigger condition</strong> — an expression evaluated before the flow runs; if it's false, the flow doesn't trigger at all (and doesn't consume a run). A common pattern: add a hidden "ProcessedByFlow" flag, set it when you process, and only trigger when it's not set:</p>
+
+        <pre><code>@equals(triggerOutputs()?['body/ProcessedByFlow'], false)</code></pre>
+
+        <p>Your flow does its work, then updates the item setting <code>ProcessedByFlow = true</code>. That update re-fires the trigger, but the condition is now false, so the flow stops. One controlled extra evaluation instead of an endless cascade. Another frequent condition: only run when a specific column changed or has a specific value.</p>
+
+        <h2>Concurrency: the silent data race</h2>
+        <p>By default the automated SharePoint trigger processes items with a degree of parallelism. If two flow runs touch related data, or order matters, you can get races. The <strong>concurrency control</strong> setting (trigger → Settings) lets you cap the <em>Degree of Parallelism</em> — set it to <code>1</code> to force strictly sequential processing.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Setting concurrency to 1 trades throughput for correctness. For flows that must process items in order, or that update shared aggregates, it prevents lost updates. For independent, high-volume items, leave it parallel. Decide deliberately — the default is "parallel," which is wrong for ordered workloads.</span>
+        </div>
+
+        <h2>When standard actions aren't enough: Send an HTTP request to SharePoint</h2>
+        <p>The pre-built actions cover common operations, but plenty of things — setting field defaults, working with content types, breaking permission inheritance, batch operations, reading properties the connector doesn't expose — require raw REST. The <strong>Send an HTTP request to SharePoint</strong> action calls the SharePoint REST API <em>inside</em> the flow, already authenticated as the connection:</p>
+
+        <pre><code>Method: POST
+Uri:    _api/web/lists/getbytitle('Contracts')/items(@{triggerOutputs()?['body/ID']})/breakroleinheritance(copyRoleAssignments=false,clearSubscopes=true)
+Headers:
+  Accept: application/json;odata=nometadata
+  Content-Type: application/json;odata=verbose</code></pre>
+
+        <p>Because the URI is relative to the site and the action handles auth, you get the full power of the REST API — including the <code>$batch</code> endpoint for bulk operations — without leaving the flow. This single action is what turns Power Automate from "low-code toy" into a serious SharePoint automation tool.</p>
+
+        <h3>Example: grant a user permission via REST</h3>
+        <pre><code>Method: POST
+Uri:    _api/web/lists/getbytitle('Contracts')/items(@{variables('ItemId')})/roleassignments/addroleassignment(principalid=@{variables('PrincipalId')},roledefid=1073741826)
+Headers:
+  Accept: application/json;odata=nometadata</code></pre>
+        <p class="code-caption">roledefid 1073741826 = Read. Resolve principal IDs via _api/web/siteusers or ensureuser.</p>
+
+        <h2>Reliability patterns</h2>
+        <ul>
+            <li><strong>Configure retry &amp; timeout</strong> on actions that call external systems (Settings → Retry Policy). Transient failures are normal; a sensible exponential retry saves a run.</li>
+            <li><strong>Use <code>Scope</code> + <code>Configure run after</code></strong> to build try/catch/finally: a Try scope, a Catch scope set to run only "has failed," and a Finally scope that always runs.</li>
+            <li><strong>Add a "Terminate" action</strong> with a meaningful status and message in your catch scope so failures are visible, not silent.</li>
+            <li><strong>Filter early.</strong> Trigger conditions are cheaper and cleaner than a Condition action at the top of the flow — they avoid consuming a run entirely.</li>
+        </ul>
+
+        <h2>Power Automate vs Azure Functions / Logic Apps</h2>
+        <table>
+            <thead><tr><th>Signal</th><th>Lean towards</th></tr></thead>
+            <tbody>
+                <tr><td>Citizen-developer maintained, low volume</td><td>Power Automate</td></tr>
+                <tr><td>High volume, complex logic, strict SLAs</td><td>Azure Functions (webhooks)</td></tr>
+                <tr><td>Need source control, CI/CD, unit tests</td><td>Functions / Logic Apps (code)</td></tr>
+                <tr><td>Quick approvals, notifications, simple updates</td><td>Power Automate</td></tr>
+            </tbody>
+        </table>
+
+        <p>Power Automate is the right first reach for most SharePoint automation — fast to build and accessible to the business. The difference between a flow that quietly corrupts data and one that runs for years is exactly the discipline above: trigger conditions to stop loops, concurrency control for ordering, the HTTP action when you outgrow the connector, and proper error scopes. Build those in from the start.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/sharepoint-power-automate.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

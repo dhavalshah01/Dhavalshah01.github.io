@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building SPFx Web Parts with React & PnPjs | Dhaval Shah</title>
+    <meta name="description" content="Wire a React-based SPFx web part to SharePoint list data with PnPjs: project setup, passing context, reading and writing items, and managing component state.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/spfx-react-pnpjs.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Building SPFx Web Parts with React & PnPjs">
+    <meta property="og:description" content="React + PnPjs: setup, context, reading and writing list data, and state.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/spfx-react-pnpjs.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">SPFx</span>
+            <span class="article-tag">React</span>
+            <span class="article-tag">PnPjs</span>
+        </div>
+        <h1>Building SPFx Web Parts with React &amp; PnPjs</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> August 23, 2018</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">A "no framework" web part is great for learning, but real SPFx development means React for the UI and PnPjs for the data. React gives you a declarative, component-based view layer; PnPjs gives you a fluent, strongly-typed wrapper over the SharePoint REST API that turns ten lines of <code>fetch</code> plumbing into one readable chain. Together they are the productivity backbone of modern SharePoint development.</p>
+
+        <h2>Scaffolding a React web part</h2>
+        <p>When you run <code>yo @microsoft/sharepoint</code>, choose <strong>React</strong> as the framework. The generator wires up a web part class plus a React component and an <code>I…Props</code> interface. Then add PnPjs:</p>
+
+        <pre><code># Inside your solution folder
+npm install @pnp/sp --save</code></pre>
+
+        <p>PnPjs needs to be initialised with the SPFx context once so every call carries the right auth and site URL. Do this in the web part's <code>onInit()</code> and the React component never has to think about authentication again:</p>
+
+        <pre><code>import { sp } from "@pnp/sp";
+
+protected onInit(): Promise&lt;void&gt; {
+  return super.onInit().then(() =&gt; {
+    sp.setup({ spfxContext: this.context as any });
+  });
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Initialising PnPjs with <code>spfxContext</code> means it inherits the page's identity and the correct web URL. You never hand it a digest or build a header — PnPjs handles the request digest, batching, and OData shaping for you.</span>
+        </div>
+
+        <h2>Passing context into React</h2>
+        <p>The web part's <code>render()</code> creates the React element and passes whatever the component needs via props — the description, the context, callbacks:</p>
+
+        <pre><code>import * as React from 'react';
+import * as ReactDom from 'react-dom';
+import ContractList from './components/ContractList';
+
+public render(): void {
+  const element = React.createElement(ContractList, {
+    listTitle: this.properties.listTitle
+  });
+  ReactDom.render(element, this.domElement);
+}
+
+protected onDispose(): void {
+  ReactDom.unmountComponentAtNode(this.domElement);
+}</code></pre>
+
+        <h2>Reading list data with PnPjs</h2>
+        <p>Inside the React component, fetch on mount. Note how <code>$select</code>/<code>$expand</code>/<code>$filter</code> from the REST article become fluent methods — and the result is typed:</p>
+
+        <pre><code>import * as React from 'react';
+import { sp } from "@pnp/sp";
+
+interface IContract { Id: number; Title: string; ContractStatus: string; AuthorName: string; }
+interface IState { items: IContract[]; loading: boolean; }
+
+export default class ContractList
+    extends React.Component&lt;{ listTitle: string }, IState&gt; {
+
+  public state: IState = { items: [], loading: true };
+
+  public async componentDidMount(): Promise&lt;void&gt; {
+    const data = await sp.web.lists
+      .getByTitle(this.props.listTitle)
+      .items
+      .select("Id", "Title", "ContractStatus", "Author/Title")
+      .expand("Author")
+      .filter("ContractStatus eq 'Approved'")
+      .orderBy("Modified", false)
+      .top(50)();
+
+    this.setState({
+      items: data.map(d =&gt; ({
+        Id: d.Id, Title: d.Title,
+        ContractStatus: d.ContractStatus,
+        AuthorName: d.Author?.Title
+      })),
+      loading: false
+    });
+  }
+
+  public render(): React.ReactElement {
+    if (this.state.loading) return &lt;p&gt;Loading…&lt;/p&gt;;
+    return (
+      &lt;ul&gt;
+        {this.state.items.map(c =&gt;
+          &lt;li key={c.Id}&gt;&lt;strong&gt;{c.Title}&lt;/strong&gt; — {c.ContractStatus} ({c.AuthorName})&lt;/li&gt;
+        )}
+      &lt;/ul&gt;
+    );
+  }
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>React escapes interpolated values by default, so <code>{c.Title}</code> is safe against XSS out of the box — a real advantage over the string-concatenation rendering of JSLink. You only need to think about encoding when you reach for <code>dangerouslySetInnerHTML</code> (and the name is a warning).</span>
+        </div>
+
+        <h2>Writing data</h2>
+        <p>Creating and updating items is equally terse. PnPjs handles the digest and the entity type automatically:</p>
+
+        <pre><code>// Create
+const add = await sp.web.lists.getByTitle("Contracts").items.add({
+  Title: "Acme MSA 2018",
+  ContractStatus: "Draft"
+});
+
+// Update item 42
+await sp.web.lists.getByTitle("Contracts").items
+  .getById(42)
+  .update({ ContractStatus: "Approved" });
+
+// Delete
+await sp.web.lists.getByTitle("Contracts").items.getById(42).delete();</code></pre>
+
+        <h2>The property pane for configuration</h2>
+        <p>Hard-coding a list title is fine for a demo; real web parts expose it. Add a text (or, better, list-picker) field to the property pane and pass <code>this.properties.listTitle</code> into the component. When the user edits it, SPFx re-runs <code>render()</code> and React reconciles the change — no manual DOM work.</p>
+
+        <pre><code>protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
+  return {
+    pages: [{
+      header: { description: "Configure the contracts web part" },
+      groups: [{
+        groupName: "Data",
+        groupFields: [
+          PropertyPaneTextField('listTitle', { label: 'List title' })
+        ]
+      }]
+    }]
+  };
+}</code></pre>
+
+        <h2>Why this stack wins</h2>
+        <ul>
+            <li><strong>Less code, fewer bugs.</strong> PnPjs removes the digest/entity-type/header ceremony that the raw REST API demands.</li>
+            <li><strong>Type safety.</strong> TypeScript interfaces catch field-name typos at build time instead of at runtime.</li>
+            <li><strong>Declarative UI.</strong> React state drives the view; you describe <em>what</em> the UI should look like, not how to mutate the DOM.</li>
+            <li><strong>Built-in batching.</strong> PnPjs can batch many operations into a single <code>$batch</code> request with almost no extra code.</li>
+        </ul>
+
+        <p>Once React and PnPjs are second nature, the rest of the SPFx story — Fluent UI for polished components, the AAD/Graph clients for Microsoft 365 data, and extensions for surfacing UI outside web parts — slots neatly on top. This is the core loop you'll use on virtually every modern SharePoint project.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/spfx-react-pnpjs.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Event Receivers in Provider-Hosted Add-ins | Dhaval Shah</title>
+    <meta name="description" content="Moving SharePoint event logic to the cloud: wiring up remote event receivers, handling the notification payload, reliability limits, and why webhooks became the better path.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/remote-event-receivers-webhooks.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Remote Event Receivers in Provider-Hosted Add-ins">
+    <meta property="og:description" content="Wiring up remote event receivers, handling the payload, and why webhooks became the better path.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/remote-event-receivers-webhooks.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Add-in Model</span>
+            <span class="article-tag">RER</span>
+            <span class="article-tag">Webhooks</span>
+        </div>
+        <h1>Remote Event Receivers in Provider-Hosted Add-ins</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> September 12, 2017</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">When server-side event receivers couldn't follow us into SharePoint Online, remote event receivers (RERs) filled the gap. The idea is elegant: SharePoint calls <em>your</em> web service when something happens, passing the event details over the wire. In practice RERs have real limitations that pushed Microsoft — and the rest of us — towards webhooks. This article covers both, and when to choose which.</p>
+
+        <h2>The remote event receiver model</h2>
+        <p>An RER is a SOAP web service endpoint, hosted in your provider-hosted add-in, that implements <code>IRemoteEventService</code>. SharePoint invokes it for the same event types you knew from the server model — but across the network:</p>
+        <ul>
+            <li><strong>Synchronous "-ing" events</strong> (<code>ItemAdding</code>, <code>ItemUpdating</code>): SharePoint waits for your response and you can cancel the operation. Because it's a network call, you have a strict time budget.</li>
+            <li><strong>Asynchronous "-ed" events</strong> (<code>ItemAdded</code>, <code>ItemUpdated</code>): fire-and-forget; you cannot cancel.</li>
+            <li><strong>App lifecycle events</strong> (<code>AppInstalled</code>, <code>AppUninstalling</code>): the most reliable use of RERs — run setup/teardown when your add-in is installed or removed.</li>
+        </ul>
+
+        <h2>Implementing the service</h2>
+        <p>The Visual Studio add-in template generates the WCF service and the <code>RemoteEventReceiver1.svc</code>. Your job is the <code>ProcessEvent</code> (synchronous) and <code>ProcessOneWayEvent</code> (asynchronous) methods:</p>
+
+        <pre><code>public SPRemoteEventResult ProcessEvent(SPRemoteEventProperties properties)
+{
+    var result = new SPRemoteEventResult();
+
+    if (properties.EventType == SPRemoteEventType.ItemAdding)
+    {
+        var value = properties.ItemEventProperties
+                              .AfterProperties["ContractValue"];
+        if (value != null && Convert.ToDecimal(value) &lt; 0)
+        {
+            result.ErrorMessage = "Contract value cannot be negative.";
+            result.Status = SPRemoteEventServiceStatus.CancelWithError;
+        }
+    }
+    return result;
+}
+
+public void ProcessOneWayEvent(SPRemoteEventProperties properties)
+{
+    if (properties.EventType == SPRemoteEventType.ItemAdded)
+    {
+        using (var ctx = TokenHelper.CreateRemoteEventReceiverClientContext(properties))
+        {
+            if (ctx != null)
+            {
+                var item = properties.ItemEventProperties
+                    .ListItem; // resolve via ctx as needed
+                // post-commit work
+                ctx.ExecuteQuery();
+            }
+        }
+    }
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><code>TokenHelper.CreateRemoteEventReceiverClientContext</code> builds an authenticated CSOM context from the token SharePoint includes in the event payload — that's how your remote code calls back into the site that raised the event.</span>
+        </div>
+
+        <h2>Registering the receiver</h2>
+        <p>RERs are declared in the add-in's <code>AppManifest.xml</code> (for app events) or attached to a list at runtime via CSOM, pointing at your service URL:</p>
+
+        <pre><code>web.Lists.GetByTitle("Contracts").EventReceivers.Add(new EventReceiverDefinitionCreationInformation
+{
+    EventType = EventReceiverType.ItemAdded,
+    ReceiverName = "ContractItemAdded",
+    ReceiverUrl = "https://contoso-addin.azurewebsites.net/RemoteEventReceiver1.svc",
+    SequenceNumber = 10000
+});
+ctx.ExecuteQuery();</code></pre>
+
+        <h2>Where RERs hurt</h2>
+        <p>RERs work, but production taught the community several painful lessons:</p>
+        <ul>
+            <li><strong>No delivery guarantee.</strong> If your endpoint is down or slow when an async event fires, SharePoint does <em>not</em> retry. The event is simply lost.</li>
+            <li><strong>Tight timeouts on synchronous events.</strong> A slow validation means the user's save fails — or worse, hangs.</li>
+            <li><strong>Cold starts.</strong> If your service is on a platform that idles out, the first event after a quiet period can time out.</li>
+            <li><strong>SOAP plumbing.</strong> The WCF endpoint is heavier and more brittle than a simple HTTP handler.</li>
+        </ul>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Treat asynchronous RERs as <strong>best-effort</strong>. If your business process cannot tolerate a missed event, an RER alone is the wrong tool — you need a model with retries and a reconciliation sweep.</span>
+        </div>
+
+        <h2>Enter webhooks</h2>
+        <p>SharePoint webhooks address the reliability problem with a fundamentally different contract. Instead of sending you the event details, SharePoint sends a lightweight <strong>notification</strong> that "something changed in this list," and <em>you</em> call back to find out what — using the list's change log. Crucially, webhooks <strong>retry</strong> failed deliveries and your subscription has an explicit lifecycle.</p>
+
+        <p>Registering a webhook is a single REST call specifying the list, your notification URL, and an expiry (max 180 days):</p>
+
+        <pre><code>POST .../_api/web/lists('list-guid')/subscriptions
+Content-Type: application/json
+
+{
+  "resource": "https://contoso.sharepoint.com/_api/web/lists('list-guid')",
+  "notificationUrl": "https://contoso-fn.azurewebsites.net/api/spwebhook",
+  "expirationDateTime": "2018-03-11T00:00:00+00:00",
+  "clientState": "contoso-secret"
+}</code></pre>
+
+        <p>Your endpoint must first answer the <strong>validation handshake</strong>: when you register, SharePoint immediately calls your URL with a <code>validationtoken</code> query parameter, and you must echo it back as plain text within 5 seconds. After that, change notifications arrive as small JSON payloads — and you respond <em>fast</em> (return HTTP 200 within seconds), queue the work, and process it asynchronously by calling <code>GetChanges</code> against the list.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Webhooks notify; they don't describe. Always pair a webhook with a stored <strong>change token</strong> so that when a notification arrives you call <code>GetChanges</code> from your last token and process exactly what changed — even if several edits batched into one notification.</span>
+        </div>
+
+        <h2>Choosing between them</h2>
+        <table>
+            <thead><tr><th>Need</th><th>Best fit</th></tr></thead>
+            <tbody>
+                <tr><td>Cancel/validate before save</td><td>Synchronous RER (only option)</td></tr>
+                <tr><td>Reliable reaction after change</td><td>Webhook (retries + change log)</td></tr>
+                <tr><td>App install/uninstall setup</td><td>App-event RER</td></tr>
+                <tr><td>High-volume change processing</td><td>Webhook + queue + Azure Function</td></tr>
+            </tbody>
+        </table>
+
+        <p>I dive into the production-grade webhook architecture — subscription renewal, the storage queue, and idempotent change processing — in a dedicated later article. For now the takeaway is this: use synchronous RERs only where you truly must block a save, and reach for webhooks for everything reactive. They are the bridge from the add-in era to the Microsoft Graph change-notification model that follows.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/remote-event-receivers-webhooks.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

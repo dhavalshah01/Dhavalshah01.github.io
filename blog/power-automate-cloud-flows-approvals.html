@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Automate Cloud Flows & Approvals, End to End | Dhaval Shah</title>
+    <meta name="description" content="Design real-world Power Automate cloud flows: trigger types, the Approvals connector, Start and wait for an approval, branching on outcomes, expressions, and error scopes.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/power-automate-cloud-flows-approvals.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Power Automate Cloud Flows & Approvals, End to End">
+    <meta property="og:description" content="Triggers, the Approvals connector, branching on outcomes, expressions, and resilient error handling.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/power-automate-cloud-flows-approvals.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Power Automate</span>
+            <span class="article-tag">Approvals</span>
+            <span class="article-tag">Cloud Flows</span>
+        </div>
+        <h1>Power Automate Cloud Flows &amp; Approvals, End to End</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> January 23, 2024</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">I've written a lot about Power Automate <em>from SharePoint's side</em> — triggers, loops, the "Send an HTTP request" action. This piece zooms out to the flow itself and the one scenario every organisation asks for first: <strong>approvals</strong>. The built-in Approvals connector makes a request-and-wait workflow almost trivial to start — and surprisingly easy to get subtly wrong. Let's build one properly.</p>
+
+        <h2>Three kinds of cloud flow</h2>
+        <p>Before the canvas, know which trigger you need. A cloud flow is defined by how it starts:</p>
+        <ul>
+            <li><strong>Automated</strong> — fires on an event ("When an item is created" in SharePoint, "When a new email arrives").</li>
+            <li><strong>Instant</strong> — a person triggers it on demand (a button, a "For a selected item" action in a list).</li>
+            <li><strong>Scheduled</strong> — runs on a recurrence (every night at 02:00).</li>
+        </ul>
+        <p>An approval flow is usually <strong>automated</strong> — a new request appears, and the flow routes it for sign-off.</p>
+
+        <h2>The shape of an approval flow</h2>
+        <p>At its core the pattern is: trigger → start the approval and wait → branch on the outcome → act. Here is the flow we'll build, as it appears in the designer:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-bolt"></i> Power Automate — Contract approval flow</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">When an item is created</span><span class="flow-node-sub">SharePoint · Contracts list</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-user-check"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Start and wait for an approval</span><span class="flow-node-sub">Approve/Reject · First to respond</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-code-branch"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Condition</span><span class="flow-node-sub">Outcome is equal to "Approve"</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-branch">
+                        <div class="flow-branch-col">
+                            <div class="flow-branch-label">If yes</div>
+                            <div class="flow-node flow-node-action">
+                                <div class="flow-node-icon"><i class="fas fa-pen"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Update item</span><span class="flow-node-sub">Status &rarr; Approved</span></div>
+                            </div>
+                        </div>
+                        <div class="flow-branch-col">
+                            <div class="flow-branch-label">If no</div>
+                            <div class="flow-node flow-node-terminal">
+                                <div class="flow-node-icon"><i class="fas fa-envelope"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Send an email</span><span class="flow-node-sub">Notify requester &middot; rejected</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>The approval pattern:</strong> trigger, a blocking approval, then a condition that branches on the returned <code>Outcome</code>.</p>
+
+        <h2>"Start and wait for an approval"</h2>
+        <p>The Approvals connector offers two flavours. <strong>Create an approval</strong> + <strong>Wait for an approval</strong> are separate actions for advanced choreography; for 95% of cases use the combined <strong>Start and wait for an approval</strong>, which posts the request and pauses the run until someone responds. Configure the approval <em>type</em>:</p>
+        <table>
+            <thead><tr><th>Approval type</th><th>Behaviour</th></tr></thead>
+            <tbody>
+                <tr><td>Approve/Reject — First to respond</td><td>Any one assignee's response decides it.</td></tr>
+                <tr><td>Approve/Reject — Everyone must approve</td><td>All assignees must approve; one rejection fails it.</td></tr>
+                <tr><td>Custom Responses — Wait for one / for all</td><td>Your own response options instead of Approve/Reject.</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Assignees respond in <strong>Teams, Outlook actionable messages, or the Power Automate approvals hub</strong> — no app to build. The action returns an <code>Outcome</code> string and a <code>Responses</code> array (with each approver's comments), which you read with dynamic content downstream.</span>
+        </div>
+
+        <h2>Branching on the outcome</h2>
+        <p>After the approval completes, a <strong>Condition</strong> checks the result. The trap: the <code>Outcome</code> value is the literal string <code>Approve</code> (not "Approved", not localized) for the standard Approve/Reject type. Compare exactly:</p>
+
+        <pre><code>// Condition (advanced mode expression)
+@equals(outputs('Start_and_wait_for_an_approval')?['body/outcome'], 'Approve')</code></pre>
+
+        <p>In the <em>If yes</em> branch, update the source item and notify the requester; in <em>If no</em>, send the rejection with the approver's comment pulled from the responses:</p>
+
+        <pre><code>// Grab the first responder's comment for the rejection email
+@first(outputs('Start_and_wait_for_an_approval')?['body/responses'])?['comments']</code></pre>
+
+        <h2>Expressions you'll actually use</h2>
+        <p>Power Automate's expression language (Workflow Definition Language) is where flows graduate from clicking to engineering. A few that earn their keep:</p>
+        <pre><code>// Format a due date 3 business-ish days out
+addDays(utcNow(), 3, 'yyyy-MM-dd')
+
+// Safe access to a possibly-missing property (no run failure)
+coalesce(triggerOutputs()?['body/ContractValue'], 0)
+
+// Build the approval title from trigger data
+concat('Approve contract: ', triggerOutputs()?['body/Title'])</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Use the <code>?[...]</code> question-mark accessor whenever a field might be absent. Plain <code>['body/Field']</code> throws and fails the whole run if the property is missing; <code>?['body/Field']</code> returns null and lets you handle it.</span>
+        </div>
+
+        <h2>Make it resilient: scopes and "Configure run after"</h2>
+        <p>A real approval flow shouldn't die silently when the "Update item" step hits a transient error. Wrap the work in a <strong>Scope</strong> named <em>Try</em>, add a second <strong>Catch</strong> scope, and use <strong>Configure run after</strong> on the Catch so it runs only when the Try <em>has failed</em>, <em>is skipped</em>, or <em>times out</em>:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-shield-halved"></i> Try / Catch error handling</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Scope — Try</span><span class="flow-node-sub">Update item &middot; notify requester</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Scope — Catch</span><span class="flow-node-sub">Run after: has failed / timed out / skipped</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>Try / Catch:</strong> "Configure run after" turns Power Automate's default fail-fast behaviour into deliberate error handling.</p>
+
+        <p>Inside Catch, post to a Teams channel or log to a SharePoint "Flow errors" list with <code>result('Try')</code> so failures are visible, not invisible.</p>
+
+        <h2>The takeaway</h2>
+        <p>An approval flow is four moves: trigger, <em>Start and wait for an approval</em>, branch on the exact <code>Outcome</code> string, and act — wrapped in a Try/Catch so it fails loudly. The Approvals connector hands you Teams and Outlook integration for free, which is precisely the kind of leverage that makes Power Automate worth reaching for before you write a single line of code. The judgment — picking the right approval type, comparing the outcome exactly, handling errors — is still yours.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/power-automate-cloud-flows-approvals.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securing a Custom API for SPFx with Azure AD & Azure Functions | Dhaval Shah</title>
+    <meta name="description" content="End-to-end pattern for calling a custom Azure Function API from SPFx securely: register the AAD app, expose a scope, use AadHttpClient, and validate the bearer token.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/spfx-azure-ad-secured-apis.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Securing a Custom API for SPFx with Azure AD & Azure Functions">
+    <meta property="og:description" content="Register the AAD app, expose a scope, call with AadHttpClient, and validate the bearer token.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/spfx-azure-ad-secured-apis.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">SPFx</span>
+            <span class="article-tag">Azure AD</span>
+            <span class="article-tag">Azure Functions</span>
+        </div>
+        <h1>Securing a Custom API for SPFx with Azure AD &amp; Azure Functions</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> February 14, 2022</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Eventually a web part needs to do something the browser shouldn't: call a database, use an app-only permission, hold a secret, or run server-side business logic. The answer is a custom API — an Azure Function — secured by Azure AD, called from SPFx with a token the framework mints for you. Done right, no secret ever touches the browser and the API verifies every caller. Here's the whole chain, end to end.</p>
+
+        <h2>The trust chain</h2>
+        <ol>
+            <li>You register an <strong>Azure AD application</strong> for your API and <strong>expose a scope</strong> on it.</li>
+            <li>Your SPFx solution <strong>requests permission</strong> to that scope; an admin approves it.</li>
+            <li>At runtime SPFx's <code>AadHttpClient</code> gets a <strong>bearer token</strong> scoped to your API and attaches it to the request.</li>
+            <li>Your Azure Function <strong>validates the token</strong> — signature, audience, issuer, scope — before doing any work.</li>
+        </ol>
+
+        <h2>Step 1 — Register the API app &amp; expose a scope</h2>
+        <p>In Azure AD, create an app registration for the API. Under <em>Expose an API</em>, set the Application ID URI (e.g. <code>api://&lt;client-id&gt;</code>) and add a delegated scope such as <code>access_as_user</code>:</p>
+
+        <pre><code># Azure CLI sketch
+az ad app create --display-name "Contoso Orders API"
+# Set the Application ID URI
+az ad app update --id &lt;appId&gt; --identifier-uris "api://&lt;appId&gt;"
+# (Add the 'access_as_user' OAuth2 permission scope in the portal or manifest)</code></pre>
+
+        <h2>Step 2 — Request the scope from SPFx</h2>
+        <p>In <code>config/package-solution.json</code>, declare the permission so an admin can approve it in <em>API access</em>:</p>
+
+        <pre><code>"webApiPermissionRequests": [
+  {
+    "resource": "Contoso Orders API",
+    "scope": "access_as_user"
+  }
+]</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><code>resource</code> must match the API app registration's display name (or its Application ID URI). After deploying the <code>.sppkg</code>, approve the request in the SharePoint admin center → <em>Advanced → API access</em>, or with <code>Approve-PnPTenantServicePrincipalPermissionRequest</code>.</span>
+        </div>
+
+        <h2>Step 3 — Call the API with AadHttpClient</h2>
+        <p>From the web part, ask the factory for a client scoped to your API's URI. SPFx performs the OAuth on-behalf flow and attaches a valid bearer token automatically:</p>
+
+        <pre><code>import { AadHttpClient, HttpClientResponse } from '@microsoft/sp-http';
+
+private async getOrders(): Promise&lt;any[]&gt; {
+  const client: AadHttpClient =
+    await this.context.aadHttpClientFactory.getClient('api://&lt;appId&gt;');
+
+  const res: HttpClientResponse = await client.get(
+    'https://contoso-orders.azurewebsites.net/api/orders',
+    AadHttpClient.configurations.v1);
+
+  if (!res.ok) { throw new Error(`API returned ${res.status}`); }
+  return res.json();
+}</code></pre>
+
+        <h2>Step 4 — Validate the token in the Function</h2>
+        <p>This is the step people skip — and it's the one that matters. The Function must <strong>independently verify</strong> the JWT: signature against Azure AD's published keys, the <code>aud</code> (audience) equals your API's app ID/URI, the <code>iss</code> (issuer) is your tenant, the token hasn't expired, and the required scope (<code>scp</code>) is present.</p>
+
+        <p>The cleanest approach is to let the platform do the heavy lifting — configure <strong>App Service Authentication ("Easy Auth")</strong> on the Function with the Microsoft identity provider, which validates the token before your code runs. When you need in-code validation, use the Microsoft Identity Web library:</p>
+
+        <pre><code>// Program.cs / Startup — validate AAD tokens
+services.AddMicrosoftIdentityWebApiAuthentication(configuration);
+
+// Function / controller — require the scope
+[Authorize]
+public class OrdersController : ControllerBase
+{
+    [HttpGet("api/orders")]
+    [RequiredScope("access_as_user")]
+    public IActionResult Get()
+    {
+        // User identity is available via HttpContext.User
+        var upn = User.FindFirst("preferred_username")?.Value;
+        return Ok(OrderService.ForUser(upn));
+    }
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Validate the audience and issuer explicitly.</strong> A token signed by Azure AD is not automatically <em>for your API</em> — a misconfigured API that only checks "is this a valid AAD token?" will accept tokens minted for <em>other</em> resources. Always assert <code>aud</code> = your app and <code>iss</code> = your tenant, and require your specific <code>scp</code>.</span>
+        </div>
+
+        <h2>CORS</h2>
+        <p>The Function is called from the browser (the SharePoint origin), so configure <strong>CORS</strong> to allow your tenant's domain — e.g. <code>https://contoso.sharepoint.com</code>. Don't use <code>*</code> in production; scope it to the origins that should call the API.</p>
+
+        <h2>App-only operations behind the user call</h2>
+        <p>Recall that SPFx tokens are always delegated. When your API needs to act with <strong>application permissions</strong> — reading data the signed-in user can't see, or running as the service — the Function holds those credentials (a certificate-based AAD app, secret in Key Vault, or a <strong>managed identity</strong>) and performs the privileged call server-side after validating the user's token. The browser never sees those credentials. This "API as a confidential broker" pattern is exactly why you stand up a custom API in the first place.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Prefer a <strong>managed identity</strong> for the Function's downstream calls (to Key Vault, Storage, SQL, Graph app-only) so there's no secret to rotate or leak. Combine with Key Vault references for any remaining secrets. The browser presents a user token; the Function presents its managed identity. Two separate trust boundaries, each least-privileged.</span>
+        </div>
+
+        <h2>The complete picture</h2>
+        <ul>
+            <li>SPFx → <code>AadHttpClient</code> → bearer token for your API.</li>
+            <li>Function validates the token (Easy Auth or Identity Web): signature, audience, issuer, scope.</li>
+            <li>Function does privileged work using a managed identity, not a browser secret.</li>
+            <li>CORS scoped to your SharePoint origin; permissions least-privileged and admin-approved.</li>
+        </ul>
+
+        <p>This pattern is the backbone of serious SPFx solutions — it's how you safely bridge the browser to databases, line-of-business systems, app-only Graph, and AI services. Every secret stays server-side, every request is authenticated, and the user's identity flows all the way through. Master this chain and there's very little you can't build on top of SharePoint.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/spfx-azure-ad-secured-apis.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

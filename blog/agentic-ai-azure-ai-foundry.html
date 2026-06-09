@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Agentic AI with Azure AI Foundry: Agents, Tools & Orchestration | Dhaval Shah</title>
+    <meta name="description" content="What agentic AI really means and how to build it on Azure AI Foundry: the Agent Service, threads and runs, tool calling, grounding with knowledge, multi-agent orchestration, tracing, and evaluation.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/agentic-ai-azure-ai-foundry.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Building Agentic AI with Azure AI Foundry: Agents, Tools & Orchestration">
+    <meta property="og:description" content="The Agent Service, threads and runs, tool calling, grounding, multi-agent orchestration, tracing, and evaluation on Azure AI Foundry.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/agentic-ai-azure-ai-foundry.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Agentic AI</span>
+            <span class="article-tag">Azure AI Foundry</span>
+            <span class="article-tag">Orchestration</span>
+        </div>
+        <h1>Building Agentic AI with Azure AI Foundry: Agents, Tools &amp; Orchestration</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> February 18, 2026</span>
+            <span><i class="fas fa-clock"></i> 12 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">In the last few articles I walked from SharePoint search to RAG to low-code Copilot Studio agents. This is the developer's end of that same arc: building <strong>agentic AI</strong> with code on <strong>Azure AI Foundry</strong>. Where Copilot Studio hands you a low-code surface, Foundry gives you the full platform — models, tools, orchestration, tracing, and evaluation — to ship production agents that reason, call systems, and act. Let's separate the hype from the engineering.</p>
+
+        <h2>What "agentic" actually means</h2>
+        <p>A chatbot answers. An <strong>agent</strong> pursues a goal: it reasons about what to do, <em>calls tools</em> to gather information or take action, observes the results, and loops until the task is done. The model is no longer just generating text — it's the decision-making core of a system that touches the real world.</p>
+        <p>The three things that turn a model into an agent:</p>
+        <ul>
+            <li><strong>Tools</strong> — functions, APIs, knowledge sources, or code the model can invoke (via function/tool calling).</li>
+            <li><strong>Memory / state</strong> — a conversation thread the agent reasons over across turns.</li>
+            <li><strong>An orchestration loop</strong> — the runtime that executes the reason → act → observe cycle until completion.</li>
+        </ul>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>Azure AI Foundry</strong> is Microsoft's unified platform for building, evaluating, and operating AI apps and agents — the evolution of what was Azure AI Studio. It bundles the model catalog, the <strong>Foundry Agent Service</strong>, knowledge/grounding, tracing, evaluations, and content safety behind one project resource and SDK.</span>
+        </div>
+
+        <h2>The anatomy of a Foundry agent</h2>
+        <p>The Agent Service follows a clean, durable object model. You create an <strong>agent</strong> (a model + instructions + tools), open a <strong>thread</strong> (the conversation), add <strong>messages</strong>, and start a <strong>run</strong> — the service executes the orchestration loop server-side, calling tools as the model decides, and returns the result:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-robot"></i> Foundry Agent Service — run lifecycle</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-comment-dots"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">User message &rarr; Thread</span><span class="flow-node-sub">"Summarise open contracts over $50k and flag risks"</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-brain"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Model reasons (Run)</span><span class="flow-node-sub">Plans which tools to call</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-branch">
+                        <div class="flow-branch-col">
+                            <div class="flow-node flow-node-action">
+                                <div class="flow-node-icon"><i class="fas fa-database"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Tool: query contracts</span><span class="flow-node-sub">Function calling</span></div>
+                            </div>
+                        </div>
+                        <div class="flow-branch-col">
+                            <div class="flow-node flow-node-action">
+                                <div class="flow-node-icon"><i class="fas fa-book-open"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Tool: grounding search</span><span class="flow-node-sub">Azure AI Search knowledge</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Grounded answer &rarr; Thread</span><span class="flow-node-sub">Cited, with risk flags</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>Reason → act → observe:</strong> the run loop executes server-side, invoking tools the model selects until the goal is met.</p>
+
+        <h2>Your first agent in code</h2>
+        <p>The Foundry SDK centres on an <code>AIProjectClient</code> pointed at your project endpoint, authenticated with Entra ID via <code>DefaultAzureCredential</code> — no API keys to leak. From there, the <code>agents</code> namespace creates the agent, thread, messages, and run:</p>
+
+        <pre><code>from azure.ai.projects import AIProjectClient
+from azure.identity import DefaultAzureCredential
+
+project = AIProjectClient(
+    endpoint="https://&lt;your-resource&gt;.services.ai.azure.com/api/projects/&lt;project&gt;",
+    credential=DefaultAzureCredential(),
+)
+
+# 1) Define the agent: a model + instructions
+agent = project.agents.create_agent(
+    model="gpt-4o",
+    name="contracts-analyst",
+    instructions=(
+        "You are a contracts analyst. Use the provided tools to look up "
+        "contract data and ground your answers. Always cite the contract ID. "
+        "If you are unsure, say so rather than guessing."
+    ),
+)
+
+# 2) Open a conversation thread and post a message
+thread = project.agents.threads.create()
+project.agents.messages.create(
+    thread_id=thread.id,
+    role="user",
+    content="Summarise open contracts over $50k and flag any renewal risks.",
+)
+
+# 3) Run it — the service drives the reasoning + tool loop
+run = project.agents.runs.create_and_process(
+    thread_id=thread.id,
+    agent_id=agent.id,
+)
+
+if run.status == "failed":
+    print("Run failed:", run.last_error)
+else:
+    messages = project.agents.messages.list(thread_id=thread.id)
+    for m in messages:
+        print(m.role, "→", m.text_messages[-1].text.value if m.text_messages else "")</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><code>create_and_process</code> is the easy path — it submits the run and polls to completion, automatically executing any tool calls the agent decides on. When you need to stream tokens or handle tool calls yourself, use <code>runs.create</code> + <code>runs.stream</code> instead and react to events as they arrive.</span>
+        </div>
+
+        <h2>Tools: where agents get their power</h2>
+        <p>An agent with no tools is just a chat completion. Foundry agents support several tool categories, and you usually mix them:</p>
+        <table>
+            <thead><tr><th>Tool type</th><th>What it does</th></tr></thead>
+            <tbody>
+                <tr><td>Function calling</td><td>Invoke <em>your</em> code/APIs — the model emits a structured call, you execute and return the result.</td></tr>
+                <tr><td>Knowledge (grounding)</td><td>Retrieve from Azure AI Search, files, SharePoint, or Microsoft Fabric — RAG, built in.</td></tr>
+                <tr><td>Code Interpreter</td><td>Run sandboxed Python for data analysis, math, and file generation.</td></tr>
+                <tr><td>OpenAPI / connected tools</td><td>Call any REST API described by an OpenAPI spec, or other Azure services.</td></tr>
+            </tbody>
+        </table>
+
+        <p>Function calling is the workhorse. You describe a Python function, attach it as a tool, and the agent decides when to call it — the SDK marshals arguments and return values:</p>
+
+        <pre><code>from azure.ai.agents.models import FunctionTool
+import json
+
+def get_contract(contract_id: str) -&gt; str:
+    """Return contract details as JSON for a given contract ID."""
+    # ...query Dataverse / SQL / SharePoint here...
+    record = {"id": contract_id, "value": 48000, "status": "Open", "renewsOn": "2026-09-01"}
+    return json.dumps(record)
+
+# Register the function as a tool the agent may call
+functions = FunctionTool(functions={get_contract})
+
+agent = project.agents.create_agent(
+    model="gpt-4o",
+    name="contracts-analyst",
+    instructions="Use get_contract to fetch live data before answering.",
+    tools=functions.definitions,
+)</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Treat tools as the security boundary.</strong> The model decides <em>when</em> to call a tool, but your code decides <em>what it's allowed to do</em>. Validate and authorize every argument inside the function, scope database queries to the caller's permissions, and never let a tool execute free-form input. The model can be prompt-injected; your tool implementation must assume it.</span>
+        </div>
+
+        <h2>Grounding: RAG without the plumbing</h2>
+        <p>The single most common enterprise agent is "answer questions over our content, with citations." Foundry's knowledge tools wire an agent to an <strong>Azure AI Search</strong> index (or files you upload) so the agent retrieves relevant chunks and grounds its response — the RAG pattern from the search-to-RAG article, now a configuration step rather than a pipeline you hand-build:</p>
+
+        <pre><code>from azure.ai.agents.models import AzureAISearchTool
+
+search = AzureAISearchTool(
+    index_connection_id=conn_id,   # a project connection to Azure AI Search
+    index_name="contracts-index",
+)
+
+agent = project.agents.create_agent(
+    model="gpt-4o",
+    name="contracts-kb",
+    instructions="Answer only from retrieved documents and cite the source.",
+    tools=search.definitions,
+    tool_resources=search.resources,
+)</code></pre>
+
+        <h2>From one agent to many</h2>
+        <p>Single agents handle a lot, but complex work benefits from <strong>multi-agent orchestration</strong> — specialised agents, each with a narrow role and toolset, coordinated by an orchestrator. Foundry supports this through connected agents (one agent calling another as a tool) and, for code-first patterns, the <strong>Microsoft Agent Framework</strong> and the open <strong>Semantic Kernel</strong> SDK for explicit planners and group-chat style collaboration.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-sitemap"></i> Multi-agent orchestration</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="rel-diagram">
+                    <div class="rel-entity">Orchestrator<small>plans &amp; delegates</small></div>
+                    <div class="rel-link"><span>calls</span><span class="rel-line"></span><span>as tools</span></div>
+                    <div class="rel-entity">Specialist agents<small>retriever &middot; analyst &middot; writer</small></div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>Divide and conquer:</strong> an orchestrator delegates to specialist agents, each with a focused role and tools.</p>
+
+        <h2>You can't ship what you can't see: tracing &amp; evaluation</h2>
+        <p>This is the part that separates a demo from production, and where Foundry genuinely shines. Agents are non-deterministic — the same prompt can take different tool paths — so observability and measurement are not optional.</p>
+        <ul>
+            <li><strong>Tracing</strong> — Foundry emits <strong>OpenTelemetry</strong> traces of every run: the model calls, the tool invocations, inputs/outputs, tokens, and latency. Wire it to Azure Monitor / Application Insights and you can see exactly why an agent did what it did.</li>
+            <li><strong>Evaluation</strong> — run your agent against a test dataset and score it with built-in evaluators for <em>groundedness</em>, <em>relevance</em>, <em>coherence</em>, <em>fluency</em>, plus <strong>agent-specific</strong> ones like <em>intent resolution</em> and <em>tool-call accuracy</em>. Track scores across versions so you know a prompt change improved things instead of hoping it did.</li>
+        </ul>
+
+        <pre><code>from azure.ai.evaluation import evaluate, GroundednessEvaluator
+from azure.ai.evaluation import IntentResolutionEvaluator
+
+results = evaluate(
+    data="eval_dataset.jsonl",               # query / response / context rows
+    evaluators={
+        "groundedness": GroundednessEvaluator(model_config),
+        "intent_resolution": IntentResolutionEvaluator(model_config),
+    },
+)
+print(results["metrics"])   # aggregate scores to gate a release</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Build the eval set <em>from real traces</em>. Once tracing is on, curate interesting and failed runs into your evaluation dataset, so every regression you find becomes a permanent test. This trace → dataset → eval loop is the agentic equivalent of writing a unit test for every bug.</span>
+        </div>
+
+        <h2>Responsible AI is part of the build</h2>
+        <p>Production agents touch real data and take real actions, so guardrails ship with the agent, not after it:</p>
+        <ul>
+            <li><strong>Azure AI Content Safety</strong> — filter harmful content and detect <em>prompt injection / jailbreak</em> attempts on inputs and tool outputs.</li>
+            <li><strong>Entra ID + least privilege</strong> — authenticate with managed identity, and scope each tool's data access to the acting user.</li>
+            <li><strong>Human-in-the-loop</strong> — for consequential actions (sending money, deleting records), require an approval step rather than letting the agent act unattended.</li>
+        </ul>
+
+        <h2>The takeaway</h2>
+        <p>Agentic AI isn't a bigger chatbot — it's a system where a reasoning model orchestrates tools to accomplish goals. Azure AI Foundry gives you the whole stack to build it responsibly: the Agent Service with its thread/run model, function and knowledge tools, multi-agent orchestration, and — crucially — the tracing and evaluation that make agents trustworthy enough to ship. The grounding discipline from SharePoint search, the action-wiring from Power Automate, and the data modeling from Dataverse all converge here. Same engineering judgment, pointed at the most capable surface yet.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/agentic-ai-azure-ai-foundry.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataverse Data Modeling: Tables, Columns & Relationships | Dhaval Shah</title>
+    <meta name="description" content="Model business data properly in Microsoft Dataverse: tables and columns, data types, choices, keys, 1:N and N:N relationships, rollups, business rules, and the security model.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/dataverse-data-modeling-relationships.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Dataverse Data Modeling: Tables, Columns & Relationships">
+    <meta property="og:description" content="Tables, columns, choices, keys, relationships, rollups, business rules, and Dataverse's row-level security.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/dataverse-data-modeling-relationships.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Dataverse</span>
+            <span class="article-tag">Data Modeling</span>
+            <span class="article-tag">Power Platform</span>
+        </div>
+        <h1>Dataverse Data Modeling: Tables, Columns &amp; Relationships</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 9, 2024</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">SharePoint lists got me a long way, but the moment an app needs real relationships, server-side validation, and row-level security, a list starts fighting you. That's where <strong>Microsoft Dataverse</strong> earns its place — a managed, relational data platform purpose-built for the Power Platform. If you can model a database, you can model Dataverse; the trick is learning what it gives you <em>above</em> a plain table.</p>
+
+        <h2>The vocabulary (it changed — use the new words)</h2>
+        <p>Microsoft renamed the core concepts in 2020. The classic CDS/CRM terms still appear in the API, but in Maker Portal you'll see:</p>
+        <table>
+            <thead><tr><th>You'll hear / see</th><th>Older term</th><th>It is…</th></tr></thead>
+            <tbody>
+                <tr><td>Table</td><td>Entity</td><td>A set of rows (like a SQL table)</td></tr>
+                <tr><td>Column</td><td>Field / Attribute</td><td>A typed property of the table</td></tr>
+                <tr><td>Row</td><td>Record</td><td>A single item</td></tr>
+                <tr><td>Choice</td><td>Option set</td><td>A fixed pick-list of values</td></tr>
+            </tbody>
+        </table>
+
+        <h2>A table is more than columns</h2>
+        <p>When you create a Dataverse table, you don't start from empty — every table gets a <strong>primary key</strong> (a GUID, auto-generated) and a <strong>primary name column</strong> (the human-friendly label shown in lookups and search). On top of that you add your business columns, each with a real data type:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-table"></i> Maker Portal — Contract table columns</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="schema-mock">
+                    <div class="schema-head"><i class="fas fa-table"></i> Contract</div>
+                    <div class="schema-row"><span class="schema-col-name"><i class="fas fa-key"></i> Contract ID</span><span class="col-type">Unique Identifier</span></div>
+                    <div class="schema-row"><span class="schema-col-name">Name</span><span class="col-type">Text (Primary)</span></div>
+                    <div class="schema-row"><span class="schema-col-name">Contract Value</span><span class="col-type">Currency</span></div>
+                    <div class="schema-row"><span class="schema-col-name">Status</span><span class="col-type choice">Choice</span></div>
+                    <div class="schema-row"><span class="schema-col-name">Start Date</span><span class="col-type">Date Only</span></div>
+                    <div class="schema-row"><span class="schema-col-name">Account</span><span class="col-type lookup">Lookup &rarr; Account</span></div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>Table design:</strong> a GUID primary key, a primary name column, and typed business columns including a <em>Choice</em> and a <em>Lookup</em>.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Currency, Date, Choice, and Lookup are <em>real types</em>, not text you parse. A Currency column automatically pairs with an exchange-rate and base-currency column; a Date column distinguishes <strong>Date Only</strong> from <strong>Date and Time</strong> with time-zone behaviour you choose. This typing is exactly what a SharePoint list can't enforce rigorously.</span>
+        </div>
+
+        <h2>Relationships: the whole point</h2>
+        <p>Dataverse relationships are first-class and referentially enforced. There are three shapes:</p>
+        <ul>
+            <li><strong>Many-to-one / one-to-many (1:N)</strong> — implemented as a <strong>Lookup</strong> column on the "many" side. A Contract has one Account; an Account has many Contracts.</li>
+            <li><strong>Many-to-many (N:N)</strong> — Dataverse maintains a hidden <em>relationship (intersect) table</em> for you; no junction table to build by hand.</li>
+            <li><strong>Self-referential</strong> — a table related to itself (e.g., a parent Contract amendment).</li>
+        </ul>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-diagram-project"></i> Relationships</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="rel-diagram">
+                    <div class="rel-entity">Account<small>the "one" side</small></div>
+                    <div class="rel-link"><span>1 &nbsp; : &nbsp; N</span><span class="rel-line"></span><span>Lookup</span></div>
+                    <div class="rel-entity">Contract<small>the "many" side</small></div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>1:N relationship:</strong> the Lookup lives on Contract (the many side) and points back to Account.</p>
+
+        <p>Crucially, a 1:N relationship carries <strong>behaviour</strong>: choose <em>Parental</em> cascade and deleting an Account deletes its Contracts (and cascades assignment, sharing, and reparenting); choose <em>Referential</em> and the child simply keeps a reference. Getting this wrong is how people accidentally delete data — decide cascade rules deliberately.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>A <strong>Parental</strong> relationship cascades deletes to children. Pick it only when the child genuinely cannot exist without the parent. For most reference links, <strong>Referential, Restrict Delete</strong> is safer — it blocks deleting a parent that still has children instead of silently destroying them.</span>
+        </div>
+
+        <h2>Choices: local vs global</h2>
+        <p>A <strong>Choice</strong> column is a fixed value set. You can define it <em>locally</em> (used by one column) or as a <strong>global choice</strong> reused across many tables. Reuse the global one for things like <em>Status</em> or <em>Region</em> so the options stay consistent everywhere and you maintain them in one place. Each option stores an integer value behind its label — handy to remember when you filter in Power Fx or query the API.</p>
+
+        <h2>Logic that lives with the data</h2>
+        <p>Dataverse pushes logic <em>down</em> to the data layer, so it runs no matter which app writes the row:</p>
+        <ul>
+            <li><strong>Calculated columns</strong> — derive a value from other columns in the same row (or related parent), evaluated on read.</li>
+            <li><strong>Rollup columns</strong> — aggregate child rows (SUM/COUNT/MIN/MAX), e.g. <em>Total contract value</em> on an Account. They refresh on a schedule (roughly hourly) or on demand — not instantly.</li>
+            <li><strong>Business rules</strong> — no-code conditional logic (set a value, show/hide, make required, validate) that runs server-side and in model-driven forms.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Rollups are <strong>asynchronous</strong>. If you need an always-current total the instant a child changes, a rollup will feel stale — use a real-time plug-in or a flow instead. Knowing this up front saves a confusing "why is my total wrong?" support ticket later.</span>
+        </div>
+
+        <h2>Security is built in — and granular</h2>
+        <p>This is where Dataverse leaves SharePoint lists behind. Access is governed by <strong>security roles</strong> that grant privileges (Create/Read/Write/Delete/Append/Assign/Share) <em>per table</em>, scoped by ownership: User, Business Unit, Parent-Child Business Unit, or Organization. Combined with <strong>row ownership</strong> and optional record-level sharing, you get true row-level security without writing a line of code.</p>
+
+        <pre><code>Security role "Contract Manager":
+  Contract table  →  Read/Write/Append  : Business Unit
+  Account table   →  Read               : Organization
+  → A manager sees every account, but only edits
+    contracts owned within their own business unit.</code></pre>
+
+        <h2>The takeaway</h2>
+        <p>Model Dataverse like the relational platform it is: typed columns, deliberate relationships with the right cascade behaviour, global choices for shared pick-lists, and logic (calculated, rollup, business rules) pushed into the data layer. Add the built-in role-based, row-level security and you have a foundation that a SharePoint list simply can't match for serious line-of-business apps. Get the model right and Power Apps, Power Automate, and Copilot Studio all just plug in on top.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/dataverse-data-modeling-relationships.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

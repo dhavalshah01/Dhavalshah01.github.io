@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Prompt Engineering Really Is (and Why Vague Prompts Fail) | Dhaval Shah</title>
+    <meta name="description" content="A plain-English guide to prompt engineering: what it is, why vague prompts produce useless answers, and how the same question gets dramatically better as you add context, role, and constraints.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/prompt-engineering-vague-to-specific.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="What Prompt Engineering Really Is (and Why Vague Prompts Fail)">
+    <meta property="og:description" content="Why vague prompts produce useless answers, and how the same question improves as you add context, role, and constraints.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/prompt-engineering-vague-to-specific.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Prompt Engineering</span>
+            <span class="article-tag">AI</span>
+            <span class="article-tag">Fundamentals</span>
+        </div>
+        <h1>What Prompt Engineering Really Is (and Why Vague Prompts Fail)</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> March 12, 2026</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">If you've ever asked an AI assistant a question and gotten back a confident but utterly useless answer, the problem usually isn't the model — it's the prompt. <strong>Prompt engineering</strong> is the skill of asking in a way that gets you what you actually want. It's quickly becoming a core literacy, and the good news is the fundamentals are simple enough for anyone to learn. This is the first in a short series; here we cover what prompt engineering is and the single biggest lever you control: specificity.</p>
+
+        <h2>So what is prompt engineering?</h2>
+        <p>A <em>prompt</em> is just the instruction you give an AI model. <em>Prompt engineering</em> is the practice of crafting and refining that instruction to reliably get a useful result. It isn't coding, and it isn't magic words. At its heart it's clear communication — with one twist: the thing you're communicating with can't see your screen, doesn't know your goal, and won't ask follow-up questions unless you invite it to.</p>
+        <p>A few ideas do most of the work:</p>
+        <ul>
+            <li><strong>Clarity</strong> — say exactly what you want, with no room for guessing.</li>
+            <li><strong>Context</strong> — give the background the model needs to be relevant to <em>your</em> situation.</li>
+            <li><strong>Constraints</strong> — set the guardrails: length, format, tone, audience.</li>
+            <li><strong>Iteration</strong> — treat the first answer as a draft and refine, rather than expecting perfection on attempt one.</li>
+        </ul>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>These principles aren't tied to any one product. Whether you're using a chat assistant, a coding helper, or an image generator, the same habits make your results better. The model changes; good prompting doesn't.</span>
+        </div>
+
+        <h2>Why "the model can't read your mind"</h2>
+        <p>An AI model predicts a likely response based on the words you give it and the patterns it learned during training. If your words are broad, the most likely response is also broad — generic, safe, and not particularly helpful. You didn't get a bad answer; you got the <em>average</em> answer to a vague question. Specificity is what pulls the model away from the average and toward your actual need.</p>
+        <p>Here's the same underlying question asked three ways. Watch how the quality of the answer tracks the quality of the prompt:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-signal"></i> The prompt quality ladder</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="prompt-ladder">
+                    <div class="ladder-step poor">
+                        <div class="ladder-head"><i class="fas fa-circle-xmark"></i> Vague</div>
+                        <div class="ladder-body">
+                            <div class="ladder-q"><b>You ask</b>"How do I build a website?"</div>
+                            <div class="ladder-a"><b>You get</b>"You can build a website by writing code and hosting it on a server." Technically true, totally unhelpful.</div>
+                            <ul class="ladder-traits">
+                                <li><i class="fas fa-xmark"></i> No context</li>
+                                <li><i class="fas fa-xmark"></i> Too broad</li>
+                                <li><i class="fas fa-xmark"></i> Not actionable</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="ladder-step better">
+                        <div class="ladder-head"><i class="fas fa-circle-half-stroke"></i> Better</div>
+                        <div class="ladder-body">
+                            <div class="ladder-q"><b>You ask</b>"How do I build a simple personal website with no coding experience?"</div>
+                            <div class="ladder-a"><b>You get</b>A nudge toward no-code tools and a rough outline. Closer, but still generic and shallow.</div>
+                            <ul class="ladder-traits">
+                                <li><i class="fas fa-check"></i> Some context</li>
+                                <li><i class="fas fa-minus"></i> Narrows the answer</li>
+                                <li><i class="fas fa-minus"></i> Still lacks depth</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="ladder-step best">
+                        <div class="ladder-head"><i class="fas fa-circle-check"></i> Specific</div>
+                        <div class="ladder-body">
+                            <div class="ladder-q"><b>You ask</b>"I'm a beginner with no coding skills. Give me step-by-step instructions to publish a one-page portfolio site for free, listing the tool to use and what to do at each step."</div>
+                            <div class="ladder-a"><b>You get</b>A named tool, numbered steps, and a clear path you can follow today.</div>
+                            <ul class="ladder-traits">
+                                <li><i class="fas fa-check"></i> Clear goal &amp; audience</li>
+                                <li><i class="fas fa-check"></i> Asks for a format</li>
+                                <li><i class="fas fa-check"></i> Actionable answer</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Same question, three rungs of specificity. The answer is only ever as good as the rung you stand on.</p>
+
+        <h2>The four ingredients you added without noticing</h2>
+        <p>The jump from the first prompt to the third wasn't luck. Four ingredients did the heavy lifting, and you can add them deliberately every time:</p>
+        <ul>
+            <li><strong>Who you are</strong> — "I'm a beginner with no coding skills" tells the model what level to pitch at.</li>
+            <li><strong>What you want</strong> — "publish a one-page portfolio site" is a concrete outcome, not a vague topic.</li>
+            <li><strong>The constraints</strong> — "for free" rules out whole categories of answer that would waste your time.</li>
+            <li><strong>The format</strong> — "step-by-step instructions... what to do at each step" shapes the answer into something usable.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>A quick mental template:</strong> <em>"I am [who]. I want [what], given [context/constraints]. Respond as [format]."</em> You won't need all four every time, but reaching for them turns a vague request into a specific one in seconds.</span>
+        </div>
+
+        <h2>It's a conversation, not a vending machine</h2>
+        <p>The biggest mindset shift is to stop treating the first answer as final. A vending machine gives you one shot; a good assistant improves when you react to it. "That's too technical — explain it for a 10-year-old." "Shorter, just the three key points." "Now give me an example." Each correction is itself a prompt, and refining across a few turns almost always beats agonising over the perfect opening line.</p>
+        <p>This is why "prompt engineering" has the word <em>engineering</em> in it: not because it's difficult, but because it's iterative. You observe the output, adjust the input, and converge on what you need — the same loop an engineer uses to tune anything.</p>
+
+        <h2>The takeaway</h2>
+        <p>Prompt engineering isn't a secret handshake. It's clarity, context, constraints, and a willingness to iterate. The fastest way to get better results from any AI tool — today, with no new software — is to climb one rung up the specificity ladder before you hit enter. In the next article we'll turn this into a practical checklist of habits you can apply to every prompt you write.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/prompt-engineering-vague-to-specific.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering the SharePoint REST API | Dhaval Shah</title>
+    <meta name="description" content="A practical guide to the SharePoint REST API: CRUD on lists and items, shaping responses with $select and $expand, the request digest, and OData metadata levels.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/mastering-sharepoint-rest-api.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Mastering the SharePoint REST API">
+    <meta property="og:description" content="CRUD, $select/$expand, the request digest, and trimming payloads with OData metadata levels.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/mastering-sharepoint-rest-api.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">REST</span>
+            <span class="article-tag">OData</span>
+            <span class="article-tag">JavaScript</span>
+        </div>
+        <h1>Mastering the SharePoint REST API</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 30, 2017</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">CSOM is great when you are writing managed code, but the moment you are inside a browser — a content editor web part, a JSLink override, or just an HTML page — the REST API is your gateway to SharePoint. It is plain HTTP and OData, which means anything that can make a web request can read and write SharePoint data. This article covers the mechanics that trip people up: the request digest, response shaping, and keeping payloads lean.</p>
+
+        <h2>The shape of an endpoint</h2>
+        <p>Every REST call hangs off the site's <code>_api</code> endpoint. The URL <em>is</em> the query:</p>
+        <pre><code>GET https://contoso.sharepoint.com/sites/ops/_api/web/title
+GET .../_api/web/lists/getbytitle('Contracts')
+GET .../_api/web/lists/getbytitle('Contracts')/items</code></pre>
+        <p>The two namespaces you'll live in are <code>/_api/web/...</code> (lists, items, files, folders) and <code>/_api/site/...</code> (site-collection scope). Reading is a simple <code>GET</code>; the interesting part is writing.</p>
+
+        <h2>Reading items and shaping the response</h2>
+        <p>A naïve <code>GET .../items</code> returns every column of every item, plus a wall of OData metadata. Three query options fix that:</p>
+        <ul>
+            <li><code>$select</code> — name the exact fields you want.</li>
+            <li><code>$filter</code> — server-side filtering (OData syntax).</li>
+            <li><code>$expand</code> — pull related data (lookups, the author) in the same call.</li>
+            <li><code>$top</code> / <code>$orderby</code> — limit and sort.</li>
+        </ul>
+
+        <pre><code>GET .../_api/web/lists/getbytitle('Contracts')/items
+    ?$select=Id,Title,ContractStatus,Author/Title
+    &amp;$expand=Author
+    &amp;$filter=ContractStatus eq 'Approved'
+    &amp;$orderby=Modified desc
+    &amp;$top=50
+Accept: application/json;odata=nometadata</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>The <code>Accept: application/json;odata=nometadata</code> header is the easiest payload win there is. The default <code>verbose</code> level wraps everything in <code>d.results</code> and bloats responses with type metadata; <code>nometadata</code> gives you a clean flat object and a top-level <code>value</code> array.</span>
+        </div>
+
+        <h3>Expanding lookups correctly</h3>
+        <p>A lookup or person field returns an ID by default. To get the friendly value you must <code>$expand</code> the related entity <em>and</em> <code>$select</code> its sub-property — <code>$expand=Author&amp;$select=Author/Title</code>. Forgetting the <code>$select</code> sub-property is the number-one reason people see <code>[object Object]</code> instead of a name.</p>
+
+        <h2>The request digest: writing data</h2>
+        <p>SharePoint protects against cross-site request forgery by requiring a <strong>form digest</strong> token on every state-changing call (<code>POST</code>, <code>MERGE</code>, <code>DELETE</code>). On a SharePoint page the token already sits in a hidden field, <code>#__REQUESTDIGEST</code>. From a standalone context you fetch it from <code>/_api/contextinfo</code>:</p>
+
+        <pre><code>// Get a fresh digest (valid for ~30 minutes)
+async function getDigest(webUrl) {
+    const res = await fetch(`${webUrl}/_api/contextinfo`, {
+        method: "POST",
+        headers: { "Accept": "application/json;odata=nometadata" }
+    });
+    const data = await res.json();
+    return data.FormDigestValue;
+}</code></pre>
+
+        <h3>Creating an item</h3>
+        <p>To create, <code>POST</code> to the items collection. The body must specify the list item entity type, which you can read from the list's <code>ListItemEntityTypeFullName</code> property:</p>
+
+        <pre><code>async function createContract(webUrl, digest) {
+    const body = {
+        "__metadata": { "type": "SP.Data.ContractsListItem" },
+        "Title": "Acme MSA 2017",
+        "ContractStatus": "Draft"
+    };
+
+    const res = await fetch(
+        `${webUrl}/_api/web/lists/getbytitle('Contracts')/items`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json;odata=verbose",
+            "Content-Type": "application/json;odata=verbose",
+            "X-RequestDigest": digest
+        },
+        body: JSON.stringify(body)
+    });
+    return res.json();
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>The entity type name follows the pattern <code>SP.Data.&lt;ListName&gt;ListItem</code>, where the list name is the list's internal (URL) name with spaces removed. When in doubt, GET <code>.../lists/getbytitle('X')?$select=ListItemEntityTypeFullName</code> and read it directly — don't guess.</span>
+        </div>
+
+        <h3>Updating and deleting</h3>
+        <p>Updates use the <code>MERGE</code> verb (tunnelled through <code>X-HTTP-Method</code>) so you only send changed fields, plus an <code>IF-MATCH</code> ETag for optimistic concurrency. Use <code>"*"</code> to force the write, or the item's real ETag to fail if someone changed it first:</p>
+
+        <pre><code>// Update item 42 — only the Status field
+await fetch(`${webUrl}/_api/web/lists/getbytitle('Contracts')/items(42)`, {
+    method: "POST",
+    headers: {
+        "Accept": "application/json;odata=nometadata",
+        "Content-Type": "application/json;odata=verbose",
+        "X-RequestDigest": digest,
+        "X-HTTP-Method": "MERGE",
+        "IF-MATCH": "*"
+    },
+    body: JSON.stringify({
+        "__metadata": { "type": "SP.Data.ContractsListItem" },
+        "ContractStatus": "Approved"
+    })
+});
+
+// Delete item 42
+await fetch(`${webUrl}/_api/web/lists/getbytitle('Contracts')/items(42)`, {
+    method: "POST",
+    headers: {
+        "X-RequestDigest": digest,
+        "X-HTTP-Method": "DELETE",
+        "IF-MATCH": "*"
+    }
+});</code></pre>
+
+        <h2>Batching with $batch</h2>
+        <p>Just like CSOM, chatty REST is slow REST. The OData <code>$batch</code> endpoint lets you bundle many reads and writes into one HTTP request using a multipart body. For more than a handful of operations it is a dramatic win — and libraries like PnPjs wrap it in a clean API so you rarely hand-craft the multipart payload yourself.</p>
+
+        <h2>Cross-domain and CORS</h2>
+        <p>The REST API does not enable CORS, so you cannot call one tenant's <code>_api</code> directly from a page on another origin. Inside an add-in, the <code>SP.RequestExecutor</code> cross-domain library proxies calls through the app web. From server-side code, you authenticate with OAuth and call REST directly. Knowing which context you are in determines how you authenticate.</p>
+
+        <h2>Why this still matters</h2>
+        <p>The SharePoint REST API remains the most direct way to manipulate list data from the browser, and it underpins higher-level libraries you will use daily. Even as Microsoft Graph becomes the strategic API for Microsoft 365, plenty of SharePoint-specific operations are still only available — or simply easier — through <code>_api</code>. Master <code>$select</code>, <code>$expand</code>, the digest, and <code>odata=nometadata</code>, and you can talk to SharePoint from anywhere.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/mastering-sharepoint-rest-api.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

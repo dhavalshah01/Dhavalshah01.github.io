@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Explained, Part 1: The Whole Pipeline at a Glance | Dhaval Shah</title>
+    <meta name="description" content="Part 1 of a beginner-friendly RAG series: the two phases of retrieval-augmented generation — indexing (load, chunk, embed, store) and querying (embed, search, augment, generate) — explained simply with a worked example.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/rag-series-1-pipeline-overview.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="RAG Explained, Part 1: The Whole Pipeline at a Glance">
+    <meta property="og:description" content="The two phases of RAG — indexing and querying — explained simply, with a worked example and a map of the whole series.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/rag-series-1-pipeline-overview.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">RAG Series</span>
+            <span class="article-tag">Search &amp; AI</span>
+            <span class="article-tag">Part 1</span>
+        </div>
+        <h1>RAG Explained, Part 1: The Whole Pipeline at a Glance</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 25, 2026</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">This is the opening part of a five-part, plain-English series on how <strong>retrieval-augmented generation (RAG)</strong> actually works under the hood — the same technology behind "chat with your documents" and grounded enterprise copilots. In this part we'll build the mental model: the two phases of a RAG system, the eight steps inside them, and a single worked example we'll carry through the whole series. No maths yet — just the shape of the thing.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>The series at a glance:</strong> Part 1 — the pipeline (you're here). Part 2 — chunking. Part 3 — embeddings &amp; vectorization. Part 4 — vector indexing &amp; similarity search. Part 5 — retrieval, reranking &amp; generation. Each part zooms into one box of the diagram below.</span>
+        </div>
+
+        <h2>The one-sentence version</h2>
+        <p>A language model is brilliant at <em>language</em> but it doesn't know <em>your</em> facts — your policies, your product docs, last quarter's numbers. RAG fixes that by <strong>finding the relevant text first and handing it to the model</strong> before it answers. The model then responds from that supplied material instead of guessing from memory. That's the entire idea. Everything else is plumbing to make the "find the relevant text" step fast and accurate.</p>
+
+        <p>Here's the analogy I keep coming back to. Imagine an extremely well-read assistant who has never seen your company's files. If you just ask them a question, they'll improvise. But if you first slide the exact right page across the desk and <em>then</em> ask, they'll give you a precise, grounded answer. RAG is the machinery that, in a fraction of a second, picks the right page out of a library of millions.</p>
+
+        <h2>RAG happens in two phases</h2>
+        <p>This is the single most important thing to understand, and it's where most beginners get confused. RAG is not one flow — it's <strong>two</strong>. They happen at completely different times:</p>
+        <ul>
+            <li><strong>Indexing (offline, done ahead of time).</strong> You take all your documents and prepare them for fast searching. This happens once when you set the system up, and again whenever your content changes. The user never sees it.</li>
+            <li><strong>Querying (online, done per question).</strong> When a user actually asks something, you search the prepared index, grab the best matches, and feed them to the model. This happens live, in milliseconds, every time.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Think of it like a library. <strong>Indexing</strong> is the librarian cataloguing every book onto shelves by topic — slow, done in advance. <strong>Querying</strong> is you walking in and asking "where's the book on refunds?" and being pointed to the right shelf instantly. The cataloguing is what makes the lookup fast.</span>
+        </div>
+
+        <h2>Phase 1 — Indexing: preparing your knowledge</h2>
+        <p>The indexing phase turns a messy pile of documents into a searchable index. It has four steps, and each one is a future part of this series:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-database"></i> Indexing phase (offline) — done ahead of time</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-file-lines"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">1. Load</span><span class="flow-node-sub">Read source documents (PDF, Word, web, SharePoint)</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-scissors"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">2. Chunk</span><span class="flow-node-sub">Split each document into small, focused passages — Part 2</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-hashtag"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">3. Embed</span><span class="flow-node-sub">Turn each chunk into a vector of numbers — Part 3</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-database"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">4. Store</span><span class="flow-node-sub">Save vectors + text in a vector index — Part 4</span></div>
+                    </div>
+                </div>
+                <p class="ui-caption">Run once up front, then re-run only when your documents change.</p>
+            </div>
+        </div>
+
+        <p>Let's walk each step with a concrete example. Say your knowledge base is a single 40-page employee handbook PDF.</p>
+        <ol>
+            <li><strong>Load</strong> — A loader reads the PDF and extracts its raw text. In a Microsoft setup the source might be SharePoint, OneDrive, or a website; the loader's job is just to get clean text out.</li>
+            <li><strong>Chunk</strong> — You can't store a whole 40-page document as one searchable unit — it covers too many topics at once. So you split it into bite-sized passages, say a few paragraphs each. One chunk might be the refund policy, another the parental-leave policy. (This is deceptively important, which is why Part 2 is entirely about it.)</li>
+            <li><strong>Embed</strong> — Each chunk is passed through an <em>embedding model</em> that converts its <em>meaning</em> into a long list of numbers — a vector. Chunks about similar topics end up with similar numbers. This is the magic that lets us search by meaning instead of keywords (all of Part 3).</li>
+            <li><strong>Store</strong> — The vectors, along with the original chunk text, are saved into a <em>vector index</em> (for example Azure AI Search). The index is organised so that, later, we can find the nearest vectors to a query almost instantly (Part 4).</li>
+        </ol>
+
+        <p>At the end of indexing, your 40-page PDF has become, say, 120 chunks, each paired with a vector and sitting in a searchable store. Nothing has been shown to a user yet. You're simply ready.</p>
+
+        <h2>Phase 2 — Querying: answering a question</h2>
+        <p>Now a real user types a question. The querying phase reuses the embedding model from indexing, then adds search and generation. Four more steps:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-bolt"></i> Querying phase (online) — runs per question</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="rag-pipe">
+                    <div class="rag-step">
+                        <span class="rag-num">5</span>
+                        <div class="rag-icon"><i class="fas fa-circle-question"></i></div>
+                        <h5>Embed query</h5>
+                        <p>Turn the user's question into a vector too — Part 3.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">6</span>
+                        <div class="rag-icon"><i class="fas fa-magnifying-glass"></i></div>
+                        <h5>Search</h5>
+                        <p>Find the chunks whose vectors are nearest — Part 4 &amp; 5.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">7</span>
+                        <div class="rag-icon"><i class="fas fa-paperclip"></i></div>
+                        <h5>Augment</h5>
+                        <p>Paste those chunks into the prompt as context — Part 5.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">8</span>
+                        <div class="rag-icon"><i class="fas fa-comment-dots"></i></div>
+                        <h5>Generate</h5>
+                        <p>The model answers using the supplied chunks — Part 5.</p>
+                    </div>
+                </div>
+                <p class="ui-caption">Steps 5–8 happen live, in well under a second, for every single question.</p>
+            </div>
+        </div>
+
+        <p>Continuing the handbook example, suppose an employee asks: <em>"How many days do I get to return a faulty laptop?"</em></p>
+        <ol start="5">
+            <li><strong>Embed the query</strong> — The question is run through the <em>same</em> embedding model used during indexing, producing a query vector. Using the same model is essential — it's what puts the question and the chunks in the same "meaning space."</li>
+            <li><strong>Search</strong> — The vector index compares the query vector against all 120 stored chunk vectors and returns the closest few — the "top-k." Notice the user said "return a faulty laptop" but never the word "refund." Keyword search would miss the refund-policy chunk; vector search finds it because the <em>meaning</em> is close.</li>
+            <li><strong>Augment</strong> — The top chunks (the refund-policy passage, maybe the IT-equipment passage) are pasted into the prompt, usually with an instruction like "Answer using only the context below, and cite it."</li>
+            <li><strong>Generate</strong> — The model reads that context and produces a grounded answer: <em>"Faulty equipment can be returned within 30 days…"</em> — drawn from your handbook, not from its imagination.</li>
+        </ol>
+
+        <h2>Why not just give the model everything?</h2>
+        <p>A fair question: if the model is so capable, why not paste the entire 40-page handbook into every prompt and skip all this machinery? Three reasons make retrieval necessary rather than optional:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Constraint</th><th>Why "paste everything" breaks</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Context window limit</td><td>Models can only read so much text at once. Your real knowledge base might be thousands of documents — it simply won't fit.</td></tr>
+                <tr><td>Cost</td><td>You pay per unit of text sent. Stuffing entire libraries into every request is wasteful when only one passage is relevant.</td></tr>
+                <tr><td>Accuracy</td><td>Burying the one relevant paragraph inside hundreds of irrelevant pages makes answers <em>worse</em>, not better — the model gets distracted. Less, but relevant, beats more.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>Retrieval is what makes RAG scale: instead of sending everything, you send only the handful of passages that matter for <em>this</em> question.</p>
+
+        <h2>The vocabulary you'll meet in this series</h2>
+        <p>A quick glossary so the later parts feel familiar. Don't memorise these — we'll build each one up properly:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Term</th><th>Plain meaning</th><th>Covered in</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Chunk</td><td>A small passage of a document — the unit you search over.</td><td>Part 2</td></tr>
+                <tr><td>Embedding / vector</td><td>A list of numbers representing the meaning of a piece of text.</td><td>Part 3</td></tr>
+                <tr><td>Embedding model</td><td>The model that converts text into that vector.</td><td>Part 3</td></tr>
+                <tr><td>Vector index / store</td><td>A database built to find the nearest vectors fast.</td><td>Part 4</td></tr>
+                <tr><td>Similarity / distance</td><td>How "close in meaning" two vectors are.</td><td>Part 4</td></tr>
+                <tr><td>Top-k retrieval</td><td>Returning the k closest chunks (e.g. the top 5).</td><td>Part 5</td></tr>
+                <tr><td>Reranking</td><td>A second, smarter pass to reorder the candidates.</td><td>Part 5</td></tr>
+                <tr><td>Augmentation</td><td>Inserting retrieved chunks into the prompt.</td><td>Part 5</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>The full picture in one line</h2>
+        <p>If you remember nothing else, remember this sentence: <strong>Index your documents once (load → chunk → embed → store); then for every question, embed → search → augment → generate.</strong> The first half is preparation; the second half is the live answer. Every remaining part of this series is just a deep, friendly look inside one of those eight boxes.</p>
+
+        <h2>What's next</h2>
+        <p>In <strong>Part 2</strong> we'll open the box that quietly determines whether your whole RAG system is good or useless: <em>chunking</em>. How big should a chunk be? Where do you cut? Why does overlap matter? We'll use real text and visuals to make the trade-offs obvious — because a brilliant embedding model can't rescue badly cut chunks.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/rag-series-1-pipeline-overview.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

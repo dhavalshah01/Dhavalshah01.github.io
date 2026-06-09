@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Agents with Copilot Studio: Topics, Knowledge & Actions | Dhaval Shah</title>
+    <meta name="description" content="Build AI agents in Microsoft Copilot Studio: authored topics and trigger phrases, generative answers grounded on your data, calling actions and flows, and generative orchestration.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/copilot-studio-ai-power-platform.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Building Agents with Copilot Studio: Topics, Knowledge & Actions">
+    <meta property="og:description" content="Topics and trigger phrases, generative answers grounded on your data, actions and flows, and generative orchestration.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/copilot-studio-ai-power-platform.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Copilot Studio</span>
+            <span class="article-tag">AI</span>
+            <span class="article-tag">Power Platform</span>
+        </div>
+        <h1>Building Agents with Copilot Studio: Topics, Knowledge &amp; Actions</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> April 16, 2025</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">In the SharePoint-to-RAG article I argued that grounding an LLM on your own content is the natural next step for anyone who's done enterprise search. <strong>Microsoft Copilot Studio</strong> is where that becomes low-code: a place to build conversational AI agents that answer from your data and <em>take action</em> through the Power Platform — no orchestration framework to hand-roll. Here's how the pieces fit, and where a builder's judgment still matters.</p>
+
+        <h2>From Power Virtual Agents to Copilot Studio</h2>
+        <p>If you remember <strong>Power Virtual Agents</strong>, this is its evolution — rebranded Copilot Studio and reoriented around generative AI. The classic, fully-authored chatbot model still exists (and matters for deterministic flows), but it now sits alongside two AI capabilities that change everything: <strong>generative answers</strong> and <strong>generative orchestration</strong>.</p>
+
+        <h2>Topics: the deterministic backbone</h2>
+        <p>A <strong>topic</strong> is an authored conversation path, matched by <strong>trigger phrases</strong> — example utterances that teach the agent when to enter it. Topics give you precise, predictable control where you need it (collecting a ticket, running a specific process):</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-robot"></i> Copilot Studio — Topic: Check contract status</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="topic-card">
+                    <h5><i class="fas fa-bolt"></i> Trigger phrases</h5>
+                    <div class="trigger-phrases">
+                        <span class="trigger-phrase">check my contract status</span>
+                        <span class="trigger-phrase">is the Acme contract approved?</span>
+                        <span class="trigger-phrase">contract approval status</span>
+                        <span class="trigger-phrase">where is my contract</span>
+                    </div>
+                </div>
+                <div class="chat-mock">
+                    <div class="chat-bubble user">Is the Acme MSA approved yet?</div>
+                    <div class="chat-bubble bot"><span class="chat-from">Contoso Agent</span>Which contract should I look up? You can give me the name or number.</div>
+                    <div class="chat-bubble user">Acme MSA 2025</div>
+                    <div class="chat-bubble bot"><span class="chat-from">Contoso Agent</span>The <strong>Acme MSA 2025</strong> was <strong>approved</strong> on 14 April by J. Rivera. Anything else?</div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>An authored topic:</strong> trigger phrases route the user in; nodes ask questions, capture entities, and respond.</p>
+
+        <p>Inside a topic you chain nodes: <em>Ask a question</em> (capturing the answer into a variable, with built-in or custom <strong>entities</strong> doing slot-filling), <em>Condition</em>, <em>Message</em>, and <em>Call an action</em>. It's the same conditional-logic muscle as a Power Automate flow, applied to a conversation.</p>
+
+        <h2>Generative answers: grounding on your data</h2>
+        <p>You can't author a topic for every question. <strong>Generative answers</strong> let the agent respond from <strong>knowledge sources</strong> you connect — public websites, SharePoint and OneDrive, Dataverse, uploaded documents, or any indexed content — using retrieval-augmented generation under the hood. The agent retrieves relevant passages, the model composes an answer, and (critically) it <strong>cites the source</strong>.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>This is RAG without building the pipeline: Copilot Studio handles chunking, retrieval, and grounding. You point it at a SharePoint site or document library and it answers questions over that content — honouring the user's existing permissions when you use the SharePoint/Graph knowledge source so people only get answers from files they're allowed to see.</span>
+        </div>
+
+        <h2>Actions: turning answers into outcomes</h2>
+        <p>An agent that only talks is half a solution. <strong>Actions</strong> let it <em>do</em> things by calling:</p>
+        <ul>
+            <li><strong>Power Automate cloud flows</strong> — run a process, write to a system, kick off an approval.</li>
+            <li><strong>Connectors</strong> — the same 1,000+ connectors the rest of the platform uses.</li>
+            <li><strong>Prompts &amp; AI Builder</strong> — invoke a custom GPT prompt for summarisation, extraction, or classification.</li>
+        </ul>
+        <p>So "check my contract status" can call a flow that queries Dataverse and returns the live record, and "request an extension" can start the approval flow from the previous article — the agent becomes a front door to your existing automation.</p>
+
+        <h2>Generative orchestration: let the model choose</h2>
+        <p>The biggest shift in the modern Copilot Studio is <strong>generative orchestration</strong>. With it enabled, you don't wire every path by hand. You describe each topic and action in natural language, and at runtime the model reads the user's intent, picks the right actions (even chaining several), gathers the inputs it needs, and composes the response:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-diagram-project"></i> Generative orchestration</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-comment"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">User: "Renew the Acme contract for a year"</span><span class="flow-node-sub">free-form intent</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-brain"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Orchestrator selects tools</span><span class="flow-node-sub">Lookup contract &rarr; Start approval</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-branch">
+                        <div class="flow-branch-col">
+                            <div class="flow-node flow-node-action">
+                                <div class="flow-node-icon"><i class="fas fa-database"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Action: Get contract</span><span class="flow-node-sub">Dataverse</span></div>
+                            </div>
+                        </div>
+                        <div class="flow-branch-col">
+                            <div class="flow-node flow-node-action">
+                                <div class="flow-node-icon"><i class="fas fa-user-check"></i></div>
+                                <div class="flow-node-text"><span class="flow-node-title">Action: Start approval</span><span class="flow-node-sub">Power Automate</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>Generative orchestration:</strong> the model plans which actions to call from one free-form request, instead of a hand-wired tree.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Orchestration is only as good as your <strong>descriptions</strong>. The names, summaries, and input descriptions you write for each topic and action <em>are</em> the prompt the orchestrator reasons over. Vague descriptions produce a confused agent; precise, action-oriented ones produce a sharp one. This is the new "low-code" skill — writing for the model.</span>
+        </div>
+
+        <h2>Don't skip security and testing</h2>
+        <p>An AI agent reaches into real data and real actions, so governance is not optional:</p>
+        <ul>
+            <li><strong>Authentication</strong> — require sign-in so the agent acts as the user and respects their data permissions, rather than answering as an anonymous service.</li>
+            <li><strong>DLP &amp; environments</strong> — agents live in environments and obey the same DLP policies as apps and flows; build them in a governed environment, not the default one.</li>
+            <li><strong>Test &amp; measure</strong> — use the test pane while authoring, then the analytics dashboards (resolution rate, escalations, abandoned sessions) to see whether it actually helps users.</li>
+        </ul>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Grounding limits hallucination; it doesn't eliminate it.</strong> Keep generative answers scoped to trusted knowledge sources, show citations, and use authored topics for anything that must be exact (legal wording, prices, compliance steps). Let the model improvise the conversation, not the facts.</span>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>Copilot Studio is the low-code front end to the AI patterns this whole series has been building toward. Authored <strong>topics</strong> give determinism; <strong>generative answers</strong> ground responses on your SharePoint and Dataverse content; <strong>actions</strong> connect to the flows and connectors you already use; and <strong>generative orchestration</strong> lets the model plan across them. The platform handles the RAG plumbing — your job is curating trusted knowledge, writing crisp action descriptions, and governing what the agent can touch. That's the same enterprise discipline, pointed at a brand-new surface.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/copilot-studio-ai-power-platform.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

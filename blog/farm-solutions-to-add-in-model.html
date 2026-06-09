@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrating from Full-Trust Farm Solutions to the Add-in Model | Dhaval Shah</title>
+    <meta name="description" content="Why full-trust farm solutions became a dead end, how provider-hosted add-ins work with OAuth and ACS, and a pragmatic refactoring strategy for legacy WSP code.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/farm-solutions-to-add-in-model.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Migrating from Full-Trust Farm Solutions to the Add-in Model">
+    <meta property="og:description" content="From WSP full-trust code to provider-hosted add-ins, OAuth and ACS — a pragmatic migration strategy.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/farm-solutions-to-add-in-model.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Add-in Model</span>
+            <span class="article-tag">OAuth</span>
+            <span class="article-tag">Migration</span>
+        </div>
+        <h1>Migrating from Full-Trust Farm Solutions to the Add-in Model</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> November 8, 2016</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">For a decade, the way to extend SharePoint was a farm solution: a WSP package containing assemblies deployed to the Global Assembly Cache, running with full trust inside the SharePoint worker process. It was powerful and dangerous in equal measure. With Office 365 and SharePoint Online, that model simply doesn't exist — there is no server you can deploy a DLL to. This article explains why the SharePoint Add-in model replaced it, how provider-hosted add-ins authenticate, and how to approach migrating real code.</p>
+
+        <h2>Why full-trust had to go</h2>
+        <p>Farm solutions execute <em>in-process</em> with SharePoint. That means a memory leak, an undisposed <code>SPSite</code>, or a blocking web-service call in your code degrades the entire farm — for every tenant on it. In a multi-tenant cloud, that is unacceptable. Microsoft's answer was to move custom code <em>out</em> of the SharePoint process entirely:</p>
+        <ul>
+            <li><strong>Full-trust farm solution</strong> — your code runs inside SharePoint, with farm-wide reach. Not possible in SharePoint Online.</li>
+            <li><strong>Sandboxed solution</strong> — a brief, constrained middle ground; deprecated for managed code.</li>
+            <li><strong>SharePoint Add-in</strong> (originally "App") — your code runs <em>somewhere else</em> and talks to SharePoint over authenticated web APIs (CSOM/REST).</li>
+        </ul>
+
+        <h2>Two add-in flavours</h2>
+        <p>The add-in model comes in two shapes:</p>
+        <ul>
+            <li><strong>SharePoint-hosted add-in</strong> — only HTML, CSS, and JavaScript, hosted in an isolated "app web" inside SharePoint. No server-side code. Good for lightweight UI.</li>
+            <li><strong>Provider-hosted add-in</strong> — your server-side logic lives in an external web application (typically ASP.NET on IIS or Azure), which calls back into SharePoint using OAuth. This is the real replacement for full-trust business logic.</li>
+        </ul>
+
+        <h2>How provider-hosted authentication works</h2>
+        <p>A provider-hosted add-in authenticates to SharePoint Online through <strong>Azure Access Control Service (ACS)</strong> using OAuth. The high-level flow:</p>
+        <ol>
+            <li>You register the add-in (via <code>AppRegNew.aspx</code> or the Seller Dashboard) and receive a <strong>client ID</strong> and <strong>client secret</strong>.</li>
+            <li>When a user launches the add-in, SharePoint posts a <strong>context token</strong> to your remote web.</li>
+            <li>Your code validates that token and exchanges it (with ACS) for an <strong>access token</strong> scoped to the user and site.</li>
+            <li>You attach the access token to CSOM/REST calls back into SharePoint.</li>
+        </ol>
+        <p>The Visual Studio add-in template ships a <code>TokenHelper</code> class and <code>SharePointContext</code> that do the heavy lifting:</p>
+
+        <pre><code>// Provider-hosted add-in: get an authenticated ClientContext
+protected void Page_Load(object sender, EventArgs e)
+{
+    var spContext =
+        SharePointContextProvider.Current.GetSharePointContext(Context);
+
+    using (var ctx = spContext.CreateUserClientContextForSPHost())
+    {
+        ctx.Load(ctx.Web, w =&gt; w.Title);
+        ctx.ExecuteQuery();
+        lblTitle.Text = ctx.Web.Title;
+    }
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><code>CreateUserClientContextForSPHost()</code> acts <em>as the signed-in user</em> (low-trust user+app token). For background jobs with no user present, use an <strong>app-only</strong> token instead — but app-only requires the permission to be explicitly granted at registration time.</span>
+        </div>
+
+        <h2>Declaring permissions</h2>
+        <p>An add-in has no rights by default. You request exactly the scopes you need in <code>AppManifest.xml</code>, and an administrator (or site owner) consents at install time. Least privilege is the rule:</p>
+
+        <pre><code>&lt;AppPermissionRequests AllowAppOnlyPolicy="true"&gt;
+  &lt;AppPermissionRequest
+      Scope="http://sharepoint/content/sitecollection/web"
+      Right="Write" /&gt;
+&lt;/AppPermissionRequests&gt;</code></pre>
+
+        <p>Scopes range from <code>tenant</code> down through <code>sitecollection</code>, <code>web</code>, and <code>list</code>, with rights of <code>Read</code>, <code>Write</code>, <code>Manage</code>, and <code>FullControl</code>. Request the narrowest scope and lowest right that gets the job done.</p>
+
+        <h2>A pragmatic migration strategy</h2>
+        <p>You rarely "lift and shift" a farm solution — the architecture is fundamentally different. Instead, decompose the old WSP by capability and map each to its modern equivalent:</p>
+
+        <table>
+            <thead>
+                <tr><th>Farm solution feature</th><th>Add-in model replacement</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Server-side event receivers</td><td>Remote event receivers / webhooks</td></tr>
+                <tr><td>Web parts (visual)</td><td>Add-in part (client web part) or, later, SPFx</td></tr>
+                <tr><td>Custom ribbon / actions</td><td>Custom actions declared in the add-in manifest</td></tr>
+                <tr><td>Timer jobs</td><td>External scheduled service (Azure WebJob / Function)</td></tr>
+                <tr><td>Feature receivers / provisioning</td><td>Remote provisioning via CSOM (PnP)</td></tr>
+                <tr><td>Full-trust business logic</td><td>Provider-hosted web app calling CSOM/REST</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>The <strong>PnP (Patterns &amp; Practices) remote provisioning engine</strong> is your friend here. Instead of feature XML, you extract a site as a template and re-apply it with CSOM from outside — the same business outcome, no server-side code.</span>
+        </div>
+
+        <h3>Refactor in layers</h3>
+        <ol>
+            <li><strong>Isolate the business logic</strong> from the SharePoint plumbing in the old solution. Pure C# rules and calculations move across almost unchanged.</li>
+            <li><strong>Replace the data layer</strong> — swap server <code>SPListItem</code> calls for client-side CSOM/REST against the same lists.</li>
+            <li><strong>Re-home the entry points</strong> — event receivers become remote receivers/webhooks; timer jobs become scheduled Azure jobs; UI becomes add-in parts.</li>
+            <li><strong>Re-implement provisioning</strong> with PnP templates rather than feature activation.</li>
+        </ol>
+
+        <h2>Looking ahead</h2>
+        <p>The add-in model itself was a transitional architecture. By the time you read the later articles in this series, <strong>SPFx</strong> had become the recommended way to build UI, and <strong>Microsoft Graph</strong> plus <strong>Azure AD app registrations</strong> replaced ACS for authentication (ACS-based app-only auth is now on a deprecation path). But the core lesson endures: in the cloud, your code lives outside SharePoint and earns access through explicit, least-privilege permissions. Internalising that during the farm-to-add-in transition is exactly what makes the later jump to Graph feel natural.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/farm-solutions-to-add-in-model.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

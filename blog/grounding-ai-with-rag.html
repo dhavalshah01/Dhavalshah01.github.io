@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grounding AI with RAG: Giving the Model the Right Context | Dhaval Shah</title>
+    <meta name="description" content="A plain-English explanation of retrieval-augmented generation (RAG): why AI invents answers, how retrieving the right documents fixes it, and how to do a manual version yourself today.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/grounding-ai-with-rag.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Grounding AI with RAG: Giving the Model the Right Context">
+    <meta property="og:description" content="Why AI invents answers, how retrieving the right documents fixes it, and how to ground answers yourself.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/grounding-ai-with-rag.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Prompt Engineering</span>
+            <span class="article-tag">RAG</span>
+            <span class="article-tag">AI</span>
+        </div>
+        <h1>Grounding AI with RAG: Giving the Model the Right Context</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 1, 2026</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Ask an AI assistant about your company's refund policy or last quarter's numbers, and it will often answer confidently — and wrongly. It isn't lying; it simply doesn't <em>have</em> your information, so it fills the gap with a plausible guess. The fix has a name: <strong>retrieval-augmented generation</strong>, or RAG. It's one of the most important ideas in practical AI, and underneath the acronym is a very intuitive trick: give the model the right material before you ask the question.</p>
+
+        <h2>Why AI makes things up</h2>
+        <p>A language model learns patterns from a huge amount of text up to a certain point in time. It doesn't have a live connection to your files, your database, or this morning's news. So when you ask about something specific and private — a policy document, an internal report, a niche product — the honest answer would be "I don't know," but the model's instinct is to produce the <em>most likely-sounding</em> answer instead. That's where confident, made-up responses (often called "hallucinations") come from.</p>
+        <p>Two facts about the model explain it:</p>
+        <ul>
+            <li><strong>Its knowledge has a cut-off.</strong> Anything that happened, or any document written, after training simply isn't in there.</li>
+            <li><strong>It can't see your private data.</strong> Your contracts, wikis, and spreadsheets were never part of its training.</li>
+        </ul>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>RAG doesn't make the model "smarter" — it makes it <em>better informed</em> for your specific question by handing it the relevant source material at the moment you ask. The model then answers from that material instead of from memory.</span>
+        </div>
+
+        <h2>How RAG works, in four steps</h2>
+        <p>The name sounds technical, but the flow mirrors how a careful person would answer a question they're unsure about: look it up first, then respond. RAG just automates the "look it up" part:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-magnifying-glass-chart"></i> Retrieval-augmented generation</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="rag-pipe">
+                    <div class="rag-step">
+                        <span class="rag-num">1</span>
+                        <div class="rag-icon"><i class="fas fa-circle-question"></i></div>
+                        <h5>Ask</h5>
+                        <p>You pose a question, e.g. "What's our refund window?"</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">2</span>
+                        <div class="rag-icon"><i class="fas fa-folder-open"></i></div>
+                        <h5>Retrieve</h5>
+                        <p>The system finds the most relevant documents from a trusted source.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">3</span>
+                        <div class="rag-icon"><i class="fas fa-paperclip"></i></div>
+                        <h5>Augment</h5>
+                        <p>Those documents are added to your question as context.</p>
+                    </div>
+                    <div class="rag-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="rag-step">
+                        <span class="rag-num">4</span>
+                        <div class="rag-icon"><i class="fas fa-comment-dots"></i></div>
+                        <h5>Generate</h5>
+                        <p>The model answers using that material — grounded and citable.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption">Ask &rarr; retrieve the right documents &rarr; add them as context &rarr; generate a grounded answer.</p>
+
+        <p>The crucial step is <strong>retrieve</strong>. Behind the scenes, a search system matches your question to the passages most likely to contain the answer — from a knowledge base, a set of files, or a company wiki — and only those passages get attached to the prompt. The model then has the facts in front of it, so its answer is anchored to real sources rather than to a hazy memory.</p>
+
+        <h2>You can do RAG by hand — today</h2>
+        <p>Full RAG systems are automated, but the core idea works manually in any chat assistant, right now, with zero setup. You simply play the role of the retriever:</p>
+        <ul>
+            <li><strong>Find the source.</strong> Grab the policy page, the report section, the documentation — whatever actually contains the answer.</li>
+            <li><strong>Paste it in.</strong> Drop that text into the chat alongside your question.</li>
+            <li><strong>Ask against it.</strong> "Using only the text above, what is our refund window, and quote the sentence that says so."</li>
+        </ul>
+        <p>That last instruction is the secret ingredient. By telling the model to answer <em>only</em> from the provided text and to quote its source, you both prevent it from wandering off into guesses and give yourself an instant way to verify the answer.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Try this phrasing:</strong> <em>"Answer using only the information below. If the answer isn't there, say 'not found in the provided text.'"</em> Giving the model permission to say "I don't know" is one of the most effective ways to stop confident, wrong answers.</span>
+        </div>
+
+        <h2>Where RAG shows up in real products</h2>
+        <p>Once you recognise the pattern, you'll see it everywhere. A customer-support bot that answers from your help centre, an assistant that searches your company's documents, a research tool that cites the papers it drew from — all of them are doing RAG. They retrieve trusted content first, then let the model phrase the answer. That's why these tools can stay current and accurate even though the underlying model's training is frozen in time: the freshness comes from the documents, not the model.</p>
+
+        <h2>Why this matters for trust</h2>
+        <p>Grounding is what turns AI from an entertaining guesser into a dependable assistant. When an answer is tied to a source you can check, you can actually rely on it — and quickly catch the rare case where the retrieval pulled the wrong document. For anything that carries real consequences, "show me where that came from" should be your default, and RAG is what makes that question answerable.</p>
+
+        <h2>The takeaway</h2>
+        <p>AI invents answers when it lacks the facts; RAG fixes that by retrieving the right material and handing it to the model before it responds. You don't need a special platform to benefit — paste your source into the chat, ask the model to answer only from it, and request a quote. In the final article of the series, we'll zoom out to <em>context</em> itself: how much an AI can hold in mind at once, and how everything you give it quietly shapes the reply.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/grounding-ai-with-rag.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

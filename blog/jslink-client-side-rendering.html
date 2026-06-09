@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSLink & Client-Side Rendering for Custom List Views | Dhaval Shah</title>
+    <meta name="description" content="How JSLink and the Client-Side Rendering (CSR) pipeline let you override SharePoint field and view rendering with pure JavaScript on classic pages.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/jslink-client-side-rendering.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="JSLink & Client-Side Rendering for Custom List Views">
+    <meta property="og:description" content="Override field and view rendering with pure JavaScript using the CSR pipeline.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/jslink-client-side-rendering.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">JSLink</span>
+            <span class="article-tag">CSR</span>
+            <span class="article-tag">Classic</span>
+        </div>
+        <h1>JSLink &amp; Client-Side Rendering for Custom List Views</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> December 4, 2017</span>
+            <span><i class="fas fa-clock"></i> 8 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Before SPFx, if you wanted to change how a column or a whole list view looked — colour-code a status, render a progress bar, format a number — you reached for JSLink and the Client-Side Rendering pipeline. CSR is a classic-mode technology, but it is still alive on countless classic lists and publishing pages, and understanding it explains a lot about how SharePoint thinks about rendering.</p>
+
+        <h2>What CSR is</h2>
+        <p>Client-Side Rendering (CSR) replaced the old server-side XSLT rendering of list views with a JavaScript pipeline that runs in the browser. The framework exposes a set of <strong>override points</strong> — for the view, the header, the body, individual rows, and each field in each form mode (View, Edit, New, Display). You register JavaScript that supplies replacement render logic for any of these points.</p>
+        <p><strong>JSLink</strong> is simply the property that tells SharePoint which JavaScript file(s) to load for a given field, web part, or content type. Point a list view web part's JSLink at your script, and your overrides take effect.</p>
+
+        <h2>The shape of an override</h2>
+        <p>You build a template overrides object and hand it to <code>SPClientTemplates.TemplateManager.RegisterTemplateOverrides</code>. Here is a field override that colour-codes a <em>Status</em> column in the list view:</p>
+
+        <pre><code>(function () {
+    // Define the override
+    var overrides = {
+        Templates: {
+            Fields: {
+                "ContractStatus": {
+                    View: renderStatus    // override the View render
+                }
+            }
+        }
+    };
+
+    function renderStatus(ctx) {
+        var status = ctx.CurrentItem.ContractStatus;
+        var color = {
+            "Draft":     "#9e9e9e",
+            "In Review": "#f0ad4e",
+            "Approved":  "#5cb85c",
+            "Archived":  "#777"
+        }[status] || "#333";
+
+        return "&lt;span style='padding:2px 8px;border-radius:4px;color:#fff;" +
+               "background:" + color + "'&gt;" +
+               STSHtmlEncode(status) +
+               "&lt;/span&gt;";
+    }
+
+    SPClientTemplates.TemplateManager.RegisterTemplateOverrides(overrides);
+})();</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Always HTML-encode user data</strong> before injecting it into your markup string. CSR hands you raw field values; rendering them unescaped is a stored-XSS waiting to happen. Use <code>SPClientTemplates.Utility.…</code> encoding helpers or build DOM nodes rather than concatenating strings.</span>
+        </div>
+
+        <h2>Override points you can hook</h2>
+        <ul>
+            <li><strong>Fields</strong> — per field, per mode (<code>View</code>, <code>DisplayForm</code>, <code>EditForm</code>, <code>NewForm</code>). The most common use: format a single column.</li>
+            <li><strong>Item</strong> — override the rendering of an entire row.</li>
+            <li><strong>Header / Body / Footer</strong> — restyle the whole view, e.g. render items as cards instead of a table.</li>
+            <li><strong>OnPreRender / OnPostRender</strong> — run code before and after rendering, useful for wiring up events or third-party widgets.</li>
+        </ul>
+
+        <h3>A view-level transform</h3>
+        <p>To render the whole list as cards you override <code>Header</code>, <code>Item</code>, and <code>Footer</code> together:</p>
+
+        <pre><code>var overrides = {
+    Templates: {
+        Header: function (ctx) { return "&lt;div class='card-grid'&gt;"; },
+        Footer: function (ctx) { return "&lt;/div&gt;"; },
+        Item: function (ctx) {
+            var item = ctx.CurrentItem;
+            return "&lt;div class='card'&gt;&lt;h3&gt;" +
+                   STSHtmlEncode(item.Title) + "&lt;/h3&gt;&lt;p&gt;" +
+                   STSHtmlEncode(item.ContractStatus) + "&lt;/p&gt;&lt;/div&gt;";
+        }
+    }
+};
+SPClientTemplates.TemplateManager.RegisterTemplateOverrides(overrides);</code></pre>
+        <p class="code-caption">STSHtmlEncode is the built-in encoder SharePoint loads on classic pages.</p>
+
+        <h2>Targeting your override</h2>
+        <p>You can attach JSLink at several scopes, which determines where the override applies:</p>
+        <ul>
+            <li><strong>Field</strong> — set the field's <code>JSLink</code> property, and the override applies everywhere that field renders.</li>
+            <li><strong>List View Web Part</strong> — set JSLink in the web part properties to affect a single view on a single page.</li>
+            <li><strong>Content type</strong> — affects forms for items of that type.</li>
+        </ul>
+        <p>The value uses <code>~</code> tokens so it resolves correctly regardless of site URL, and can chain multiple files with <code>|</code>:</p>
+
+        <pre><code>~sitecollection/Style Library/csr/status-field.js</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Set JSLink at scale with CSOM/PnP: <code>Set-PnPField -Identity "ContractStatus" -Values @{ JSLink = "~sitecollection/Style Library/csr/status-field.js" }</code>. That makes your formatting deployable and repeatable rather than hand-clicked.</span>
+        </div>
+
+        <h2>The honest caveats</h2>
+        <ul>
+            <li><strong>Classic only.</strong> CSR does not run on modern pages. The modern equivalent for column display is <strong>JSON column formatting</strong> (covered in a later article); for richer UI it's SPFx.</li>
+            <li><strong>Fragile across updates.</strong> Because you're hooking an internal rendering pipeline, heavy customisations can break when the platform changes.</li>
+            <li><strong>No build tooling.</strong> It's raw JavaScript dropped in a library — fine for small overrides, unwieldy for anything large.</li>
+        </ul>
+
+        <h2>Why it still earns a place</h2>
+        <p>If you support classic SharePoint — and many enterprises still run classic team sites and publishing portals — JSLink/CSR remains the lightest way to restyle a column or view without deploying a solution. And conceptually it set the stage for what came next: declarative JSON formatting took the same "format this column in the browser" idea and made it codeless, while SPFx took the "run my JavaScript on the page" idea and gave it a real toolchain. Knowing CSR makes both of those successors click into place.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/jslink-client-side-rendering.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

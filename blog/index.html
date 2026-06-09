@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | Dhaval Shah — SharePoint, Agentic AI & Azure</title>
+    <meta name="description" content="Technical articles by Dhaval Shah on SharePoint development, SPFx, Microsoft Graph, Agentic AI, Azure AI Foundry, and cloud architecture.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Blog | Dhaval Shah — SharePoint, Agentic AI & Azure">
+    <meta property="og:description" content="Deep-dives on SharePoint development, SPFx, Microsoft Graph, RAG, and cloud architecture.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Shared blog styles -->
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#certifications">Certifications</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- Page Hero -->
+<header class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-hero-label"><i class="fas fa-pen-nib"></i> Technical Writing</div>
+        <h1>SharePoint, <span>AI & Cloud</span></h1>
+        <p>A decade of field notes — from classic server-side SharePoint and SPFx to Microsoft Graph, the Power Platform, and AI-powered retrieval.</p>
+    </div>
+</header>
+
+<!-- Blog Content -->
+<main class="blog-container">
+
+    <!-- Filter Buttons -->
+    <div class="blog-filters reveal">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="server-csom">Server-Side &amp; CSOM</button>
+        <button class="filter-btn" data-filter="rest-addin">REST &amp; Add-in Model</button>
+        <button class="filter-btn" data-filter="spfx">SPFx</button>
+        <button class="filter-btn" data-filter="graph">Microsoft Graph</button>
+        <button class="filter-btn" data-filter="powershell">PowerShell</button>
+        <button class="filter-btn" data-filter="modern">Modern SharePoint</button>
+        <button class="filter-btn" data-filter="search-ai">Search &amp; AI</button>
+        <button class="filter-btn" data-filter="power-platform">Power Platform</button>
+        <button class="filter-btn" data-filter="agentic-ai">Agentic AI</button>
+        <button class="filter-btn" data-filter="prompt-engineering">Prompt Engineering</button>
+        <button class="filter-btn" data-filter="azure">Azure &amp; Certs</button>
+    </div>
+
+    <!-- ============================================================
+         Articles ordered newest-first. To add a new post, copy a
+         <a class="post-card"> block, update href/title/date/tags.
+         ============================================================ -->
+    <div class="blog-grid" id="blogGrid">
+
+        <!-- 39 -->
+        <a href="./rag-series-5-retrieval-reranking-generation.html" class="post-card reveal" data-tags="search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 9, 2026</span><span><i class="fas fa-clock"></i> 15 min</span></div>
+                <h2>RAG Explained, Part 5: Retrieval, Reranking &amp; Generation</h2>
+                <p>The finale of the RAG series: choosing top-k, hybrid search and metadata filters, reranking for precision, assembling the prompt, grounded generation with citations, and how to evaluate and tune the whole system.</p>
+                <div class="post-tags"><span class="post-tag">RAG Series</span><span class="post-tag">Search &amp; AI</span><span class="post-tag">Part 5</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 38 -->
+        <a href="./rag-series-4-vector-indexing-search.html" class="post-card reveal" data-tags="search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 6, 2026</span><span><i class="fas fa-clock"></i> 14 min</span></div>
+                <h2>RAG Explained, Part 4: Vector Indexing &amp; Similarity Search</h2>
+                <p>How "closeness" between vectors is measured with cosine similarity, what a vector database does, and how approximate nearest-neighbor search (HNSW) makes million-scale search feel instant.</p>
+                <div class="post-tags"><span class="post-tag">RAG Series</span><span class="post-tag">Search &amp; AI</span><span class="post-tag">Part 4</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 37 -->
+        <a href="./rag-series-3-embeddings-vectorization.html" class="post-card reveal" data-tags="search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 2, 2026</span><span><i class="fas fa-clock"></i> 14 min</span></div>
+                <h2>RAG Explained, Part 3: Embeddings &amp; Vectorization</h2>
+                <p>How text becomes a vector of numbers, why similar meanings sit close together in a "meaning map," how this beats keyword search, and how to choose an embedding model.</p>
+                <div class="post-tags"><span class="post-tag">RAG Series</span><span class="post-tag">Search &amp; AI</span><span class="post-tag">Part 3</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 36 -->
+        <a href="./rag-series-2-chunking.html" class="post-card reveal" data-tags="search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 27, 2026</span><span><i class="fas fa-clock"></i> 13 min</span></div>
+                <h2>RAG Explained, Part 2: Chunking — Cutting Documents the Right Way</h2>
+                <p>Why chunk size and overlap make or break retrieval, fixed vs recursive vs structure-aware vs semantic chunking, the role of metadata, and practical defaults — with worked examples and visuals.</p>
+                <div class="post-tags"><span class="post-tag">RAG Series</span><span class="post-tag">Search &amp; AI</span><span class="post-tag">Part 2</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 35 -->
+        <a href="./rag-series-1-pipeline-overview.html" class="post-card reveal" data-tags="search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 25, 2026</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>RAG Explained, Part 1: The Whole Pipeline at a Glance</h2>
+                <p>The opening of a five-part plain-English RAG series: the two phases (indexing and querying), the eight steps inside them, and a worked example carried through the whole series.</p>
+                <div class="post-tags"><span class="post-tag">RAG Series</span><span class="post-tag">Search &amp; AI</span><span class="post-tag">Part 1</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 34 -->
+        <a href="./ab-100-agentic-ai-business-solutions-architect.html" class="post-card reveal" data-tags="agentic-ai azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 18, 2026</span><span><i class="fas fa-clock"></i> 16 min</span></div>
+                <h2>AB-100 Field Notes: Architecting Agentic AI Business Solutions</h2>
+                <p>A practical study guide for AB-100: business outcomes first, agentic-first design, the Microsoft stack, data grounding and RAG, security and responsible AI, multi-agent orchestration, A2A and MCP, ALM, and measurable value.</p>
+                <div class="post-tags"><span class="post-tag">Agentic AI</span><span class="post-tag">Certification</span><span class="post-tag">AB-100</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 33 -->
+        <a href="./pl-400-power-platform-developer-guide.html" class="post-card reveal" data-tags="power-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 13, 2026</span><span><i class="fas fa-clock"></i> 14 min</span></div>
+                <h2>PL-400 Field Notes: A Developer's Guide to the Power Platform Developer Exam</h2>
+                <p>A practical study guide for PL-400: the five skill areas, configure-before-code, choosing plug-ins vs Power Automate vs Azure Functions, the plug-in execution pipeline, PCF components, solutions and ALM, and Dataverse integrations.</p>
+                <div class="post-tags"><span class="post-tag">Power Platform</span><span class="post-tag">Certification</span><span class="post-tag">PL-400</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 32 -->
+        <a href="./az-900-azure-fundamentals.html" class="post-card reveal" data-tags="azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 8, 2026</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>AZ-900: A Practical Guide to Microsoft Azure Fundamentals</h2>
+                <p>A practical roadmap for passing AZ-900: cloud concepts and service models, core Azure services, security and identity, governance, pricing and cost management, SLAs, support plans, and a structured study plan.</p>
+                <div class="post-tags"><span class="post-tag">Azure</span><span class="post-tag">Certification</span><span class="post-tag">AZ-900</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 31 -->
+        <a href="./context-windows-and-prompt-composition.html" class="post-card reveal" data-tags="prompt-engineering">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 4, 2026</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Context Is Everything: Memory, Windows &amp; What the AI Actually Sees</h2>
+                <p>How AI context works: the context window as short-term memory, what really goes into a prompt behind the scenes, hidden system instructions, and practical ways to give the model the right background.</p>
+                <div class="post-tags"><span class="post-tag">Prompt Engineering</span><span class="post-tag">Context</span><span class="post-tag">AI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 30 -->
+        <a href="./grounding-ai-with-rag.html" class="post-card reveal" data-tags="prompt-engineering search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 1, 2026</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Grounding AI with RAG: Giving the Model the Right Context</h2>
+                <p>Why AI invents answers, how retrieval-augmented generation fixes it by fetching the right documents first, and how to do a manual version yourself today in any chat assistant.</p>
+                <div class="post-tags"><span class="post-tag">Prompt Engineering</span><span class="post-tag">RAG</span><span class="post-tag">AI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 29 -->
+        <a href="./prompting-techniques-shots-chain-of-thought.html" class="post-card reveal" data-tags="prompt-engineering">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Apr 30, 2026</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>Prompting Techniques That Level You Up: Examples, Step-by-Step &amp; Building Knowledge</h2>
+                <p>A friendly tour beyond the basics: zero, one, and few-shot prompting, chain-of-thought step-by-step reasoning, and the generated-knowledge approach — and when to reach for each.</p>
+                <div class="post-tags"><span class="post-tag">Prompt Engineering</span><span class="post-tag">Techniques</span><span class="post-tag">AI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 28 -->
+        <a href="./six-habits-of-effective-prompts.html" class="post-card reveal" data-tags="prompt-engineering">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Apr 9, 2026</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Six Habits of Effective Prompts: A Practical Checklist</h2>
+                <p>Six repeatable habits that make any AI prompt better: clear instructions, references, breaking work into steps, letting the model think, using the right tools, and checking your results — with a before-and-after example.</p>
+                <div class="post-tags"><span class="post-tag">Prompt Engineering</span><span class="post-tag">Best Practices</span><span class="post-tag">AI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 27 -->
+        <a href="./prompt-engineering-vague-to-specific.html" class="post-card reveal" data-tags="prompt-engineering">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Mar 12, 2026</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>What Prompt Engineering Really Is (and Why Vague Prompts Fail)</h2>
+                <p>A plain-English guide to prompt engineering: what it is, why vague prompts produce useless answers, and how the same question gets dramatically better as you add context, role, and constraints.</p>
+                <div class="post-tags"><span class="post-tag">Prompt Engineering</span><span class="post-tag">Fundamentals</span><span class="post-tag">AI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 26 -->
+        <a href="./agentic-ai-azure-ai-foundry.html" class="post-card reveal" data-tags="agentic-ai search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Feb 18, 2026</span><span><i class="fas fa-clock"></i> 12 min</span></div>
+                <h2>Building Agentic AI with Azure AI Foundry: Agents, Tools &amp; Orchestration</h2>
+                <p>What agentic AI really means and how to build it on Azure AI Foundry: the Agent Service, threads and runs, tool calling, grounding with knowledge, multi-agent orchestration, tracing, and evaluation.</p>
+                <div class="post-tags"><span class="post-tag">Agentic AI</span><span class="post-tag">Azure AI Foundry</span><span class="post-tag">Orchestration</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 25 -->
+        <a href="./copilot-studio-ai-power-platform.html" class="post-card reveal" data-tags="power-platform search-ai">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Apr 16, 2025</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>Building Agents with Copilot Studio: Topics, Knowledge &amp; Actions</h2>
+                <p>Build low-code AI agents in Copilot Studio: authored topics and trigger phrases, generative answers grounded on your data, calling flows and connectors, and generative orchestration.</p>
+                <div class="post-tags"><span class="post-tag">Copilot Studio</span><span class="post-tag">AI</span><span class="post-tag">Power Platform</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 24 -->
+        <a href="./power-platform-governance-alm.html" class="post-card reveal" data-tags="power-platform">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Nov 7, 2024</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>Power Platform Governance &amp; ALM: Environments, Solutions, Pipelines</h2>
+                <p>Run Power Platform like a pro: environment strategy, managed vs unmanaged solutions, environment variables and connection references, Pipelines, and DLP policies.</p>
+                <div class="post-tags"><span class="post-tag">Governance</span><span class="post-tag">ALM</span><span class="post-tag">Solutions</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 23 -->
+        <a href="./dataverse-data-modeling-relationships.html" class="post-card reveal" data-tags="power-platform">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 9, 2024</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>Dataverse Data Modeling: Tables, Columns &amp; Relationships</h2>
+                <p>Model business data properly in Dataverse: tables and columns, data types, choices, keys, 1:N and N:N relationships, rollups, business rules, and the row-level security model.</p>
+                <div class="post-tags"><span class="post-tag">Dataverse</span><span class="post-tag">Data Modeling</span><span class="post-tag">Power Platform</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 22 -->
+        <a href="./power-automate-cloud-flows-approvals.html" class="post-card reveal" data-tags="power-platform">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jan 23, 2024</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Power Automate Cloud Flows &amp; Approvals, End to End</h2>
+                <p>Design real-world cloud flows: trigger types, the Approvals connector, Start and wait for an approval, branching on outcomes, expressions, and resilient Try/Catch error scopes.</p>
+                <div class="post-tags"><span class="post-tag">Power Automate</span><span class="post-tag">Approvals</span><span class="post-tag">Cloud Flows</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 21 -->
+        <a href="./power-apps-canvas-fundamentals.html" class="post-card reveal" data-tags="power-platform">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Aug 14, 2023</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Power Apps Canvas Fundamentals: Screens, Controls &amp; Power Fx</h2>
+                <p>Build your first canvas app the right way: data sources, galleries and forms, Power Fx formulas, variables and collections, delegation pitfalls, and Patch.</p>
+                <div class="post-tags"><span class="post-tag">Power Apps</span><span class="post-tag">Canvas</span><span class="post-tag">Power Fx</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 20 -->
+        <a href="./sharepoint-search-to-rag.html" class="post-card reveal" data-tags="search-ai modern">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 23, 2023</span><span><i class="fas fa-clock"></i> 11 min</span></div>
+                <h2>From SharePoint Search to RAG: Indexing, Enrichment &amp; the Road to AI Retrieval</h2>
+                <p>How classic SharePoint Search concepts — crawling, managed properties, and content enrichment — map directly onto modern vector search and Retrieval-Augmented Generation pipelines.</p>
+                <div class="post-tags"><span class="post-tag">Search</span><span class="post-tag">RAG</span><span class="post-tag">AI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 19 -->
+        <a href="./modern-sharepoint-performance-governance.html" class="post-card reveal" data-tags="modern">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Aug 30, 2022</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Performance &amp; Governance Best Practices for Modern SharePoint</h2>
+                <p>Taming the 5,000-item list view threshold, indexed columns, throttling (429s), and a practical governance checklist for SharePoint Online at enterprise scale.</p>
+                <div class="post-tags"><span class="post-tag">Governance</span><span class="post-tag">Throttling</span><span class="post-tag">Large Lists</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 18 -->
+        <a href="./spfx-azure-ad-secured-apis.html" class="post-card reveal" data-tags="spfx graph">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Feb 14, 2022</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Securing a Custom API for SPFx with Azure AD &amp; Azure Functions</h2>
+                <p>End-to-end token flow: register an Azure AD app, expose a scope, call it from SPFx with <code>AadHttpClient</code>, and validate the bearer token in an Azure Function backend.</p>
+                <div class="post-tags"><span class="post-tag">SPFx</span><span class="post-tag">Azure AD</span><span class="post-tag">Azure Functions</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 17 -->
+        <a href="./microsoft-graph-sharepoint-solutions.html" class="post-card reveal" data-tags="graph">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Sep 21, 2021</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Building SharePoint Solutions with Microsoft Graph API</h2>
+                <p>Navigating sites, lists, and drives through Graph — resolving site IDs, working with list items and files, and using delta queries to track changes efficiently.</p>
+                <div class="post-tags"><span class="post-tag">Microsoft Graph</span><span class="post-tag">Delta Query</span><span class="post-tag">REST</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 16 -->
+        <a href="./sharepoint-power-automate.html" class="post-card reveal" data-tags="modern">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Apr 6, 2021</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>Integrating SharePoint with Power Automate: Patterns &amp; Pitfalls</h2>
+                <p>Trigger conditions, concurrency control, the <em>Send an HTTP request to SharePoint</em> action, and how to avoid infinite trigger loops in production flows.</p>
+                <div class="post-tags"><span class="post-tag">Power Automate</span><span class="post-tag">Workflows</span><span class="post-tag">REST</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 15 -->
+        <a href="./column-view-formatting-json.html" class="post-card reveal" data-tags="modern">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Nov 17, 2020</span><span><i class="fas fa-clock"></i> 8 min</span></div>
+                <h2>Column &amp; View Formatting with JSON — No Code Required</h2>
+                <p>Transform list columns and views with declarative JSON: conditional colors, data bars, action buttons, and hyperlinks, all without deploying a single custom component.</p>
+                <div class="post-tags"><span class="post-tag">Column Formatting</span><span class="post-tag">JSON</span><span class="post-tag">Modern UI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 14 -->
+        <a href="./sharepoint-webhooks-at-scale.html" class="post-card reveal" data-tags="graph modern">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jul 28, 2020</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>SharePoint Webhooks at Scale with Azure Functions</h2>
+                <p>The validation handshake, managing subscriptions and their 180-day expiry, and processing change notifications reliably with <code>GetChanges</code> and a storage queue.</p>
+                <div class="post-tags"><span class="post-tag">Webhooks</span><span class="post-tag">Azure Functions</span><span class="post-tag">REST</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 13 -->
+        <a href="./pnp-provisioning-engine.html" class="post-card reveal" data-tags="powershell modern">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Mar 9, 2020</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>Repeatable Site Provisioning with the PnP Provisioning Engine</h2>
+                <p>Capture a site as a reusable template, parameterize it with tokens, and re-apply it across tenants — plus where site designs and site scripts fit in.</p>
+                <div class="post-tags"><span class="post-tag">PnP</span><span class="post-tag">Provisioning</span><span class="post-tag">PowerShell</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 12 -->
+        <a href="./theming-fluent-ui-spfx.html" class="post-card reveal" data-tags="spfx">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Oct 29, 2019</span><span><i class="fas fa-clock"></i> 8 min</span></div>
+                <h2>Theming &amp; Fluent UI in SPFx: Building Accessible Web Parts</h2>
+                <p>Consume the section theme via <code>IReadonlyTheme</code>, react to theme changes, and build web parts that look native in any SharePoint site or section background.</p>
+                <div class="post-tags"><span class="post-tag">SPFx</span><span class="post-tag">Fluent UI</span><span class="post-tag">Theming</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 11 -->
+        <a href="./calling-microsoft-graph-from-spfx.html" class="post-card reveal" data-tags="spfx graph">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 11, 2019</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>Securely Calling Microsoft Graph from SPFx</h2>
+                <p>Using <code>MSGraphClientV3</code> and <code>AadHttpClient</code>, requesting API permissions in the package manifest, and the tenant-level approval flow in the API access page.</p>
+                <div class="post-tags"><span class="post-tag">SPFx</span><span class="post-tag">Microsoft Graph</span><span class="post-tag">AAD</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 10 -->
+        <a href="./spfx-extensions.html" class="post-card reveal" data-tags="spfx">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jan 15, 2019</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>SPFx Extensions: Application Customizers, Command Sets &amp; Field Customizers</h2>
+                <p>Inject persistent headers and footers, add commands to list toolbars, and render custom field markup — the three extension types every modern SharePoint dev needs.</p>
+                <div class="post-tags"><span class="post-tag">SPFx</span><span class="post-tag">Extensions</span><span class="post-tag">Modern UI</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 9 -->
+        <a href="./spfx-react-pnpjs.html" class="post-card reveal" data-tags="spfx">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Aug 23, 2018</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Building SPFx Web Parts with React &amp; PnPjs</h2>
+                <p>Wire up a React web part, read and write list data fluently with PnPjs, and use the property pane to make your component configurable for site owners.</p>
+                <div class="post-tags"><span class="post-tag">SPFx</span><span class="post-tag">React</span><span class="post-tag">PnPjs</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 8 -->
+        <a href="./getting-started-with-spfx.html" class="post-card reveal" data-tags="spfx">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Apr 17, 2018</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>Getting Started with the SharePoint Framework (SPFx)</h2>
+                <p>Set up the toolchain (Node, Yeoman, gulp), scaffold your first client-side web part, understand its anatomy, and test it in the local and hosted workbench.</p>
+                <div class="post-tags"><span class="post-tag">SPFx</span><span class="post-tag">Yeoman</span><span class="post-tag">Toolchain</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 7 -->
+        <a href="./jslink-client-side-rendering.html" class="post-card reveal" data-tags="server-csom">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Dec 4, 2017</span><span><i class="fas fa-clock"></i> 8 min</span></div>
+                <h2>JSLink &amp; Client-Side Rendering for Custom List Views</h2>
+                <p>Before SPFx, JSLink let us override how fields and views rendered with pure JavaScript. A look at the CSR pipeline — still useful for classic sites today.</p>
+                <div class="post-tags"><span class="post-tag">JSLink</span><span class="post-tag">CSR</span><span class="post-tag">Classic</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 6 -->
+        <a href="./remote-event-receivers-webhooks.html" class="post-card reveal" data-tags="rest-addin">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Sep 12, 2017</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>Remote Event Receivers in Provider-Hosted Add-ins</h2>
+                <p>Moving server-side event logic to the cloud: wiring up remote event receivers, handling the SOAP notification payload, and why webhooks became the better path.</p>
+                <div class="post-tags"><span class="post-tag">Add-in Model</span><span class="post-tag">RER</span><span class="post-tag">Webhooks</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 5 -->
+        <a href="./mastering-sharepoint-rest-api.html" class="post-card reveal" data-tags="rest-addin">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> May 30, 2017</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Mastering the SharePoint REST API</h2>
+                <p>CRUD against lists and items, shaping payloads with <code>$select</code> and <code>$expand</code>, the request digest, and trimming response bloat with OData metadata levels.</p>
+                <div class="post-tags"><span class="post-tag">REST</span><span class="post-tag">OData</span><span class="post-tag">JavaScript</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 4 -->
+        <a href="./powershell-for-sharepoint-developers.html" class="post-card reveal" data-tags="powershell">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Feb 19, 2017</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>PowerShell for SharePoint Developers &amp; Consultants</h2>
+                <p>From the SharePoint Online Management Shell to PnP PowerShell — bulk provisioning lists and fields, automating site lifecycles, and scripting content types.</p>
+                <div class="post-tags"><span class="post-tag">PowerShell</span><span class="post-tag">PnP</span><span class="post-tag">Automation</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 3 -->
+        <a href="./farm-solutions-to-add-in-model.html" class="post-card reveal" data-tags="rest-addin">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Nov 8, 2016</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Migrating from Full-Trust Farm Solutions to the Add-in Model</h2>
+                <p>Why full-trust code became a dead end, how provider-hosted add-ins work with OAuth and ACS, and a pragmatic strategy for refactoring legacy WSP solutions.</p>
+                <div class="post-tags"><span class="post-tag">Add-in Model</span><span class="post-tag">OAuth</span><span class="post-tag">Migration</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 2 -->
+        <a href="./csom-batching-performance.html" class="post-card reveal" data-tags="server-csom rest-addin">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jul 22, 2016</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>CSOM Deep Dive: Batching Requests for Performance</h2>
+                <p>How the Client-Side Object Model batches operations, why one well-formed <code>ExecuteQuery</code> beats ten chatty ones, and patterns for throttling-safe bulk work.</p>
+                <div class="post-tags"><span class="post-tag">CSOM</span><span class="post-tag">Performance</span><span class="post-tag">.NET</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 1 -->
+        <a href="./sharepoint-server-side-event-receivers.html" class="post-card reveal" data-tags="server-csom">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Mar 14, 2016</span><span><i class="fas fa-clock"></i> 9 min</span></div>
+                <h2>Building Robust SharePoint Server-Side Event Receivers</h2>
+                <p>Synchronous vs. asynchronous events, avoiding the dreaded recursion loop with <code>EventFiringEnabled</code>, and writing event receivers that don't break under load.</p>
+                <div class="post-tags"><span class="post-tag">Event Receivers</span><span class="post-tag">Server-Side</span><span class="post-tag">.NET</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    // Navbar scroll
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+
+    // Mobile nav toggle
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+
+    // Dark mode (shared localStorage key with main site)
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') {
+        document.body.classList.add('dark-mode');
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+    }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+
+    // Scroll reveal
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // Tag filtering
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.post-card[data-tags]');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            cards.forEach(card => {
+                const tags = card.dataset.tags || '';
+                card.style.display = (filter === 'all' || tags.split(' ').includes(filter)) ? '' : 'none';
+            });
+        });
+    });
+</script>
+</body>
+</html>

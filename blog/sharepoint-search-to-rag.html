@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From SharePoint Search to RAG: Indexing, Enrichment & AI Retrieval | Dhaval Shah</title>
+    <meta name="description" content="How SharePoint search — crawling, managed properties, the search schema, and content enrichment — maps directly onto modern RAG concepts like chunking, embeddings, and vector retrieval.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/sharepoint-search-to-rag.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="From SharePoint Search to RAG: Indexing, Enrichment & the Road to AI Retrieval">
+    <meta property="og:description" content="Crawling, managed properties, content enrichment — and how they map onto chunking, embeddings, and RAG.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/sharepoint-search-to-rag.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Search</span>
+            <span class="article-tag">RAG</span>
+            <span class="article-tag">AI</span>
+        </div>
+        <h1>From SharePoint Search to RAG: Indexing, Enrichment &amp; the Road to AI Retrieval</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 23, 2023</span>
+            <span><i class="fas fa-clock"></i> 11 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">If you've spent years configuring SharePoint search — crawling content, mapping managed properties, tuning relevance — you already understand the hard part of retrieval-augmented generation (RAG). The vocabulary has changed (embeddings, chunks, vectors), but the architecture is strikingly familiar. This final article connects the SharePoint search you know to the AI retrieval systems everyone's building now, and shows why SharePoint pros are unusually well-prepared for it.</p>
+
+        <h2>What SharePoint search actually does</h2>
+        <p>SharePoint search is a full retrieval pipeline, and every stage has a RAG analogue:</p>
+        <ul>
+            <li><strong>Crawling</strong> — a crawler walks sites, lists, and libraries, extracting text and metadata from documents (Word, PDF, etc.) via format handlers (iFilters).</li>
+            <li><strong>Content processing</strong> — extracted text is parsed, words are tokenised, and properties are mapped.</li>
+            <li><strong>The index</strong> — processed content is stored in an inverted index optimised for fast keyword lookup.</li>
+            <li><strong>Query &amp; ranking</strong> — a query is parsed and matched against the index, and results are ranked by a relevance model.</li>
+        </ul>
+
+        <h2>Crawled vs managed properties</h2>
+        <p>The heart of SharePoint search configuration is the <strong>search schema</strong>. When the crawler finds content, every column and metadata field becomes a <strong>crawled property</strong>. Crawled properties aren't directly searchable in a useful way until you map them to <strong>managed properties</strong> — named, typed properties you can search, filter, sort, and refine on.</p>
+
+        <pre><code>Crawled property:   ows_ContractStatus  (raw, from the column)
+        │  map in the search schema
+        ▼
+Managed property:   ContractStatus  (Queryable, Refinable, Retrievable)</code></pre>
+
+        <p>Setting a managed property as <em>Queryable</em>, <em>Refinable</em>, <em>Sortable</em>, or <em>Retrievable</em> is exactly the schema design you do in a search index today — deciding which fields are searchable, which are facets/filters, and which come back in results. In Azure AI Search you make the identical decisions with field attributes (<code>searchable</code>, <code>filterable</code>, <code>facetable</code>, <code>retrievable</code>).</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>The managed-property model is structured metadata-driven retrieval. Designing which SharePoint columns become refiners is the same skill as designing filterable/facetable fields in a vector index — you're deciding how users (or an LLM) will narrow the corpus before ranking.</span>
+        </div>
+
+        <h2>Content enrichment: the original "embeddings step"</h2>
+        <p>SharePoint Server let you inject custom processing into the indexing pipeline via the <strong>Content Enrichment Web Service (CEWS)</strong>. During crawl, content was sent to your web service, which could read managed properties, compute new ones, and return them to be indexed — classify documents, extract entities, score sentiment, clean text.</p>
+
+        <p>That is conceptually identical to the <strong>enrichment / embedding stage</strong> of a modern RAG ingestion pipeline:</p>
+
+        <pre><code>SharePoint (CEWS)                 Modern RAG pipeline
+─────────────────                 ───────────────────
+Crawl document            →       Load document
+Send text to web service  →       Send chunk to embedding model
+Compute managed props     →       Compute vector + metadata
+Return to indexer         →       Upsert into vector store</code></pre>
+
+        <p>The instinct a search consultant has — "intercept content during ingestion, enrich it, and store the enrichment alongside the original for retrieval" — is precisely the RAG ingestion pattern.</p>
+
+        <h2>The RAG pipeline, in SharePoint terms</h2>
+        <p>A retrieval-augmented generation system has four stages. Each one has a direct SharePoint-search ancestor:</p>
+        <table>
+            <thead><tr><th>RAG stage</th><th>What it does</th><th>SharePoint analogue</th></tr></thead>
+            <tbody>
+                <tr><td>Chunking</td><td>Split documents into passages</td><td>Content processing / tokenisation</td></tr>
+                <tr><td>Embedding</td><td>Convert each chunk to a vector</td><td>Content enrichment (CEWS)</td></tr>
+                <tr><td>Indexing</td><td>Store vectors + metadata</td><td>The managed-property index</td></tr>
+                <tr><td>Retrieval</td><td>Find the most relevant chunks for a query</td><td>Query + relevance ranking</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Why chunking matters (and SharePoint hints at it)</h3>
+        <p>RAG splits documents into chunks because an LLM has a finite context window and because smaller, focused passages retrieve more precisely. SharePoint search already broke documents into searchable units and ranked passages for query matching — chunking is the same idea, tuned for a different consumer (a language model instead of a results page).</p>
+
+        <h2>Keyword vs vector — and hybrid</h2>
+        <p>The genuine leap is <strong>how</strong> relevance is computed. SharePoint's index is fundamentally <strong>lexical</strong>: it matches terms (with stemming, synonyms, and a ranking model on top). RAG retrieval is typically <strong>semantic</strong>: it compares the <em>meaning</em> of the query and chunks using vector similarity, so "how do I expense a flight" matches a document titled "travel reimbursement policy" even with no shared keywords.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>The best modern retrieval is <strong>hybrid</strong> — combine lexical (keyword/BM25) and vector similarity, then re-rank. That's not a rejection of SharePoint search; it's an extension of it. Your years of relevance tuning are directly relevant to getting the lexical half — and the metadata filtering — right.</span>
+        </div>
+
+        <h2>Building RAG over SharePoint content today</h2>
+        <p>The practical pattern for a SharePoint-grounded AI assistant:</p>
+        <ol>
+            <li><strong>Acquire content</strong> via Microsoft Graph (sites/drives/lists) — including delta queries to keep the index fresh, exactly like an incremental crawl.</li>
+            <li><strong>Chunk and embed</strong> each document, preserving SharePoint metadata (site, author, status, sensitivity) as filterable fields.</li>
+            <li><strong>Index</strong> the vectors and metadata in a vector store (e.g. Azure AI Search with vector + semantic ranking).</li>
+            <li><strong>Retrieve</strong> with a hybrid query, <strong>trim by permissions</strong>, and pass the top chunks to the LLM as grounding context.</li>
+        </ol>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Security trimming is non-negotiable.</strong> SharePoint search has always trimmed results to what the user may see. A RAG system over enterprise content <em>must</em> do the same — store ACL/permission metadata with each chunk and filter on the user's identity at query time, or your assistant will happily quote documents the user was never allowed to read.</span>
+        </div>
+
+        <h2>The throughline</h2>
+        <p>Across this whole series we've traced SharePoint development from server-side event receivers to the cloud, through the add-in model, REST, SPFx, Microsoft Graph, and secured APIs. RAG is the next chapter, not a departure: ingest content, enrich it, index it with the right metadata, retrieve it relevantly, and respect permissions throughout. Every one of those is something SharePoint practitioners have done for years. The models are new; the discipline is the one you already have. That's why the move from SharePoint search to AI retrieval is less a leap than a natural next step — and why the developers and consultants who mastered the platform are exactly the people best placed to build what comes next.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/sharepoint-search-to-rag.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSOM Deep Dive: Batching Requests for Performance | Dhaval Shah</title>
+    <meta name="description" content="How the SharePoint Client-Side Object Model batches operations, why one ExecuteQuery beats many, request shaping with Include, and throttling-safe bulk patterns.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/csom-batching-performance.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="CSOM Deep Dive: Batching Requests for Performance">
+    <meta property="og:description" content="Why one well-formed ExecuteQuery beats ten chatty round-trips, and patterns for throttling-safe bulk work.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/csom-batching-performance.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">CSOM</span>
+            <span class="article-tag">Performance</span>
+            <span class="article-tag">.NET</span>
+        </div>
+        <h1>CSOM Deep Dive: Batching Requests for Performance</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> July 22, 2016</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The Client-Side Object Model (CSOM) is how managed code talks to SharePoint from outside the farm — and increasingly from outside the network entirely, against SharePoint Online. Its defining characteristic is that nothing happens until you call <code>ExecuteQuery</code>. Understand that one fact and you can write CSOM that is both correct and fast; ignore it and you will write code that makes dozens of round-trips when one would do.</p>
+
+        <h2>How CSOM actually works</h2>
+        <p>Every CSOM call you make against a <code>ClientContext</code> is <em>queued</em>, not executed. You build up a batch of operations, then send them all to the server in a single request when you call <code>ExecuteQuery()</code> (or <code>ExecuteQueryAsync()</code>). The server processes the batch, returns the results in one response, and the client populates your objects.</p>
+        <p>This is why you must explicitly <code>Load</code> the properties you intend to read. The proxy doesn't fetch anything until you ask and then execute:</p>
+
+        <pre><code>using (var ctx = new ClientContext("https://contoso.sharepoint.com/sites/ops"))
+{
+    ctx.Credentials = new SharePointOnlineCredentials(user, securePassword);
+
+    Web web = ctx.Web;
+    ctx.Load(web, w =&gt; w.Title, w =&gt; w.Url);   // queue: load two properties
+
+    ctx.ExecuteQuery();                          // one round-trip
+
+    Console.WriteLine(web.Title);                // now populated
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Accessing a property you never <code>Load</code>ed throws <code>PropertyOrFieldNotInitializedException</code>. This is CSOM telling you "you never asked me to fetch that."</span>
+        </div>
+
+        <h2>The chatty anti-pattern</h2>
+        <p>Here is the mistake that tanks performance — calling <code>ExecuteQuery</code> inside a loop:</p>
+
+        <pre><code>// DON'T: one round-trip per item — slow and throttling-prone
+foreach (var id in itemIds)
+{
+    ListItem item = list.GetItemById(id);
+    ctx.Load(item);
+    ctx.ExecuteQuery();          // N network calls!
+    Console.WriteLine(item["Title"]);
+}</code></pre>
+
+        <p>Against SharePoint Online, with network latency of 50–150 ms per call, a thousand items means minutes of wall-clock time and a high chance of being throttled. Batch the loads instead and execute once:</p>
+
+        <pre><code>// DO: queue all loads, execute one batch
+var loaded = new List&lt;ListItem&gt;();
+foreach (var id in itemIds)
+{
+    ListItem item = list.GetItemById(id);
+    ctx.Load(item, i =&gt; i["Title"]);
+    loaded.Add(item);
+}
+ctx.ExecuteQuery();              // one network call for the whole set
+
+foreach (var item in loaded)
+    Console.WriteLine(item["Title"]);</code></pre>
+
+        <h2>Shape your requests: load only what you need</h2>
+        <p>By default <code>Load</code> on a collection returns every field of every item — a lot of wasted bytes. Use lambda projections and <code>Include</code> to request just the columns you want:</p>
+
+        <pre><code>CamlQuery query = CamlQuery.CreateAllItemsQuery(2000);
+ListItemCollection items = list.GetItems(query);
+
+ctx.Load(items,
+    coll =&gt; coll.Include(
+        i =&gt; i.Id,
+        i =&gt; i["Title"],
+        i =&gt; i["Status"]));      // only these three fields come back
+
+ctx.ExecuteQuery();</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Trimming the projection is the single biggest payload win in CSOM. On wide lists it routinely cuts response size by 80–90%.</span>
+        </div>
+
+        <h2>Paging large lists with ListItemCollectionPosition</h2>
+        <p>SharePoint will not return an unbounded result set, and you should never ask it to. Use the row limit in your CAML and page with <code>ListItemCollectionPosition</code> until it comes back null:</p>
+
+        <pre><code>ListItemCollectionPosition position = null;
+do
+{
+    var camlQuery = new CamlQuery
+    {
+        ViewXml = "&lt;View&gt;&lt;RowLimit&gt;500&lt;/RowLimit&gt;&lt;/View&gt;",
+        ListItemCollectionPosition = position
+    };
+
+    ListItemCollection items = list.GetItems(camlQuery);
+    ctx.Load(items, i =&gt; i.ListItemCollectionPosition,
+                    i =&gt; i.Include(x =&gt; x["Title"]));
+    ctx.ExecuteQuery();
+
+    foreach (var item in items)
+        Process(item);
+
+    position = items.ListItemCollectionPosition;   // null when done
+}
+while (position != null);</code></pre>
+
+        <h2>ConditionalScope: skip work that isn't needed</h2>
+        <p><code>ConditionalScope</code> lets the server evaluate a test and only run the queued operations if the condition holds — useful for "load this only if it exists" without a separate round-trip:</p>
+
+        <pre><code>bool listExists;
+var scope = new ConditionalScope(ctx,
+    () =&gt; ctx.Web.Lists.GetByTitle("Contracts").ServerObjectIsNull.Value != true);
+
+using (scope.StartScope())
+{
+    using (scope.StartIfTrue())
+    {
+        var list = ctx.Web.Lists.GetByTitle("Contracts");
+        ctx.Load(list, l =&gt; l.ItemCount);
+    }
+}
+ctx.ExecuteQuery();
+listExists = scope.TestResult.Value;</code></pre>
+
+        <h2>Bulk writes and surviving throttling</h2>
+        <p>The same batching rule applies to writes — set all your fields and call <code>ExecuteQuery</code> once per reasonable batch (a few hundred operations), not once per item. But against SharePoint Online you must also plan for <strong>throttling</strong>: the service returns HTTP 429 (Too Many Requests) or 503 with a <code>Retry-After</code> header when you push too hard.</p>
+        <p>The correct response is to honour <code>Retry-After</code> and back off exponentially — never hammer in a tight retry loop:</p>
+
+        <pre><code>void ExecuteWithRetry(ClientContext ctx, int maxRetries = 5)
+{
+    int attempt = 0;
+    int delay = 2000; // ms
+    while (true)
+    {
+        try { ctx.ExecuteQuery(); return; }
+        catch (WebException wex)
+            when (IsThrottled(wex, out int retryAfter))
+        {
+            if (++attempt &gt; maxRetries) throw;
+            Thread.Sleep(retryAfter &gt; 0 ? retryAfter * 1000 : delay);
+            delay *= 2;   // exponential back-off
+        }
+    }
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Also decorate your traffic with a meaningful <code>User-Agent</code> (for example <code>NONISV|Contoso|OpsTool/1.0</code>). Microsoft uses it to apply more favourable throttling treatment and to help you diagnose which app is being throttled.</span>
+        </div>
+
+        <h2>Takeaways</h2>
+        <ul>
+            <li>Nothing executes until <code>ExecuteQuery</code> — batch aggressively, never call it in a loop.</li>
+            <li>Load only the properties and fields you actually read.</li>
+            <li>Page large lists with a row limit and <code>ListItemCollectionPosition</code>.</li>
+            <li>Expect throttling on SharePoint Online; honour <code>Retry-After</code> with exponential back-off.</li>
+        </ul>
+        <p>These habits scale from a quick console utility to a nightly sync job moving hundreds of thousands of items. The PnP Sites Core library (and later PnP PowerShell) bakes many of these patterns in for you — but knowing what they do under the hood is what lets you debug the day they don't.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/csom-batching-performance.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

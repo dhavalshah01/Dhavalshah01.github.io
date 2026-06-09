@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Explained, Part 4: Vector Indexing &amp; Similarity Search | Dhaval Shah</title>
+    <meta name="description" content="Part 4 of a beginner-friendly RAG series: how 'closeness' between vectors is measured (cosine similarity), what a vector database does, and how approximate nearest-neighbor search (HNSW) makes million-scale search feel instant.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/rag-series-4-vector-indexing-search.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="RAG Explained, Part 4: Vector Indexing & Similarity Search">
+    <meta property="og:description" content="How closeness is measured (cosine similarity), what a vector database does, and how HNSW makes million-scale search instant.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/rag-series-4-vector-indexing-search.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">RAG Series</span>
+            <span class="article-tag">Search &amp; AI</span>
+            <span class="article-tag">Part 4</span>
+        </div>
+        <h1>RAG Explained, Part 4: Vector Indexing &amp; Similarity Search</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 6, 2026</span>
+            <span><i class="fas fa-clock"></i> 14 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">By now we have a pile of chunks (<a href="./rag-series-2-chunking.html">Part 2</a>), each turned into a vector of numbers (<a href="./rag-series-3-embeddings-vectorization.html">Part 3</a>). This part answers the two questions that turn those vectors into a working search engine: <strong>how do we measure that two vectors are "close,"</strong> and <strong>how do we find the closest ones among millions without checking every single one?</strong> The answers are cosine similarity and a clever index called HNSW — both of which are far friendlier than they sound.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>A <strong>vector index</strong> (or vector database) stores all your chunk vectors and is purpose-built to answer one question fast: "given this query vector, which stored vectors are nearest?" Azure AI Search, for example, provides exactly this.</span>
+        </div>
+
+        <h2>Measuring "closeness" between vectors</h2>
+        <p>In Part 3 we drew chunks as dots on a meaning-map and said "find the nearest dots." But what does <em>nearest</em> mean for a list of 1,536 numbers? We need an actual measure of distance. There are a few, and you'll meet these names constantly:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Measure</th><th>Intuition</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Cosine similarity</td><td>The <em>angle</em> between two vectors — are they pointing the same way?</td><td>The default for text embeddings. Ignores length, focuses on direction (meaning).</td></tr>
+                <tr><td>Dot product</td><td>Direction <em>and</em> magnitude combined.</td><td>Fast; equivalent to cosine when vectors are normalised (most are).</td></tr>
+                <tr><td>Euclidean distance</td><td>Straight-line distance between the two dots.</td><td>Intuitive, but for text, angle usually beats raw distance.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>Why cosine, in one picture</h3>
+        <p>Cosine similarity asks: do these two vectors <em>point in the same direction?</em> Two chunks about refunds point almost the same way (small angle → similarity near 1.0). A refund chunk and a leave chunk point in very different directions (big angle → similarity near 0). It deliberately ignores how "long" a vector is, because for meaning we care about direction, not magnitude. The score runs from 1.0 (identical meaning) down toward 0 (unrelated), and the system simply ranks chunks by it.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-ruler-combined"></i> Cosine similarity to the query "return a faulty laptop?"</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="sim-rows">
+                    <div class="sim-row match">
+                        <div class="sim-doc">Refunds &amp; returns<small>chunk_01 · handbook p.12</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 91%;"></div></div>
+                        <div class="sim-score">0.91</div>
+                    </div>
+                    <div class="sim-row match">
+                        <div class="sim-doc">IT equipment policy<small>chunk_18 · handbook p.20</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 78%;"></div></div>
+                        <div class="sim-score">0.78</div>
+                    </div>
+                    <div class="sim-row">
+                        <div class="sim-doc">Expense claims<small>chunk_03 · handbook p.7</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 41%;"></div></div>
+                        <div class="sim-score">0.41</div>
+                    </div>
+                    <div class="sim-row weak">
+                        <div class="sim-doc">Parental leave<small>chunk_02 · handbook p.5</small></div>
+                        <div class="sim-track"><div class="sim-fill" style="width: 18%;"></div></div>
+                        <div class="sim-score">0.18</div>
+                    </div>
+                </div>
+                <p class="ui-caption">The system scores every chunk, sorts by score, and keeps the top few. Here the refund and IT-equipment chunks win.</p>
+            </div>
+        </div>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>You'll often see this called <strong>k-nearest-neighbor (k-NN)</strong> search: return the <em>k</em> chunks nearest to the query. If k = 3, you get the three highest-scoring chunks. We'll tune k in Part 5.</span>
+        </div>
+
+        <h2>The scaling problem</h2>
+        <p>Scoring four chunks is trivial. But a real knowledge base might hold <strong>millions</strong> of chunks. Comparing the query against every single one — called a <em>flat</em> or <em>brute-force</em> search — gives perfect results but gets painfully slow as the collection grows. Doing a million 1,536-number comparisons for every keystroke doesn't scale.</p>
+        <p>So we make a classic engineering trade: give up a tiny bit of accuracy for an enormous speed-up. Instead of checking everything (exact search), we use <strong>approximate nearest-neighbor (ANN)</strong> search, which finds <em>almost</em> always the right neighbours while looking at only a small fraction of the data.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th></th><th>Exact (flat / brute-force)</th><th>Approximate (ANN)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Accuracy</td><td>Perfect — always the true nearest</td><td>Very high — occasionally misses an edge case</td></tr>
+                <tr><td>Speed at scale</td><td>Slow; grows with collection size</td><td>Fast; barely grows with collection size</td></tr>
+                <tr><td>When to use</td><td>Small collections, or when 100% recall is critical</td><td>The default for large, production knowledge bases</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>HNSW: how approximate search stays fast</h2>
+        <p>The most popular ANN method is <strong>HNSW</strong> — Hierarchical Navigable Small World. The name is scary; the idea is delightfully simple, and there's a perfect real-world analogy: <em>travelling across a country</em>.</p>
+        <p>Suppose you're at a random town and want to reach a specific house. You don't inspect every house in the country. Instead you use layers of transport:</p>
+        <ol>
+            <li><strong>Top layer — flights.</strong> Take a long flight to land in roughly the right region of the country. A few big hops cover huge distances.</li>
+            <li><strong>Middle layer — highways.</strong> Drive the motorways to get into the right city.</li>
+            <li><strong>Bottom layer — local streets.</strong> Navigate street by street to the exact house.</li>
+        </ol>
+        <p>HNSW builds exactly this kind of multi-layer map of your vectors. The top layer has a few "long-haul" links that let a search jump across the whole space in a couple of steps; lower layers have progressively shorter, denser links for fine-grained navigation. A query starts at the top, makes a few big jumps to the right neighbourhood, then drops down layer by layer to home in on the true nearest chunks — touching only a tiny handful of vectors along the way.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-plane-up"></i> HNSW — zoom in through layers, like flights → highways → streets</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-plane"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Top layer — long hops</span><span class="flow-node-sub">A few big jumps land near the right region</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-road"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Middle layer — medium hops</span><span class="flow-node-sub">Navigate into the right neighbourhood</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-location-dot"></i></div>
+                        <div class="flow-node-text"><span class="flow-node-title">Bottom layer — short hops</span><span class="flow-node-sub">Step to the exact nearest chunks (top-k)</span></div>
+                    </div>
+                </div>
+                <p class="ui-caption">By starting coarse and refining, HNSW finds the nearest vectors among millions in milliseconds, visiting only a sliver of the data.</p>
+            </div>
+        </div>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>You don't implement HNSW — your vector store does. But knowing it exists explains two things you'll see in tuning: parameters that trade <em>index build time / memory</em> against <em>search accuracy</em>, and why search stays fast even as your collection grows from thousands to millions of chunks.</span>
+        </div>
+
+        <h2>What's actually stored in the index</h2>
+        <p>A vector index entry is more than just numbers. For each chunk you typically store three things together, and all three earn their keep:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-table-list"></i> One record in the vector index</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="schema-mock">
+                    <div class="schema-head"><i class="fas fa-database"></i> chunk_01</div>
+                    <div class="schema-row"><span class="schema-col-name"><i class="fas fa-hashtag"></i> vector</span><span class="col-type">float[1536] — used for similarity search</span></div>
+                    <div class="schema-row"><span class="schema-col-name"><i class="fas fa-align-left"></i> text</span><span class="col-type">"Faulty items may be returned within 30 days…"</span></div>
+                    <div class="schema-row"><span class="schema-col-name"><i class="fas fa-tags"></i> metadata</span><span class="col-type">source, page, date, permissions</span></div>
+                </div>
+                <p class="ui-caption">The vector finds the match; the text is what we hand to the model; the metadata enables filtering and citations (Part 5).</p>
+            </div>
+        </div>
+
+        <ul>
+            <li><strong>The vector</strong> — what the similarity search actually compares against.</li>
+            <li><strong>The original chunk text</strong> — because once we've <em>found</em> a chunk, it's the human-readable text (not the numbers) that we feed to the language model.</li>
+            <li><strong>The metadata</strong> — source, page, date, and permissions from Part 2, used to filter results and to cite sources.</li>
+        </ul>
+
+        <h2>Keeping the index fresh</h2>
+        <p>Your documents change — policies get updated, pages get added, old ones retired. A production index needs a refresh strategy so it doesn't drift out of date:</p>
+        <ul>
+            <li><strong>Add</strong> new or changed documents by chunking and embedding just those, then inserting their vectors.</li>
+            <li><strong>Update</strong> a changed chunk by re-embedding it and replacing the old vector.</li>
+            <li><strong>Delete</strong> vectors whose source content was removed, so stale answers can't surface.</li>
+        </ul>
+        <p>Tools like Azure AI Search support <em>indexers</em> that watch a source (such as a SharePoint library or blob storage) and keep the index in sync automatically, including change detection — so you rarely rebuild from scratch.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Remember the rule from Part 3: if you ever change the <em>embedding model</em>, every vector in the index must be regenerated. A model change isn't an update — it's a full re-index, because old and new vectors live in different meaning-spaces.</span>
+        </div>
+
+        <h2>Where we are now</h2>
+        <p>We can now take a question, embed it, and retrieve the top few most-relevant chunks from millions in milliseconds. That's a complete retrieval engine. What remains is the part the user actually sees: turning those retrieved chunks into a trustworthy answer — and squeezing out the last bit of accuracy with hybrid search and reranking.</p>
+
+        <h2>What's next</h2>
+        <p><strong>Part 5: Retrieval, Reranking &amp; Generation</strong> closes the series. We'll choose how many chunks to fetch (top-k), combine vector search with keyword search (hybrid) and metadata filters, add a reranking pass that reorders candidates with a smarter model, then assemble the final prompt so the model answers <em>only</em> from the retrieved context — with citations. That's the whole pipeline, end to end.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/rag-series-4-vector-indexing-search.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

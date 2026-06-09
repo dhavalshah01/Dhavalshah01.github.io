@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerShell for SharePoint Developers & Consultants | Dhaval Shah</title>
+    <meta name="description" content="From the SharePoint Online Management Shell to PnP PowerShell — bulk-provision lists and fields, automate site lifecycles, and script content types reliably.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/powershell-for-sharepoint-developers.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="PowerShell for SharePoint Developers & Consultants">
+    <meta property="og:description" content="SPO Management Shell vs PnP PowerShell — automate provisioning, site lifecycles, and content types.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/powershell-for-sharepoint-developers.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">PowerShell</span>
+            <span class="article-tag">PnP</span>
+            <span class="article-tag">Automation</span>
+        </div>
+        <h1>PowerShell for SharePoint Developers &amp; Consultants</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> February 19, 2017</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Anything you do twice in the SharePoint admin UI, you should script. PowerShell is the difference between a consultant who spends an afternoon clicking through site settings and one who runs a tested script across fifty sites in two minutes. This article maps out the SharePoint PowerShell landscape and shows the patterns I reach for on almost every engagement.</p>
+
+        <h2>Know your modules</h2>
+        <p>There isn't one "SharePoint PowerShell" — there are several, and choosing the right one matters:</p>
+        <ul>
+            <li><strong>SharePoint Online Management Shell</strong> (<code>Microsoft.Online.SharePoint.PowerShell</code>) — tenant administration: creating site collections, setting tenant policies, managing sharing. Connects with <code>Connect-SPOService</code>.</li>
+            <li><strong>PnP PowerShell</strong> (<code>SharePointPnPPowerShellOnline</code>) — the developer/consultant workhorse: lists, fields, content types, pages, provisioning templates. Connects with <code>Connect-PnPOnline</code>.</li>
+            <li><strong>SharePoint Management Shell (on-prem)</strong> — the <code>Microsoft.SharePoint.PowerShell</code> snap-in with <code>Get-SPSite</code> et al., for farm administration only.</li>
+        </ul>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>The SPO Management Shell is for <em>tenant-level</em> tasks; PnP PowerShell is for <em>everything inside a site</em>. On most projects you use both — SPO to create the site, PnP to fill it.</span>
+        </div>
+
+        <h2>Connecting</h2>
+        <pre><code># Tenant administration
+Connect-SPOService -Url "https://contoso-admin.sharepoint.com"
+
+# Site-level work with PnP
+Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/ops" -Interactive</code></pre>
+        <p class="code-caption">Prefer interactive or certificate-based auth over storing credentials in scripts.</p>
+
+        <h2>Provisioning a list with fields</h2>
+        <p>The bread-and-butter task: stand up a list with a defined schema, repeatably and idempotently. PnP makes it terse:</p>
+
+        <pre><code># Create the list only if it doesn't already exist
+$list = Get-PnPList -Identity "Contracts" -ErrorAction SilentlyContinue
+if (-not $list) {
+    $list = New-PnPList -Title "Contracts" -Template GenericList -OnQuickLaunch
+}
+
+# Add fields (Add-PnPField is safe to re-run with -ErrorAction)
+Add-PnPField -List "Contracts" -DisplayName "Contract Value" `
+    -InternalName "ContractValue" -Type Currency -AddToDefaultView
+
+Add-PnPField -List "Contracts" -DisplayName "Status" `
+    -InternalName "ContractStatus" -Type Choice `
+    -Choices "Draft","In Review","Approved","Archived" -AddToDefaultView
+
+# Index a column you'll filter on (matters for large lists)
+Set-PnPField -List "Contracts" -Identity "ContractStatus" `
+    -Values @{ Indexed = $true }</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Write provisioning scripts to be <strong>idempotent</strong> — safe to run repeatedly. Check for existence before creating, and your script doubles as both an installer and a repair tool.</span>
+        </div>
+
+        <h2>Bulk operations</h2>
+        <p>Need to update hundreds of items? Pull them once, loop, and let PnP batch the writes:</p>
+
+        <pre><code>$items = Get-PnPListItem -List "Contracts" -PageSize 500
+
+foreach ($item in $items) {
+    if ($item["ContractStatus"] -eq "Approved" -and
+        $null -eq $item["ReviewedDate"]) {
+        Set-PnPListItem -List "Contracts" -Identity $item.Id `
+            -Values @{ "ReviewedDate" = (Get-Date) } | Out-Null
+    }
+}</code></pre>
+
+        <h2>Content types the scripted way</h2>
+        <p>Content types are tedious to build by hand and error-prone to keep consistent across sites. Script them:</p>
+
+        <pre><code>$ct = New-PnPContentType -Name "Vendor Contract" `
+    -Group "Contoso Content Types" -ParentContentType (Get-PnPContentType -Identity "Document")
+
+Add-PnPFieldToContentType -Field "ContractValue" -ContentType "Vendor Contract"
+Add-PnPFieldToContentType -Field "ContractStatus" -ContentType "Vendor Contract"
+
+# Attach it to a library
+Add-PnPContentTypeToList -List "Contract Documents" -ContentType "Vendor Contract" -DefaultContentType</code></pre>
+
+        <h2>Automating the full site lifecycle</h2>
+        <p>Tie it together: create the site collection with the SPO shell, then hand off to PnP to configure it:</p>
+
+        <pre><code># 1. Create the site (tenant admin context)
+New-SPOSite -Url "https://contoso.sharepoint.com/sites/project-atlas" `
+    -Owner "admin@contoso.com" -StorageQuota 1024 `
+    -Title "Project Atlas" -Template "STS#3"
+
+# 2. Configure it (site context)
+Connect-PnPOnline -Url "https://contoso.sharepoint.com/sites/project-atlas" -Interactive
+# ... New-PnPList / Add-PnPField / Set-PnPWebTheme etc.</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Site creation in SharePoint Online is asynchronous. After <code>New-SPOSite</code>, poll with <code>Get-SPOSite</code> until status is <em>Active</em> before you try to connect and configure it, or your PnP commands may fail with a 404.</span>
+        </div>
+
+        <h2>From scripts to templates</h2>
+        <p>Once your provisioning logic grows past a few dozen lines, graduate from imperative scripts to the <strong>PnP provisioning engine</strong>: capture an entire configured site as an XML template with <code>Get-PnPProvisioningTemplate</code>, then re-apply it anywhere with <code>Apply-PnPProvisioningTemplate</code>. I cover that approach in depth in a later article — but the imperative cmdlets here remain the right tool for surgical, one-off changes and for the glue around the declarative templates.</p>
+
+        <h2>Practical habits</h2>
+        <ul>
+            <li><strong>Parameterise</strong> site URLs and titles; never hard-code a tenant.</li>
+            <li><strong>Use <code>-ErrorAction</code> deliberately</strong> — <code>SilentlyContinue</code> for "create if missing" checks, <code>Stop</code> where a failure must halt the run.</li>
+            <li><strong>Log what you change</strong> with <code>Write-Host</code> / a transcript so a consultant after you can see what the script did.</li>
+            <li><strong>Test against a dev site collection</strong> first — PowerShell will happily delete a thousand items without confirmation.</li>
+        </ul>
+
+        <p>PowerShell is the consultant's force multiplier. The investment you make turning a manual checklist into a tested script pays back on the very next environment you have to stand up.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/powershell-for-sharepoint-developers.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

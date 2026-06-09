@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Apps Canvas Fundamentals: Screens, Controls & Power Fx | Dhaval Shah</title>
+    <meta name="description" content="Build your first Power Apps canvas app the right way: data sources, galleries and forms, Power Fx formulas, variables and collections, delegation, and Patch.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/power-apps-canvas-fundamentals.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Power Apps Canvas Fundamentals: Screens, Controls & Power Fx">
+    <meta property="og:description" content="Data sources, galleries, forms, Power Fx, delegation, and Patch — a developer's mental model for canvas apps.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/power-apps-canvas-fundamentals.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Power Apps</span>
+            <span class="article-tag">Canvas</span>
+            <span class="article-tag">Power Fx</span>
+        </div>
+        <h1>Power Apps Canvas Fundamentals: Screens, Controls &amp; Power Fx</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> August 14, 2023</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">After years of writing SPFx web parts and C# event receivers, my first canvas app felt like cheating — I dragged a gallery onto a screen, pointed it at a list, and had a working mobile app before lunch. But "low-code" is not "no-thought." The developers who build canvas apps that <em>scale</em> are the ones who understand the data layer, Power Fx, and delegation. Here's the mental model I wish I'd had on day one.</p>
+
+        <h2>Canvas vs model-driven — pick the right one</h2>
+        <p>Power Apps gives you two app types, and choosing wrong is the most expensive mistake you can make:</p>
+        <ul>
+            <li><strong>Canvas apps</strong> — pixel-perfect, drag-and-drop UI over <em>any</em> data source (SharePoint, Dataverse, SQL, Excel, 1,000+ connectors). You control every control's position and behavior. Best for task-focused, mobile-first experiences.</li>
+            <li><strong>Model-driven apps</strong> — the UI is <em>generated</em> from your Dataverse data model and forms. You design data and business rules; the app shapes itself. Best for complex, relationship-heavy line-of-business systems.</li>
+        </ul>
+        <p>This article is about canvas, because that's where most people start — and where Power Fx lives.</p>
+
+        <h2>The anatomy of a canvas app</h2>
+        <p>A canvas app is a tree of <strong>screens</strong>, each holding <strong>controls</strong> (galleries, forms, labels, buttons, inputs). Controls have <strong>properties</strong>, and almost every property is set with a <strong>Power Fx formula</strong> — a declarative, Excel-like expression that recalculates automatically when its inputs change.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-mobile-screen"></i> Power Apps Studio — Contracts app</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="device-mock">
+                    <div class="device-screen">
+                        <div class="app-bar"><span>Contracts</span><i class="fas fa-plus"></i></div>
+                        <div class="app-gallery">
+                            <div class="gallery-row selected">
+                                <div class="gallery-avatar">AM</div>
+                                <div class="gallery-text"><span class="gallery-title">Acme MSA 2023</span><span class="gallery-sub">Renewal · $48,000</span></div>
+                                <span class="gallery-badge approved">Approved</span>
+                            </div>
+                            <div class="gallery-row">
+                                <div class="gallery-avatar">NB</div>
+                                <div class="gallery-text"><span class="gallery-title">Northwind SOW</span><span class="gallery-sub">New · $12,500</span></div>
+                                <span class="gallery-badge">Draft</span>
+                            </div>
+                            <div class="gallery-row">
+                                <div class="gallery-avatar">FC</div>
+                                <div class="gallery-text"><span class="gallery-title">Fabrikam NDA</span><span class="gallery-sub">New · $0</span></div>
+                                <span class="gallery-badge">Draft</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="ui-caption"><strong>Browse screen:</strong> a Gallery bound to a data source, with a row template of avatar, title, subtitle, and a status badge.</p>
+
+        <h2>Connecting data</h2>
+        <p>A canvas app talks to data through <strong>connectors</strong>. Add the SharePoint connector, point it at a site, pick the <em>Contracts</em> list, and it becomes a data source you reference by name. The gallery's <code>Items</code> property is just a formula that returns a table:</p>
+
+        <pre><code>// Gallery1.Items — show approved contracts, newest first
+SortByColumns(
+    Filter(Contracts, ContractStatus.Value = "Approved"),
+    "Modified",
+    SortOrder.Descending
+)</code></pre>
+
+        <p>Inside the gallery template you reference the current row with <code>ThisItem</code>:</p>
+
+        <pre><code>// Title label inside the gallery
+ThisItem.Title
+
+// Subtitle label
+ThisItem.ContractType.Value &amp; " · " &amp; Text(ThisItem.ContractValue, "$#,##0")</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>SharePoint <em>Choice</em> columns come through as records, not strings — that's why you write <code>ContractStatus.Value</code>, not <code>ContractStatus</code>. Forgetting <code>.Value</code> is the single most common "why is my filter broken?" issue for newcomers.</span>
+        </div>
+
+        <h2>Delegation — the concept that separates toy apps from real ones</h2>
+        <p>Here is the most important thing in this entire article. Power Apps does not pull your whole list to the device — that wouldn't scale. Instead it tries to <strong>delegate</strong> the work (filtering, sorting) to the data source, which processes it server-side and returns only matching rows. But not every function or operator <em>can</em> be delegated, and the set differs per connector.</p>
+
+        <p>When you write a formula the source can't delegate, Power Apps silently falls back to pulling only the first <strong>500 rows</strong> (raisable to 2,000 in app settings) and processing them locally. Your app looks fine in testing against a small list, then quietly returns wrong results in production.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Watch for the blue squiggly "delegation warning."</strong> For SharePoint, <code>=</code>, <code>StartsWith</code>, and basic <code>Filter</code>/<code>Sort</code> on indexed columns delegate; functions like <code>Search()</code> on some column types, or filtering across a many-lookup, often do <em>not</em>. Design your queries around the delegable set, and keep working sets under the row limit.</span>
+        </div>
+
+        <h2>Editing data: forms and Patch</h2>
+        <p>For straightforward edit screens, the <strong>Edit Form</strong> control does the heavy lifting — bind its <code>DataSource</code> and <code>Item</code>, drop in cards for each field, and call <code>SubmitForm</code> on a button. The form handles validation, required fields, and the write-back:</p>
+
+        <pre><code>// "Save" button — OnSelect
+SubmitForm(EditForm1)
+
+// Form OnSuccess — go back and confirm
+Notify("Contract saved", NotificationType.Success);
+Back()</code></pre>
+
+        <p>When you need precise control — write specific fields, create-or-update logic, no form control — use <code>Patch</code> directly:</p>
+
+        <pre><code>// Approve the selected contract without a form
+Patch(
+    Contracts,
+    Gallery1.Selected,
+    { ContractStatus: { Value: "Approved" }, ApprovedOn: Now() }
+)</code></pre>
+
+        <h2>State: variables, context, and collections</h2>
+        <p>Canvas apps are reactive, so you reach for explicit state less than you'd think — but when you do, there are three tools, and mixing them up causes real confusion:</p>
+        <table>
+            <thead><tr><th>Tool</th><th>Scope</th><th>Set with</th></tr></thead>
+            <tbody>
+                <tr><td>Global variable</td><td>Whole app</td><td><code>Set(varUser, User())</code></td></tr>
+                <tr><td>Context variable</td><td>Single screen</td><td><code>UpdateContext({ showPanel: true })</code></td></tr>
+                <tr><td>Collection</td><td>Whole app (in-memory table)</td><td><code>Collect(colCart, ThisItem)</code></td></tr>
+            </tbody>
+        </table>
+
+        <pre><code>// App.OnStart — load the current user once, globally
+Set(gblCurrentUser, User());
+
+// Pass a record to a detail screen
+Navigate(DetailScreen, ScreenTransition.Cover, { selected: Gallery1.Selected })</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Prefer the gallery's <code>.Selected</code> and direct references over stuffing everything into variables. The more you let Power Fx recalculate declaratively, the less stale-state debugging you'll do. Reach for <code>Set</code>/<code>UpdateContext</code> only for genuine UI state (a toggled panel, a loading flag).</span>
+        </div>
+
+        <h2>Publishing</h2>
+        <p>Save and <strong>Publish</strong> promotes your edits to the live version users run; <em>Save</em> alone only checkpoints your draft. Share the app with users or a security group, and — critically — they also need access to the underlying data source (the SharePoint list, the Dataverse table). The app is just the UI; permissions still live with the data.</p>
+
+        <h2>The takeaway</h2>
+        <p>A canvas app is a tree of controls whose properties are Power Fx formulas over connected data. Master four things — the data connector, <code>ThisItem</code>/<code>Selected</code> binding, <strong>delegation</strong>, and <code>Patch</code>/<code>SubmitForm</code> — and you can build genuinely production-grade apps fast. Skip delegation in particular, and you'll ship something that demos beautifully and fails the moment the list grows past 500 rows. Low-code rewards the developer who still thinks like one.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/power-apps-canvas-fundamentals.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

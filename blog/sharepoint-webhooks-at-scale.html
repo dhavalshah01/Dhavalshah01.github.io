@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharePoint Webhooks at Scale with Azure Functions | Dhaval Shah</title>
+    <meta name="description" content="A production architecture for SharePoint webhooks: the validation handshake, queue-based processing with Azure Functions, change tokens, and subscription renewal.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/sharepoint-webhooks-at-scale.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="SharePoint Webhooks at Scale with Azure Functions">
+    <meta property="og:description" content="Validation handshake, queue-based processing, change tokens, and subscription renewal.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/sharepoint-webhooks-at-scale.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Webhooks</span>
+            <span class="article-tag">Azure Functions</span>
+            <span class="article-tag">REST</span>
+        </div>
+        <h1>SharePoint Webhooks at Scale with Azure Functions</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> July 28, 2020</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Webhooks are the reliable way to react to SharePoint list changes — but only if you build the receiver correctly. SharePoint gives you about five seconds to acknowledge a notification, retries if you fail, and expects you to figure out <em>what</em> changed yourself. The proven pattern is a two-stage architecture: a fast HTTP receiver that just queues, and a separate worker that does the real work. Azure Functions are a perfect fit for both.</p>
+
+        <h2>The architecture</h2>
+        <ol>
+            <li>SharePoint posts a notification to an <strong>HTTP-triggered function</strong>.</li>
+            <li>That function validates, drops a message on a <strong>storage queue</strong>, and returns <code>200</code> immediately.</li>
+            <li>A <strong>queue-triggered function</strong> picks up the message, calls <code>GetChanges</code> from the last change token, and processes exactly what changed.</li>
+        </ol>
+        <p>This separation is the whole game: the receiver stays under the timeout no matter how slow the downstream work is, and the queue gives you retries, buffering, and parallelism for free.</p>
+
+        <h2>Stage 1: the validation handshake</h2>
+        <p>When you register a subscription, SharePoint immediately calls your URL with a <code>validationtoken</code> query string. You must echo it back as <code>text/plain</code> within 5 seconds or the subscription is rejected. The same function also handles real notifications:</p>
+
+        <pre><code>[FunctionName("SPWebhook")]
+public static async Task&lt;IActionResult&gt; Run(
+    [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req,
+    [Queue("sp-changes")] IAsyncCollector&lt;string&gt; queue,
+    ILogger log)
+{
+    // 1. Validation handshake
+    string validationToken = req.Query["validationtoken"];
+    if (!string.IsNullOrEmpty(validationToken))
+    {
+        return new ContentResult {
+            Content = validationToken,
+            ContentType = "text/plain",
+            StatusCode = 200
+        };
+    }
+
+    // 2. Real notification — queue and return fast
+    using var reader = new StreamReader(req.Body);
+    string body = await reader.ReadToEndAsync();
+    var payload = JsonConvert.DeserializeObject&lt;NotificationList&gt;(body);
+
+    foreach (var n in payload.Value)
+        await queue.AddAsync(JsonConvert.SerializeObject(n));
+
+    return new OkResult();   // ack within seconds
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Never do real work in the HTTP receiver.</strong> The notification payload tells you only the list and subscription id — not what changed. If you try to call back into SharePoint synchronously here, a slow tenant pushes you past the 5-second window, SharePoint marks the delivery failed, retries, and eventually disables your subscription after repeated failures.</span>
+        </div>
+
+        <h2>Stage 2: resolving the changes</h2>
+        <p>The notification says "list X changed." To learn <em>what</em> changed you keep a <strong>change token</strong> per list (in table storage, a database, or a config list) and call <code>GetChanges</code> from that token. PnP Core / CSOM makes this clean:</p>
+
+        <pre><code>[FunctionName("ProcessChange")]
+public static async Task Run(
+    [QueueTrigger("sp-changes")] string message, ILogger log)
+{
+    var notification = JsonConvert.DeserializeObject&lt;Notification&gt;(message);
+
+    using var ctx = GetAppOnlyContext(notification.SiteUrl);
+    var list = ctx.Web.Lists.GetById(new Guid(notification.Resource));
+
+    // Load the last token we stored for this list
+    string lastToken = await LoadChangeToken(notification.Resource);
+
+    var query = new ChangeQuery(false, true) { Item = true, Add = true, Update = true };
+    if (lastToken != null)
+        query.ChangeTokenStart = new ChangeToken { StringValue = lastToken };
+
+    var changes = list.GetChanges(query);
+    ctx.Load(changes);
+    ctx.ExecuteQuery();
+
+    foreach (ChangeItem change in changes.OfType&lt;ChangeItem&gt;())
+    {
+        // idempotent processing of change.ItemId …
+        log.LogInformation($"Item {change.ItemId} {change.ChangeType}");
+    }
+
+    // Persist the new token for next time
+    if (changes.Count &gt; 0)
+        await SaveChangeToken(notification.Resource,
+            changes.LastChangeToken.StringValue);
+}</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>The change token is the heart of reliability. Storing it means that even if several edits batch into one notification — or a delivery is retried — you process the exact delta since you last succeeded, with no gaps and no double-processing. Make your handler <strong>idempotent</strong> so a replayed message is harmless.</span>
+        </div>
+
+        <h2>Subscription management</h2>
+        <p>Webhook subscriptions <strong>expire after a maximum of 180 days</strong> and must be renewed before they lapse. Register with a <code>PATCH</code> to extend the expiry, and run a timer function to keep them alive:</p>
+
+        <pre><code># Register a subscription (REST)
+POST .../_api/web/lists('list-guid')/subscriptions
+{
+  "resource": "https://contoso.sharepoint.com/_api/web/lists('list-guid')",
+  "notificationUrl": "https://contoso-fn.azurewebsites.net/api/SPWebhook?code=…",
+  "expirationDateTime": "2021-01-24T00:00:00+00:00",
+  "clientState": "shared-secret"
+}
+
+# Renew (PATCH) before it expires
+PATCH .../_api/web/lists('list-guid')/subscriptions('sub-id')
+{ "expirationDateTime": "2021-07-24T00:00:00+00:00" }</code></pre>
+
+        <p>A daily <strong>timer-triggered function</strong> that lists subscriptions and renews any nearing expiry is essential — a lapsed subscription silently stops delivering, and you won't notice until someone asks why the integration "stopped working."</p>
+
+        <h2>Hardening checklist</h2>
+        <ul>
+            <li><strong>Validate <code>clientState</code></strong> on every notification to reject spoofed calls — it's the shared secret you set at registration.</li>
+            <li><strong>Secure app-only auth</strong> with a certificate-based Azure AD app (not a client secret in code); store credentials in Key Vault.</li>
+            <li><strong>Idempotency</strong> — design processing so replays/retries don't double-apply.</li>
+            <li><strong>Dead-letter handling</strong> — Azure Storage queues move poison messages aside automatically after retries; monitor that queue.</li>
+            <li><strong>Renewal monitoring</strong> — alert if the renewal job fails.</li>
+        </ul>
+
+        <h2>Why this scales</h2>
+        <p>Because the receiver only queues, it can absorb bursts without ever timing out, and the queue-triggered worker scales out across messages automatically. Add more lists, more sites, more events, and the same two functions handle it — the queue smooths the load. This pattern has been the backbone of reliable SharePoint event processing for years, and it maps almost one-to-one onto the Microsoft Graph change-notification model when you're ready to move up the stack.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/sharepoint-webhooks-at-scale.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AB-100 Field Notes: Architecting Agentic AI Business Solutions | Dhaval Shah</title>
+    <meta name="description" content="A practical study guide for the AB-100 Microsoft Certified: Agentic AI Business Solutions Architect exam: business outcomes, agentic-first design, the Microsoft stack, data grounding and RAG, security and responsible AI, multi-agent orchestration, A2A and MCP, ALM, and continuous improvement.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/ab-100-agentic-ai-business-solutions-architect.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="AB-100 Field Notes: Architecting Agentic AI Business Solutions">
+    <meta property="og:description" content="Business outcomes, agentic-first design, the Microsoft stack, data grounding, security and responsible AI, multi-agent orchestration, A2A and MCP, ALM, and measurable value.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/ab-100-agentic-ai-business-solutions-architect.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Agentic AI</span>
+            <span class="article-tag">Certification</span>
+            <span class="article-tag">AB-100</span>
+        </div>
+        <h1>AB-100 Field Notes: Architecting Agentic AI Business Solutions</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> May 18, 2026</span>
+            <span><i class="fas fa-clock"></i> 16 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The <strong>Microsoft Certified: Agentic AI Business Solutions Architect (AB-100)</strong> exam is aimed at experienced architects who design AI-first business solutions across Microsoft business applications, Power Platform, Copilot Studio, Microsoft Foundry, and Azure AI. It isn't a product-memorisation test. It's about judgement — translating a messy business problem into a secure, scalable, measurable, and <em>responsible</em> agentic solution. These are my field notes, organised around how the exam actually thinks: outcomes first, grounded in data, secure by design, and continuously improved.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>AB-100 is an advanced certification. Before you study anything, read the official <strong>skills measured</strong> outline and treat the exam as a series of architecture decisions: <em>why</em> is one design better than another for this scenario? Memorising features won't carry you — explaining trade-offs will.</span>
+        </div>
+
+        <h2>The shape of the role</h2>
+        <p>An Agentic AI Business Solutions Architect sits at the intersection of business strategy, enterprise architecture, application design, and AI implementation. The job is to define the solution vision, choose the right Microsoft services, shape the architecture, and guide delivery from idea to production — while keeping security, cost, governance, and measurable value in view. The diagram below is the mental model I keep coming back to: a single architecture problem with six forces pulling on it.</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-diagram-project"></i> AB-100 — the six forces of an agentic business solution</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="habit-grid">
+                    <div class="habit-card">
+                        <span class="habit-num">01</span>
+                        <div class="habit-icon"><i class="fas fa-bullseye"></i></div>
+                        <h5>Business Outcomes</h5>
+                        <p>Value, ROI, adoption, and process change. Define success metrics <em>before</em> architecture.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">02</span>
+                        <div class="habit-icon"><i class="fas fa-robot"></i></div>
+                        <h5>Agentic Design</h5>
+                        <p>Single agent or multi-agent flow. Tools, orchestration, and human approval points.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">03</span>
+                        <div class="habit-icon"><i class="fas fa-layer-group"></i></div>
+                        <h5>Microsoft Stack</h5>
+                        <p>Copilot Studio, Power Platform, Microsoft Foundry, Dynamics 365, and Azure AI.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">04</span>
+                        <div class="habit-icon"><i class="fas fa-shield-halved"></i></div>
+                        <h5>Security + RAI</h5>
+                        <p>Identity, access, and guardrails. Prompt safety and responsible AI throughout.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">05</span>
+                        <div class="habit-icon"><i class="fas fa-code-branch"></i></div>
+                        <h5>ALM + Environments</h5>
+                        <p>Versioning, testing, and promotion across dev, test, and production governance.</p>
+                    </div>
+                    <div class="habit-card">
+                        <span class="habit-num">06</span>
+                        <div class="habit-icon"><i class="fas fa-database"></i></div>
+                        <h5>Data + Integration</h5>
+                        <p>Dataverse, APIs, connectors, RAG, A2A, and MCP grounded in trusted enterprise data.</p>
+                    </div>
+                </div>
+                <p class="ui-caption"><strong>Architect for outcomes. Ground in data. Secure every action. Monitor and improve continuously.</strong></p>
+            </div>
+        </div>
+
+        <p>Day to day, the role usually breaks down like this:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Responsibility</th><th>What it means</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Business process analysis</td><td>Find where agents can improve productivity, quality, speed, or decision-making.</td></tr>
+                <tr><td>Solution architecture</td><td>Design how agents, data, systems, workflows, APIs, and user experiences connect.</td></tr>
+                <tr><td>Platform selection</td><td>Choose the right mix of Copilot Studio, Power Platform, Microsoft Foundry, Dynamics 365, Azure AI, and Microsoft 365.</td></tr>
+                <tr><td>Security and governance</td><td>Protect data, manage identity, control access, enforce compliance, and reduce AI risk.</td></tr>
+                <tr><td>Delivery leadership</td><td>Guide teams through prototyping, deployment, ALM, monitoring, and adoption.</td></tr>
+                <tr><td>Outcome measurement</td><td>Define success metrics, evaluate ROI, and improve the solution over time.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>Why agentic AI is different</h2>
+        <p>Organisations have moved past isolated chatbots and one-off experiments. They now want systems that can reason over business context, automate multi-step processes, collaborate with people, and integrate with enterprise systems. That's the line between a chatbot and an <strong>agent</strong>: an agent interprets intent, uses tools, retrieves information, takes actions, follows guardrails, coordinates with other agents, and supports a process end to end.</p>
+        <p>Picture an agent that helps a sales team prepare for a customer meeting: it generates account insights, updates CRM records, triggers follow-up workflows, and escalates exceptions when a human needs to review. AB-100 validates whether you can design that kind of solution <em>responsibly</em> — balancing innovation with security, cost, governance, reliability, and value.</p>
+
+        <h2>1. Start with business outcomes</h2>
+        <p>The most important starting point is value. Agentic AI shouldn't be introduced because the technology is exciting; it should solve a meaningful problem. A strong architect begins with the process, the pain points, the users, the data sources, the decision points, and the expected outcome — reducing case resolution time, improving sales productivity, automating document processing, or improving compliance accuracy.</p>
+        <p>Expect scenario-based questions where the right pattern depends on process complexity, required integrations, user experience, data sensitivity, and whether the agent needs to <em>act</em> or only recommend. During discovery, the questions worth asking are:</p>
+        <ol>
+            <li>What process or decision are we trying to improve?</li>
+            <li>Who are the users, and how will they interact with the agent?</li>
+            <li>What data does the agent need to access?</li>
+            <li>What systems must the agent update or trigger?</li>
+            <li>Which actions require human approval?</li>
+            <li>How will we measure success?</li>
+            <li>What risks must be controlled before go-live?</li>
+        </ol>
+
+        <h2>2. Think agentic-first</h2>
+        <p>Agentic-first design means treating a business process as a combination of people, agents, tools, data, and workflows — not just screens and forms. A single agent may be enough for a focused use case (answering HR policy questions, helping employees raise tickets). A multi-agent architecture fits better when the work needs distinct agents for research, validation, planning, execution, and escalation. A customer-service solution might decompose like this:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Agent</th><th>Purpose</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Intake agent</td><td>Understands customer intent and gathers required information.</td></tr>
+                <tr><td>Knowledge agent</td><td>Searches policies, documentation, and case history.</td></tr>
+                <tr><td>Resolution agent</td><td>Recommends or executes the next best action.</td></tr>
+                <tr><td>Compliance agent</td><td>Checks responses against policy and regulatory rules.</td></tr>
+                <tr><td>Escalation agent</td><td>Routes complex or sensitive cases to a human specialist.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>Just as important: define where agents should <em>stop</em>. Not every task should be fully automated. Decisions with financial impact, customer commitments, regulated processes, or sensitive data usually need a human in the loop.</p>
+
+        <h2>3. Know the Microsoft stack</h2>
+        <p>AB-100 spans business applications, low-code platforms, AI development tools, data services, and governance. You need to understand how the pieces combine into one solution, not just what each does in isolation.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Platform</th><th>Role in an agentic solution</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Microsoft Copilot Studio</td><td>Build, customise, publish, and manage agents and copilots for business scenarios.</td></tr>
+                <tr><td>Microsoft Power Platform</td><td>Create apps, workflows, automations, connectors, and low-code solutions.</td></tr>
+                <tr><td>Dynamics 365</td><td>Provide business process data and context across sales, service, finance, supply chain, and operations.</td></tr>
+                <tr><td>Microsoft Foundry</td><td>Build, evaluate, deploy, and manage AI models, prompts, agents, and AI applications.</td></tr>
+                <tr><td>Azure AI services</td><td>Language, search, document intelligence, speech, vision, and other AI capabilities.</td></tr>
+                <tr><td>Microsoft 365 Copilot ecosystem</td><td>Extend productivity experiences using organisational context and connected tools.</td></tr>
+                <tr><td>Dataverse</td><td>Store and secure business data used by Power Platform and Dynamics 365.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>The exam will test whether you can pick the right service for the scenario. <strong>Copilot Studio</strong> is the usual choice for business agents that integrate with Microsoft 365, Power Platform, and enterprise connectors. <strong>Microsoft Foundry</strong> fits when teams need deeper model selection, prompt evaluation, custom AI development, orchestration, and model operations.</p>
+
+        <h2>4. Make data the foundation</h2>
+        <p>An agent is only as useful as the data and context it can safely reach. Sources may include Dataverse, Dynamics 365, Microsoft 365, Azure SQL, Fabric, SharePoint, custom APIs, and external knowledge stores. The architecture must define how agents retrieve, summarise, update, or act on that data. The considerations that matter:</p>
+        <ol>
+            <li><strong>Data quality</strong> — incomplete or inconsistent data leads to poor recommendations.</li>
+            <li><strong>Grounding</strong> — agents should use trusted enterprise data, not just model knowledge.</li>
+            <li><strong>Permissions</strong> — users should only ever see data they're authorised to access.</li>
+            <li><strong>Residency</strong> — data must stay in approved regions when required.</li>
+            <li><strong>Auditability</strong> — important actions and decisions should be logged.</li>
+            <li><strong>Lifecycle</strong> — sources, prompts, and workflows must be maintained as the business changes.</li>
+        </ol>
+        <p><strong>Retrieval-augmented generation (RAG)</strong> is the key pattern here. Grounding responses in enterprise knowledge improves accuracy, reduces hallucinations, and keeps answers relevant to organisational context — the difference between a confident wrong answer and a useful one.</p>
+
+        <h2>5. Architect for security and governance</h2>
+        <p>Security is one of the heaviest AB-100 themes. Agentic systems can access data, call tools, generate content, and sometimes <em>take action</em> — so the architecture needs strong identity, access control, data protection, monitoring, and governance baked in.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Security area</th><th>Key concern</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Identity</td><td>Who is using the agent, and how are they authenticated?</td></tr>
+                <tr><td>Authorization</td><td>What data and actions is the user allowed to access?</td></tr>
+                <tr><td>Least privilege</td><td>Does the agent have only the permissions it needs?</td></tr>
+                <tr><td>Data protection</td><td>Is sensitive data protected during retrieval, processing, and output?</td></tr>
+                <tr><td>Prompt safety</td><td>Is the solution protected from prompt injection and manipulation?</td></tr>
+                <tr><td>Auditability</td><td>Can important actions be traced and reviewed?</td></tr>
+                <tr><td>Compliance</td><td>Does the design meet organisational and regulatory requirements?</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Prompt injection</strong> is the agentic system's signature risk. A malicious or accidental instruction hidden in a document, email, webpage, or data source can try to hijack the agent. Treat all external content as <em>data, not instructions</em>. Separate system instructions, user requests, retrieved content, and tool-execution permissions — and never let retrieved text silently expand what the agent is allowed to do.</span>
+        </div>
+
+        <p>Security extends to customisation. If a solution uses custom prompts, fine-tuning, or specialised models, the organisation must control who can change them, how changes are approved, how versions are tracked, and how quality is tested.</p>
+
+        <h2>6. Build in responsible AI</h2>
+        <p>Responsible AI isn't a final checkbox — it's a design input from day one. Microsoft's principles are fairness, reliability and safety, privacy and security, inclusiveness, transparency, and accountability. For AB-100 you should be able to explain how those principles shape a design. If an agent influences loan decisions, hiring, customer prioritisation, or compliance outcomes, fairness, explainability, oversight, and audit trails become central. Typical controls include:</p>
+        <ol>
+            <li>Human-in-the-loop approval for sensitive decisions.</li>
+            <li>Content filtering and safety policies.</li>
+            <li>Grounded responses from trusted data sources.</li>
+            <li>Clear disclosure when a user is interacting with AI.</li>
+            <li>Monitoring for accuracy, drift, and unexpected behaviour.</li>
+            <li>Feedback loops so users can flag incorrect or unsafe responses.</li>
+            <li>Documentation of risks, mitigations, and operational ownership.</li>
+        </ol>
+        <p>Defining what the agent <em>should not do</em> is often as important as listing what it can.</p>
+
+        <h2>7. Design multi-agent orchestration</h2>
+        <p>Rather than one giant agent that tries to do everything, architects often design multiple agents with focused responsibilities — easier to manage, test, monitor, and improve. A well-designed multi-agent solution typically has these elements:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Design element</th><th>Purpose</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Orchestrator</td><td>Coordinates tasks, decides which agent acts, and manages the overall flow.</td></tr>
+                <tr><td>Specialist agents</td><td>Perform focused tasks — research, validation, communication, execution.</td></tr>
+                <tr><td>Shared memory / context</td><td>Maintains state and business context across steps when appropriate.</td></tr>
+                <tr><td>Tool access</td><td>Lets agents call APIs, connectors, workflows, or enterprise systems.</td></tr>
+                <tr><td>Guardrails</td><td>Define allowed actions, escalation paths, safety rules, and approval points.</td></tr>
+                <tr><td>Telemetry</td><td>Captures performance, errors, latency, usage, and user feedback.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>An orchestrated flow with clear hand-offs and a human approval gate before any sensitive action looks like this:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-sitemap"></i> Multi-agent operational workflow</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="flow-mock">
+                    <div class="flow-node flow-node-trigger">
+                        <div class="flow-node-icon"><i class="fas fa-inbox"></i></div>
+                        <div class="flow-node-text"><strong>Intake</strong><span>Capture intent &amp; context</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-action">
+                        <div class="flow-node-icon"><i class="fas fa-magnifying-glass"></i></div>
+                        <div class="flow-node-text"><strong>Knowledge agent</strong><span>Retrieve grounded data (RAG)</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-scale-balanced"></i></div>
+                        <div class="flow-node-text"><strong>Compliance check</strong><span>Policy &amp; regulatory rules</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-condition">
+                        <div class="flow-node-icon"><i class="fas fa-user-check"></i></div>
+                        <div class="flow-node-text"><strong>Human approval</strong><span>Gate sensitive actions</span></div>
+                    </div>
+                    <div class="flow-connector"></div>
+                    <div class="flow-node flow-node-terminal">
+                        <div class="flow-node-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="flow-node-text"><strong>Execute &amp; log</strong><span>Update systems, capture telemetry</span></div>
+                    </div>
+                </div>
+                <p class="ui-caption">More agents add flexibility but also complexity. For simple use cases, a single well-designed agent is easier to operate.</p>
+            </div>
+        </div>
+
+        <h2>8. Understand open standards: A2A and MCP</h2>
+        <p>AB-100 expects awareness of two interoperability standards. <strong>Agent2Agent (A2A)</strong> focuses on how agents communicate and collaborate — important when you build multi-agent systems or need agents from different environments to coordinate. <strong>Model Context Protocol (MCP)</strong> focuses on how AI applications and agents connect to tools, data, and external systems in a consistent way, standardising how context and capabilities are exposed.</p>
+        <p>Don't memorise specifications. Understand <em>why</em> standards matter: they improve interoperability, reduce custom integration effort, support extensibility, and make agentic systems easier to govern.</p>
+
+        <h2>9. Plan application lifecycle management</h2>
+        <p>Agentic solutions need ALM just like traditional apps — arguably more, because prompts, models, actions, connectors, data sources, and workflows all affect behaviour. A solid strategy covers development, testing, deployment, monitoring, versioning, rollback, and change control. In Power Platform and Copilot Studio scenarios that means environments, solutions, pipelines, connection references, environment variables, and managed deployments. The clean separation between dev, test, and production is the backbone:</p>
+
+        <div class="ui-mock">
+            <div class="ui-mock-chrome">
+                <div class="ui-mock-dots"><span></span><span></span><span></span></div>
+                <div class="ui-mock-chrome-title"><i class="fas fa-code-branch"></i> ALM — promote through governed environments</div>
+            </div>
+            <div class="ui-mock-body">
+                <div class="pipe-mock">
+                    <div class="pipe-stage dev">
+                        <div class="pipe-icon"><i class="fas fa-flask"></i></div>
+                        <h5>Development</h5>
+                        <p>Build agents, prompts &amp; flows</p>
+                    </div>
+                    <div class="pipe-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipe-stage test">
+                        <div class="pipe-icon"><i class="fas fa-vial-circle-check"></i></div>
+                        <h5>Test</h5>
+                        <p>Validate behaviour &amp; guardrails</p>
+                    </div>
+                    <div class="pipe-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipe-stage prod">
+                        <div class="pipe-icon"><i class="fas fa-rocket"></i></div>
+                        <h5>Production</h5>
+                        <p>Managed deploy &amp; monitor</p>
+                    </div>
+                </div>
+                <p class="ui-caption">Version everything, gate changes with approvals, and keep a rollback path for when an agent misbehaves.</p>
+            </div>
+        </div>
+
+        <p>The questions an ALM strategy must answer:</p>
+        <ol>
+            <li>How are agents and prompts versioned?</li>
+            <li>How are changes reviewed and approved?</li>
+            <li>How are test cases defined for AI behaviour?</li>
+            <li>How are environments separated for development, test, and production?</li>
+            <li>How are connectors and credentials managed?</li>
+            <li>How can the organisation roll back if an agent behaves incorrectly?</li>
+            <li>How are production issues monitored and triaged?</li>
+        </ol>
+        <p>Testing an agent means more than checking that it starts. Validate expected responses, edge cases, groundedness, tool execution, security boundaries, and escalation behaviour.</p>
+
+        <h2>10. Monitor and improve continuously</h2>
+        <p>Deployment isn't the finish line. Design telemetry and feedback loops so the solution gets better over time. Good telemetry answers: are users adopting the agent? Which tasks succeed? Where do users abandon the flow? Are responses accurate and grounded? Are tool calls succeeding? Is latency acceptable? Are there policy violations? Are business outcomes improving?</p>
+        <p>Track both <strong>technical metrics</strong> (error rates, response time, token usage, tool-call failures, model performance) and <strong>business metrics</strong> (reduced handling time, higher conversion, better case deflection, lower cost, higher satisfaction). AB-100 expects you to connect AI design to measurable outcomes — including ROI. A solution is only successful if it creates enough value to justify its cost, complexity, and operational overhead.</p>
+
+        <h2>11. Get your environment strategy right</h2>
+        <p>Enterprise solutions span multiple environments, business units, data sources, and teams. A good environment strategy prevents chaos as adoption grows. In Power Platform and Copilot Studio, environments can separate development, test, production, business units, geographies, or security boundaries. Decide how they're structured, who owns them, how data policies apply, and how solutions move between them — and account for third-party tools and integrations, defining how external systems connect, how data is protected, and how compliance is enforced.</p>
+
+        <h2>12. Common scenario patterns</h2>
+        <p>The exam leans heavily on scenario-based decisions. These are the patterns worth internalising:</p>
+        <ul>
+            <li><strong>Customer service agent</strong> — summarises cases, suggests responses, retrieves knowledge articles, creates follow-up tasks, and escalates complex issues. Protect customer data, respect permissions, and review sensitive responses.</li>
+            <li><strong>Sales productivity agent</strong> — prepares account briefs, summarises CRM history, drafts follow-ups, identifies next best actions, and updates opportunities. Typically integrates Dynamics 365 Sales, Microsoft 365, Dataverse, and external data.</li>
+            <li><strong>Finance operations assistant</strong> — helps with invoice review, variance explanations, vendor inquiries, and approvals. Because finance is sensitive, design audit trails, role-based access, and human approval for material actions.</li>
+            <li><strong>Employee self-service agent</strong> — answers HR, IT, policy, and benefits questions from trusted internal content. Needs strong grounding, clear source references, and escalation when the answer is uncertain.</li>
+            <li><strong>Multi-agent operational workflow</strong> — one agent gathers information, another validates policy, another executes a system action, another monitors exceptions. Requires orchestration, logging, ownership, and clear boundaries.</li>
+        </ul>
+
+        <h2>A suggested study approach</h2>
+        <p>Combine architecture concepts, platform knowledge, and scenario analysis:</p>
+        <ol>
+            <li>Review the official AB-100 study guide and skills outline.</li>
+            <li>Understand how Copilot Studio, Power Platform, Dynamics 365, Microsoft Foundry, and Azure AI fit together.</li>
+            <li>Study agentic design patterns — single-agent and multi-agent.</li>
+            <li>Review security, identity, data access, governance, and responsible AI.</li>
+            <li>Learn how ALM applies to agents, prompts, connectors, environments, and workflows.</li>
+            <li>Practise architecture scenarios and explain why one design beats another.</li>
+            <li>Review monitoring, telemetry, ROI, adoption, and continuous improvement.</li>
+        </ol>
+
+        <h2>Key terms to know</h2>
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Term</th><th>Meaning</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Agentic AI</td><td>AI that can reason, use tools, take actions, and support multi-step workflows.</td></tr>
+                <tr><td>Copilot Studio</td><td>Microsoft platform for creating and managing business copilots and agents.</td></tr>
+                <tr><td>Microsoft Foundry</td><td>Platform for building, evaluating, deploying, and operating AI apps, models, and agents.</td></tr>
+                <tr><td>RAG</td><td>Retrieval-augmented generation — grounding AI responses in trusted data.</td></tr>
+                <tr><td>RBAC</td><td>Role-based access control — assigning permissions based on roles.</td></tr>
+                <tr><td>ALM</td><td>Application lifecycle management across development, testing, deployment, and operations.</td></tr>
+                <tr><td>A2A</td><td>Agent2Agent protocol for agent collaboration and interoperability.</td></tr>
+                <tr><td>MCP</td><td>Model Context Protocol for connecting models and agents to tools and context.</td></tr>
+                <tr><td>Responsible AI</td><td>Principles and practices for safe, fair, transparent, secure, and accountable AI.</td></tr>
+                <tr><td>ROI</td><td>Return on investment — measuring business value against cost.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>Mistakes to avoid</h2>
+        <p>Four traps catch people on AB-100. First, treating it as a <strong>product-memorisation exam</strong> — product knowledge matters, but the test is about architectural decision-making and <em>why</em> a service or pattern fits a scenario. Second, designing <strong>agents without boundaries</strong> — agentic AI is powerful, but agents should never take sensitive actions without authorisation, validation, and approval. Third, <strong>ignoring operations</strong> — a slick prototype isn't an enterprise solution without monitoring, lifecycle management, security, governance, and support ownership. And fourth, <strong>forgetting business value</strong> — a technically impressive solution that doesn't move a measurable outcome hasn't succeeded.</p>
+
+        <h2>The takeaway</h2>
+        <p>AB-100 is about designing AI-powered business solutions that are practical, secure, scalable, and outcome-driven. The best architects connect business processes with agents, data, workflows, and Microsoft platform capabilities — and manage risk through responsible AI, governance, security, and lifecycle management. To prepare well, focus on the architecture <em>behind</em> agentic AI: evaluate the business problem, decide whether an agentic solution even fits, choose the right services, design secure integrations, define human oversight, and measure success after deployment. Explain those decisions clearly and you'll be ready — for the exam and for the real work.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/ab-100-agentic-ai-business-solutions-architect.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>
