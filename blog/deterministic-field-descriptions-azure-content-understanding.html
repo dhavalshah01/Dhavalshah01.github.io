@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing Deterministic Field Descriptions for Azure Content Understanding | Dhaval Shah</title>
+    <meta name="description" content="How to write field descriptions that produce the same output every time in Azure AI Content Understanding — anchoring, scope, inclusions, exclusions, and null cases.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/deterministic-field-descriptions-azure-content-understanding.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Writing Deterministic Field Descriptions for Azure Content Understanding | Dhaval Shah">
+    <meta property="og:description" content="How to write field descriptions that produce the same output every time in Azure AI Content Understanding — anchoring, scope, inclusions, exclusions, and null cases.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/deterministic-field-descriptions-azure-content-understanding.html">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #0078d4;
+            --primary-dark: #005a9e;
+            --primary-light: #deecf9;
+            --accent: #00b4d8;
+            --dark: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --text-lighter: #94a3b8;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --border: #e2e8f0;
+            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--off-white);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== Navbar ===== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: var(--transition);
+        }
+        .navbar.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo { font-weight: 800; font-size: 1.25rem; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+        .nav-logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 8px; list-style: none; }
+        .nav-links a {
+            color: var(--text-lighter);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: var(--accent); }
+        .nav-toggle { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .theme-toggle {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-lighter);
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-left: 8px;
+        }
+        .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* ===== Article Hero ===== */
+        .article-hero {
+            background: var(--gradient-hero);
+            padding: 120px 24px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+        .article-hero::before {
+            content: '';
+            position: absolute;
+            top: -30%; right: -10%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,120,212,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .article-hero-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .article-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.55);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+        .article-back:hover { color: var(--accent); }
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .article-tag {
+            background: rgba(0,180,216,0.15);
+            border: 1px solid rgba(0,180,216,0.3);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .article-hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1.25;
+            margin-bottom: 20px;
+        }
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+        }
+        .article-meta span { display: flex; align-items: center; gap: 6px; }
+        .article-meta i { font-size: 0.78rem; }
+
+        /* ===== Article Body ===== */
+        .article-body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 24px 80px;
+        }
+
+        /* ===== Prose Styles ===== */
+        .prose h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2.5rem 0 1rem;
+            letter-spacing: -0.5px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        .prose h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2rem 0 0.75rem;
+        }
+        .prose p {
+            margin-bottom: 1.25rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        .prose ul, .prose ol {
+            margin: 0 0 1.25rem 1.5rem;
+        }
+        .prose li {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        .prose a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .prose a:hover { color: var(--accent); }
+        .prose strong { font-weight: 700; color: var(--dark); }
+        .prose em { font-style: italic; }
+        .prose blockquote {
+            border-left: 4px solid var(--primary);
+            background: var(--primary-light);
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: var(--primary-dark);
+        }
+        .prose pre {
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .prose code {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.875em;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .prose pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
+        }
+        .prose img {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+        .prose hr {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 2.5rem 0;
+        }
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .prose th {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .prose td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: top;
+        }
+        .prose tr:nth-child(even) td { background: var(--off-white); }
+
+        /* ===== Info / Callout Box ===== */
+        .callout {
+            display: flex;
+            gap: 14px;
+            padding: 18px 20px;
+            border-radius: var(--radius-sm);
+            margin: 1.5rem 0;
+            font-size: 0.92rem;
+        }
+        .callout-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        .callout-tip  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .callout-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+        .callout i { margin-top: 2px; flex-shrink: 0; }
+
+        /* ===== Series nav ===== */
+        .series-nav {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 2rem 0;
+        }
+        .series-nav p { margin: 0 0 8px; font-weight: 600; color: var(--primary-dark); font-size: 0.9rem; }
+        .series-nav ul { margin: 0; padding-left: 1.25rem; }
+        .series-nav li { margin-bottom: 4px; font-size: 0.88rem; }
+
+        /* ===== Checklist ===== */
+        .checklist { list-style: none; margin: 0 0 1.25rem; padding: 0; }
+        .checklist li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 0.6rem; font-size: 1rem; line-height: 1.7; }
+        .checklist li::before { content: '☐'; font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; color: var(--primary); }
+
+        /* ===== Article Footer / Share ===== */
+        .article-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .article-footer-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .article-footer-back:hover { color: var(--accent); }
+        .share-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.82rem;
+            color: var(--text-lighter);
+        }
+        .share-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .share-links a:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ===== Dark Mode ===== */
+        body.dark-mode {
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --text-lighter: #94a3b8;
+            --off-white: #0f172a;
+            --white: #1e293b;
+            --border: #334155;
+            --primary-light: rgba(0,120,212,0.15);
+        }
+        body.dark-mode .prose h2,
+        body.dark-mode .prose h3,
+        body.dark-mode .prose strong { color: #f1f5f9; }
+        body.dark-mode .prose p,
+        body.dark-mode .prose li { color: #cbd5e1; }
+        body.dark-mode .prose blockquote { background: rgba(0,120,212,0.12); color: #93c5fd; border-color: var(--primary); }
+        body.dark-mode .prose code { background: rgba(0,120,212,0.2); color: #93c5fd; }
+        body.dark-mode .prose h2 { border-color: #1e3a5f; }
+        body.dark-mode .prose img { border-color: #334155; }
+        body.dark-mode .prose hr { border-color: #334155; }
+        body.dark-mode .prose td { color: #cbd5e1; }
+        body.dark-mode .prose tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        body.dark-mode .callout-info { background: rgba(30,64,175,0.15); border-color: rgba(191,219,254,0.2); color: #93c5fd; }
+        body.dark-mode .callout-tip  { background: rgba(22,101,52,0.15);  border-color: rgba(187,247,208,0.2); color: #86efac; }
+        body.dark-mode .callout-warn { background: rgba(146,64,14,0.15);  border-color: rgba(253,230,138,0.2); color: #fcd34d; }
+        body.dark-mode .series-nav { background: rgba(0,120,212,0.12); border-color: rgba(0,120,212,0.25); }
+        body.dark-mode .series-nav p { color: #93c5fd; }
+        body.dark-mode .article-footer { border-color: #334155; }
+        body.dark-mode .share-links a { border-color: #334155; color: #94a3b8; }
+        body.dark-mode .share-links a:hover { border-color: var(--primary); color: #60a5fa; }
+        body.dark-mode .theme-toggle { border-color: #334155; color: #94a3b8; }
+        body.dark-mode .checklist li::before { color: #60a5fa; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.98); padding: 16px; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+            .nav-links.active { display: flex; }
+            .nav-toggle { display: block; }
+            .article-hero h1 { font-size: 1.8rem; }
+            .prose h2 { font-size: 1.3rem; }
+            .prose table { font-size: 0.8rem; }
+            .prose th, .prose td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#certifications">Certifications</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- Article Hero -->
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Azure AI</span>
+            <span class="article-tag">Content Understanding</span>
+            <span class="article-tag">Document Intelligence</span>
+            <span class="article-tag">Part 2 of 3</span>
+        </div>
+        <h1>Writing Deterministic Field Descriptions for Azure Content Understanding: A Practical Guide</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 12, 2026</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<!-- Article Body -->
+<article class="article-body">
+    <div class="prose">
+
+        <div class="series-nav">
+            <p><i class="fas fa-layer-group"></i> &nbsp;Series: Azure Content Understanding — Field Schema Design</p>
+            <ul>
+                <li><a href="./extract-vs-generate-azure-content-understanding.html">Part 1: <code>extract</code> vs <code>generate</code> — choosing the right method</a></li>
+                <li><strong>Part 2 (this article):</strong> Writing Deterministic Field Descriptions</li>
+                <li><a href="./boundary-problem-azure-content-understanding.html">Part 3: The Boundary Problem — Too Much or Too Little</a></li>
+            </ul>
+        </div>
+
+        <h2>The Problem</h2>
+
+        <p>A team had an extraction field for remarks in a document table. The description read:</p>
+
+        <blockquote>"Remarks associated to the specific instrument type. This begins with REMARKS and will be an additional row in the document's table, but belonging to the same registration number, overlapping multiple columns in the document."</blockquote>
+
+        <p>The extraction worked most of the time. But on certain documents — particularly when a remarks row happened to contain another registration number in its text — the field came back empty.</p>
+
+        <p>No code change. No model change. The word "RO993321" appearing inside a remarks line was enough to confuse the model into thinking it had found a new row rather than remark text.</p>
+
+        <p>The description wasn't wrong — it was just incomplete. It described the happy path but gave the model no guidance for edge cases. The fix was not a code change. It was a description rewrite.</p>
+
+        <h2>What Makes a Description "Deterministic"?</h2>
+
+        <p>A <strong>deterministic description</strong> is one that gives the model enough information to produce the <strong>same output</strong> every time it encounters the same input, regardless of edge cases in the document.</p>
+
+        <p>A vague description leaves the model to resolve ambiguity on its own. A deterministic description resolves every significant ambiguity explicitly.</p>
+
+        <p>There are five properties that separate vague descriptions from deterministic ones:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Vague</th>
+                    <th>Deterministic</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Anchor</strong></td>
+                    <td>"A row that belongs to this instrument"</td>
+                    <td>"The line positioned directly beneath this instrument's row, same REG. NUM."</td>
+                </tr>
+                <tr>
+                    <td><strong>Scope</strong></td>
+                    <td>"The text of the remark"</td>
+                    <td>"The complete text of that one line, reading left to right"</td>
+                </tr>
+                <tr>
+                    <td><strong>Inclusion rule</strong></td>
+                    <td>(silent)</td>
+                    <td>"Include any registration numbers that appear in the remark text"</td>
+                </tr>
+                <tr>
+                    <td><strong>Exclusion rule</strong></td>
+                    <td>(silent)</td>
+                    <td>"Do NOT include party names; those belong to a PARTIES column on a different line"</td>
+                </tr>
+                <tr>
+                    <td><strong>Null case</strong></td>
+                    <td>(silent)</td>
+                    <td>"Return an empty string if this instrument has no REMARKS line"</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Before and After: Three Fields</h2>
+
+        <img src="images/deterministic-descriptions.png" alt="Side-by-side comparison of vague vs deterministic field descriptions in Azure Content Understanding schemas">
+
+        <h3>Field 1: Remarks</h3>
+
+        <p><strong>Vague:</strong></p>
+        <pre><code>"description": "Remarks associated to the specific instrument type.
+This begins with 'REMARKS' and will be an additional row in the
+document's table, overlapping multiple columns."</code></pre>
+
+        <p><strong>Problems:</strong></p>
+        <ul>
+            <li>No anchor: which row, when there are many instruments?</li>
+            <li>No inclusion rule: what if the remark text contains a number that looks like a new row?</li>
+            <li>No null case: what should be returned when there is no remark?</li>
+        </ul>
+
+        <p><strong>Deterministic:</strong></p>
+        <pre><code>"description": "The remark for this instrument. A remark is the line
+that begins with the word 'REMARKS:' positioned directly beneath this
+instrument's row (same REG. NUM.). Return the complete text of that one
+line, reading left to right to the end of the line, joining words that
+are separated by column gaps into a single string. Include any
+registration numbers that appear in the remark text. The remark NEVER
+includes party or owner names; those belong to a PARTIES column on a
+different line and must be excluded. Return an empty string if this
+instrument has no REMARKS line."</code></pre>
+
+        <p><strong>What changed:</strong> Added row anchor, explicit inclusion rule for embedded registration numbers, explicit exclusion rule for party names, and a null-case instruction.</p>
+
+        <h3>Field 2: Amount</h3>
+
+        <p><strong>Vague:</strong></p>
+        <pre><code>"description": "The monetary amount associated with the instrument
+if applicable."</code></pre>
+
+        <p><strong>Problems:</strong></p>
+        <ul>
+            <li>"If applicable" is ambiguous — the model may fill in remark text or header text that happens to sit in the same column band.</li>
+            <li>No format constraint — what counts as a monetary amount?</li>
+            <li>No exclusion — header lines like <code>** PRINTOUT INCLUDES ALL DOCUMENT TYPES **</code> sit in the same region and can bleed in.</li>
+        </ul>
+
+        <p><strong>Deterministic:</strong></p>
+        <pre><code>"description": "The monetary amount associated with the instrument,
+taken only from the AMOUNT column. Capture ONLY a currency value
+(a figure preceded by a '$' sign, e.g. '$29,248,934' or '$557,997').
+Do NOT include any non-monetary text such as dates, names, remark text,
+or words like 'ADDED', 'DELETED', or 'INSTRUMENTS NOT INCLUDED'.
+If the instrument has no dollar amount, return an empty string."</code></pre>
+
+        <p><strong>What changed:</strong> Explicit format constraint (<code>$</code> prefix), named examples of text to exclude, explicit null case.</p>
+
+        <h3>Field 3: PartiesTo</h3>
+
+        <p><strong>Vague:</strong></p>
+        <pre><code>"description": "The party or parties to whom the instrument is directed."</code></pre>
+
+        <p><strong>Problems:</strong></p>
+        <ul>
+            <li>Does not mention that a single instrument may have multiple parties on separate lines.</li>
+            <li>Does not specify what to do when a REMARKS row is visually adjacent.</li>
+        </ul>
+
+        <p><strong>Deterministic:</strong></p>
+        <pre><code>"description": "The party or parties to whom the instrument is directed,
+taken from the PARTIES TO column. An instrument may list more than one
+party on separate lines within this column (e.g. 'THE CORPORATION OF
+THE CITY OF ACTON' followed by 'THE REGIONAL MUNICIPALITY'); capture
+all such party lines for this instrument. Do NOT include any REMARKS text."</code></pre>
+
+        <p><strong>What changed:</strong> Explicit multi-line rule, concrete example of multi-party layout, exclusion rule for REMARKS text.</p>
+
+        <h2>The Five-Question Test</h2>
+
+        <p>Before finalising any field description, run through this checklist:</p>
+
+        <ul class="checklist">
+            <li><strong>Anchor</strong> — Have I told the model exactly <em>where</em> in the document the value lives? (column name, row position, relationship to other rows)</li>
+            <li><strong>Scope</strong> — Have I told it how much to capture? (one line, one cell, one sentence, the full column)</li>
+            <li><strong>Inclusion</strong> — Are there unusual values that look wrong but should be captured? Have I named them?</li>
+            <li><strong>Exclusion</strong> — Are there values nearby that should <em>not</em> be captured? Have I named them explicitly?</li>
+            <li><strong>Null case</strong> — Have I told the model what to return when the value is absent?</li>
+        </ul>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>If the answer to any of these is "the model will figure it out," that is where your next incident will originate.</span>
+        </div>
+
+        <h2>Reinforcing Rules at Two Levels</h2>
+
+        <p>For complex schemas, the same rule should appear at <strong>both</strong> the field level and the parent array/object level.</p>
+
+        <p>Consider a schema that extracts rows from a table. The table-level description governs what counts as a valid row. The field-level description governs what the field captures within a row. A rule that only appears at the field level may be ignored if the table-level logic has already made a conflicting decision.</p>
+
+        <p><strong>Table-level (parent array):</strong></p>
+        <pre><code>"description": "A table of registered instruments. Some instruments
+have an additional REMARKS row beneath them — do not create a separate
+instrument entry for a REMARKS row. A REMARKS row may itself contain
+registration numbers; these are part of the remark text and must NOT
+be treated as a new row. Ignore any printout header lines."</code></pre>
+
+        <p><strong>Field-level (Remarks):</strong></p>
+        <pre><code>"description": "...A remarks row often contains one or more registration
+numbers as part of its text; these are part of the remark and do NOT
+start a new row — still capture the entire remark line and never skip it..."</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>The rule appears twice. That redundancy is intentional. The model reads both, and agreement between the two levels produces more consistent behaviour than either alone.</span>
+        </div>
+
+        <h2>Key Takeaways</h2>
+
+        <ul>
+            <li>Vague descriptions work on the happy path and silently fail on edge cases.</li>
+            <li>Deterministic descriptions explicitly handle anchoring, scope, inclusions, exclusions, and the null case.</li>
+            <li>When a field behaves inconsistently, rewrite its description before changing any code or method.</li>
+            <li>Use concrete named examples in descriptions — <code>'$29,248,934'</code>, <code>'REMARKS: RO993321'</code> — rather than abstract categories.</li>
+            <li>Reinforce critical rules at both the parent (array/object) level and the child field level.</li>
+        </ul>
+
+        <hr>
+
+        <div class="series-nav">
+            <p><i class="fas fa-arrow-right"></i> &nbsp;Continue the series</p>
+            <ul>
+                <li><a href="./extract-vs-generate-azure-content-understanding.html">Part 1: <code>extract</code> vs <code>generate</code> — choosing the right method</a></li>
+                <li><a href="./boundary-problem-azure-content-understanding.html">Part 3: The Boundary Problem — When Your AI Extracts Too Much or Too Little</a></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- Article Footer -->
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back">
+            <i class="fas fa-arrow-left"></i> Back to Blog
+        </a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/deterministic-field-descriptions-azure-content-understanding.html" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i> LinkedIn
+            </a>
+            <a href="https://twitter.com/intent/tweet?url=https://dhavalshah01.github.io/blog/deterministic-field-descriptions-azure-content-understanding.html&text=Check+out+this+article+by+%40dhavalshah" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-twitter"></i> Twitter
+            </a>
+        </div>
+    </div>
+</article>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => navLinks.classList.remove('active'));
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') {
+        document.body.classList.add('dark-mode');
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+    }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

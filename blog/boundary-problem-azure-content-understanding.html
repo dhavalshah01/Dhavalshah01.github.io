@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Boundary Problem: When Your AI Extracts Too Much or Too Little | Dhaval Shah</title>
+    <meta name="description" content="A deep-dive into under-extraction and over-extraction in Azure AI Content Understanding — how to diagnose which failure you have and fix it with precise boundary definitions.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/boundary-problem-azure-content-understanding.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="The Boundary Problem: When Your AI Extracts Too Much or Too Little | Dhaval Shah">
+    <meta property="og:description" content="A deep-dive into under-extraction and over-extraction in Azure AI Content Understanding — how to diagnose which failure you have and fix it with precise boundary definitions.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/boundary-problem-azure-content-understanding.html">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #0078d4;
+            --primary-dark: #005a9e;
+            --primary-light: #deecf9;
+            --accent: #00b4d8;
+            --dark: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --text-lighter: #94a3b8;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --border: #e2e8f0;
+            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--off-white);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== Navbar ===== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: var(--transition);
+        }
+        .navbar.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo { font-weight: 800; font-size: 1.25rem; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+        .nav-logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 8px; list-style: none; }
+        .nav-links a {
+            color: var(--text-lighter);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: var(--accent); }
+        .nav-toggle { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .theme-toggle {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-lighter);
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-left: 8px;
+        }
+        .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* ===== Article Hero ===== */
+        .article-hero {
+            background: var(--gradient-hero);
+            padding: 120px 24px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+        .article-hero::before {
+            content: '';
+            position: absolute;
+            top: -30%; right: -10%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,120,212,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .article-hero-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .article-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.55);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+        .article-back:hover { color: var(--accent); }
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .article-tag {
+            background: rgba(0,180,216,0.15);
+            border: 1px solid rgba(0,180,216,0.3);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .article-hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1.25;
+            margin-bottom: 20px;
+        }
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+        }
+        .article-meta span { display: flex; align-items: center; gap: 6px; }
+        .article-meta i { font-size: 0.78rem; }
+
+        /* ===== Article Body ===== */
+        .article-body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 24px 80px;
+        }
+
+        /* ===== Prose Styles ===== */
+        .prose h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2.5rem 0 1rem;
+            letter-spacing: -0.5px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        .prose h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2rem 0 0.75rem;
+        }
+        .prose p {
+            margin-bottom: 1.25rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        .prose ul, .prose ol {
+            margin: 0 0 1.25rem 1.5rem;
+        }
+        .prose li {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        .prose a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .prose a:hover { color: var(--accent); }
+        .prose strong { font-weight: 700; color: var(--dark); }
+        .prose em { font-style: italic; }
+        .prose blockquote {
+            border-left: 4px solid var(--primary);
+            background: var(--primary-light);
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: var(--primary-dark);
+        }
+        .prose pre {
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .prose code {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.875em;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .prose pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
+        }
+        .prose img {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+        .prose hr {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 2.5rem 0;
+        }
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .prose th {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .prose td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: top;
+        }
+        .prose tr:nth-child(even) td { background: var(--off-white); }
+
+        /* ===== Info / Callout Box ===== */
+        .callout {
+            display: flex;
+            gap: 14px;
+            padding: 18px 20px;
+            border-radius: var(--radius-sm);
+            margin: 1.5rem 0;
+            font-size: 0.92rem;
+        }
+        .callout-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        .callout-tip  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .callout-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+        .callout i { margin-top: 2px; flex-shrink: 0; }
+
+        /* ===== Series nav ===== */
+        .series-nav {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 2rem 0;
+        }
+        .series-nav p { margin: 0 0 8px; font-weight: 600; color: var(--primary-dark); font-size: 0.9rem; }
+        .series-nav ul { margin: 0; padding-left: 1.25rem; }
+        .series-nav li { margin-bottom: 4px; font-size: 0.88rem; }
+
+        /* ===== Checklist ===== */
+        .checklist { list-style: none; margin: 0 0 1.25rem; padding: 0; }
+        .checklist li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 0.6rem; font-size: 1rem; line-height: 1.7; }
+        .checklist li::before { content: '☐'; font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; color: var(--primary); }
+
+        /* ===== Iteration flow ===== */
+        .iteration-flow {
+            background: var(--off-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px 24px;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 2;
+            color: var(--text);
+        }
+        .iteration-flow .step-good { color: #166534; font-weight: 600; }
+        .iteration-flow .step-bad  { color: #92400e; font-weight: 600; }
+        .iteration-flow .arrow { color: var(--primary); }
+
+        /* ===== Article Footer / Share ===== */
+        .article-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .article-footer-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .article-footer-back:hover { color: var(--accent); }
+        .share-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.82rem;
+            color: var(--text-lighter);
+        }
+        .share-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .share-links a:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ===== Dark Mode ===== */
+        body.dark-mode {
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --text-lighter: #94a3b8;
+            --off-white: #0f172a;
+            --white: #1e293b;
+            --border: #334155;
+            --primary-light: rgba(0,120,212,0.15);
+        }
+        body.dark-mode .prose h2,
+        body.dark-mode .prose h3,
+        body.dark-mode .prose strong { color: #f1f5f9; }
+        body.dark-mode .prose p,
+        body.dark-mode .prose li { color: #cbd5e1; }
+        body.dark-mode .prose blockquote { background: rgba(0,120,212,0.12); color: #93c5fd; border-color: var(--primary); }
+        body.dark-mode .prose code { background: rgba(0,120,212,0.2); color: #93c5fd; }
+        body.dark-mode .prose h2 { border-color: #1e3a5f; }
+        body.dark-mode .prose img { border-color: #334155; }
+        body.dark-mode .prose hr { border-color: #334155; }
+        body.dark-mode .prose td { color: #cbd5e1; }
+        body.dark-mode .prose tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        body.dark-mode .callout-info { background: rgba(30,64,175,0.15); border-color: rgba(191,219,254,0.2); color: #93c5fd; }
+        body.dark-mode .callout-tip  { background: rgba(22,101,52,0.15);  border-color: rgba(187,247,208,0.2); color: #86efac; }
+        body.dark-mode .callout-warn { background: rgba(146,64,14,0.15);  border-color: rgba(253,230,138,0.2); color: #fcd34d; }
+        body.dark-mode .series-nav { background: rgba(0,120,212,0.12); border-color: rgba(0,120,212,0.25); }
+        body.dark-mode .series-nav p { color: #93c5fd; }
+        body.dark-mode .iteration-flow { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        body.dark-mode .article-footer { border-color: #334155; }
+        body.dark-mode .share-links a { border-color: #334155; color: #94a3b8; }
+        body.dark-mode .share-links a:hover { border-color: var(--primary); color: #60a5fa; }
+        body.dark-mode .theme-toggle { border-color: #334155; color: #94a3b8; }
+        body.dark-mode .checklist li::before { color: #60a5fa; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.98); padding: 16px; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+            .nav-links.active { display: flex; }
+            .nav-toggle { display: block; }
+            .article-hero h1 { font-size: 1.8rem; }
+            .prose h2 { font-size: 1.3rem; }
+            .prose table { font-size: 0.8rem; }
+            .prose th, .prose td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#certifications">Certifications</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- Article Hero -->
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Azure AI</span>
+            <span class="article-tag">Content Understanding</span>
+            <span class="article-tag">Document Intelligence</span>
+            <span class="article-tag">Part 3 of 3</span>
+        </div>
+        <h1>The Boundary Problem: When Your AI Extracts Too Much or Too Little from the Same Field</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 12, 2026</span>
+            <span><i class="fas fa-clock"></i> 10 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<!-- Article Body -->
+<article class="article-body">
+    <div class="prose">
+
+        <div class="series-nav">
+            <p><i class="fas fa-layer-group"></i> &nbsp;Series: Azure Content Understanding — Field Schema Design</p>
+            <ul>
+                <li><a href="./extract-vs-generate-azure-content-understanding.html">Part 1: <code>extract</code> vs <code>generate</code> — choosing the right method</a></li>
+                <li><a href="./deterministic-field-descriptions-azure-content-understanding.html">Part 2: Writing Deterministic Field Descriptions</a></li>
+                <li><strong>Part 3 (this article):</strong> The Boundary Problem — Too Much or Too Little</li>
+            </ul>
+        </div>
+
+        <h2>The Problem</h2>
+
+        <p>A team built a schema to extract data from a structured document table. The <code>Remarks</code> field was the last thing they added — it seemed simple: find the REMARKS row beneath each instrument, return the text.</p>
+
+        <p>Then testing began.</p>
+
+        <p><strong>Run 1:</strong> A remarks row containing plain text — "PLANNING ACT CONSENT ATTACHED" — was captured correctly.<br>
+        <strong>Run 2:</strong> A remarks row containing a registration number — "RO993321" — was skipped entirely. Zero. Empty string.<br>
+        <strong>Run 3:</strong> After fixing the skipping issue, a party name from a completely different row — "THE REGIONAL MUNICIPALITY OF PEEL" — began appearing inside the remarks value.</p>
+
+        <p>The same field. Three different failure modes. All caused by the same root issue: <strong>the model did not have a precise enough boundary definition for what belonged inside the field and what did not.</strong></p>
+
+        <p>This is the boundary problem.</p>
+
+        <h2>What Is the Boundary Problem?</h2>
+
+        <p>In structured document extraction, a <strong>boundary</strong> defines:</p>
+
+        <ul>
+            <li>Where a field's value <strong>starts</strong> and <strong>ends</strong> horizontally (which columns)</li>
+            <li>Where it <strong>starts</strong> and <strong>ends</strong> vertically (which rows)</li>
+            <li>What neighbouring content is <strong>in scope</strong> versus <strong>out of scope</strong></li>
+        </ul>
+
+        <p>When a field description is ambiguous about any of these, one of two failures occurs:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Failure Mode</th>
+                    <th>What Happens</th>
+                    <th>Symptom</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Under-extraction</strong></td>
+                    <td>The model stops before the boundary — it drops content that should be captured</td>
+                    <td>Empty strings, truncated values, silently missing data</td>
+                </tr>
+                <tr>
+                    <td><strong>Over-extraction</strong></td>
+                    <td>The model goes past the boundary — it pulls in content from adjacent rows or columns</td>
+                    <td>Contaminated values, party names inside remarks, header text inside amounts</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>The same field can exhibit both failures on different documents — or even on different runs of the same document.</span>
+        </div>
+
+        <h2>Visual: Under-Extraction vs Over-Extraction</h2>
+
+        <img src="images/boundary-problem.png" alt="Diagram showing under-extraction (value dropped) and over-extraction (adjacent content pulled in) in Azure Content Understanding">
+
+        <p>The diagram above shows a document table with two adjacent instruments. The left panel shows under-extraction: a second party line and a remarks row are silently dropped. The right panel shows over-extraction: a party name from an adjacent row bleeds into the Remarks field value.</p>
+
+        <h2>Case Study: The Remarks Field Boundary</h2>
+
+        <h3>Step 1 — Initial state (under-extraction)</h3>
+
+        <p>The schema had:</p>
+
+        <pre><code>"Remarks": {
+  "type": "string",
+  "method": "extract",
+  "description": "Remarks associated to the specific instrument type.
+  This begins with 'REMARKS' and will be an additional row in the
+  document's table."
+}</code></pre>
+
+        <p><strong>Failure mode:</strong> Under-extraction. Remarks rows containing embedded registration numbers (e.g. <code>REMARKS: RO993321</code>) were silently dropped. The model interpreted the registration number as a new instrument row anchor, so it stopped the remark capture and started a new (phantom) row.</p>
+
+        <p><strong>Root cause:</strong> The description said what a remarks row <em>is</em> but gave no rule about what should happen when the remarks text <em>looks like</em> something else (a registration number in this case).</p>
+
+        <p><strong>Fix 1 — Added inclusion rule:</strong></p>
+
+        <pre><code>"description": "...A remarks row often contains one or more registration
+numbers as part of its text (e.g. 'REMARKS: RO993321', 'REMARKS: PR590237
+TO PR1011304 ADDED ... DELETED BY ...'). These registration numbers are
+part of the remark and do NOT start a new instrument row — still capture
+the entire remark line and never skip it..."</code></pre>
+
+        <hr>
+
+        <h3>Step 2 — After fix 1 (over-extraction)</h3>
+
+        <p>After fixing the under-extraction, a new failure appeared. The <code>Remarks</code> field was now capturing a party name from the previous instrument's PARTIES TO column:</p>
+
+        <blockquote>"DELETED BY J. SMITH ON 2007/12/11 THE REGIONAL MUNICIPALITY OF PEEL"</blockquote>
+
+        <p>The party name was on a separate line in the PARTIES TO column, visually adjacent to the remarks row. With <code>method: generate</code> and a description focused on "read left to right to the end of the line," the model was stitching together text from the remarks line and the party entry that appeared nearby.</p>
+
+        <p><strong>Root cause:</strong> The description said to read the full line but did not define what "line" meant in terms of column scope, and did not name the PARTIES TO column as out-of-scope.</p>
+
+        <p><strong>Fix 2 — Added exclusion rule:</strong></p>
+
+        <pre><code>"description": "...The remark NEVER includes party or owner names
+(such as a corporation or municipality name like 'THE REGIONAL MUNICIPALITY
+OF PEEL' or 'THE CORPORATION OF THE CITY OF ACTON'); those belong to a
+PARTIES column on a different line and must be excluded..."</code></pre>
+
+        <hr>
+
+        <h3>Step 3 — After fix 2 (clarifying horizontal scope)</h3>
+
+        <p>An additional clarification was needed to make the horizontal scope explicit: the remarks line spans the full width of the table left to right — it is not limited to the left columns. This needed to be stated so the model would capture the complete remark text, not just the left portion.</p>
+
+        <p><strong>Final description:</strong></p>
+
+        <pre><code>"Remarks": {
+  "type": "string",
+  "method": "generate",
+  "description": "The remark for this instrument. A remark is the line
+  that begins with the word 'REMARKS:' positioned directly beneath this
+  instrument's row (same REG. NUM.). Return the complete text of that one
+  line, reading left to right to the end of the line, joining words that
+  are separated by column gaps into a single string. Include any
+  registration numbers that appear in the remark text. The remark NEVER
+  includes party or owner names (such as a corporation or municipality
+  name like 'THE REGIONAL MUNICIPALITY OF PEEL'); those belong to a
+  PARTIES column on a different line and must be excluded. Do not include
+  text from any line above or below the REMARKS line. Return an empty
+  string if this instrument has no REMARKS line.",
+  "estimateSourceAndConfidence": true
+}</code></pre>
+
+        <h2>The Iteration Pattern</h2>
+
+        <p>The boundary problem rarely resolves in a single step. The typical pattern is:</p>
+
+        <div class="iteration-flow">
+            <span class="step-bad">Under-extraction discovered</span><br>
+            <span class="arrow">&nbsp;&nbsp;&nbsp;↓</span><br>
+            Add inclusion rule → <span class="step-good">fix under-extraction</span><br>
+            <span class="arrow">&nbsp;&nbsp;&nbsp;↓</span><br>
+            <span class="step-bad">Over-extraction discovered</span><br>
+            <span class="arrow">&nbsp;&nbsp;&nbsp;↓</span><br>
+            Add exclusion rule → <span class="step-good">fix over-extraction</span><br>
+            <span class="arrow">&nbsp;&nbsp;&nbsp;↓</span><br>
+            <span class="step-bad">Scope ambiguity discovered</span><br>
+            <span class="arrow">&nbsp;&nbsp;&nbsp;↓</span><br>
+            Clarify horizontal/vertical extent → <span class="step-good">stable</span>
+        </div>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>This is normal. Each fix reveals a new edge case that was previously hidden because the field was returning empty. Budget for two to three description iterations per complex field.</span>
+        </div>
+
+        <h2>How to Diagnose Which Failure You Have</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Observation</th>
+                    <th>Likely failure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Field is empty on some documents, populated on others with identical structure</td>
+                    <td>Under-extraction from an ambiguous anchor</td>
+                </tr>
+                <tr>
+                    <td>Field is empty when the value contains a number, ID, or code</td>
+                    <td>Under-extraction because the value "looks like" something else</td>
+                </tr>
+                <tr>
+                    <td>Field contains text from a different row above or below</td>
+                    <td>Over-extraction — vertical boundary not defined</td>
+                </tr>
+                <tr>
+                    <td>Field contains text from an adjacent column</td>
+                    <td>Over-extraction — horizontal boundary not defined</td>
+                </tr>
+                <tr>
+                    <td>Field contains the correct value <em>plus</em> extra text after it</td>
+                    <td>Over-extraction — end boundary not defined</td>
+                </tr>
+                <tr>
+                    <td>Field value appears in two fields simultaneously</td>
+                    <td>Both fields have overlapping scope; add exclusion to one</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Boundary Design Checklist</h2>
+
+        <p>For any field that extracts from a structured table or form, define:</p>
+
+        <ul class="checklist">
+            <li><strong>Row anchor:</strong> Which row? (e.g. "the row directly beneath", "the same row as REG. NUM. X")</li>
+            <li><strong>Column scope:</strong> Which columns are in scope? (e.g. "taken only from the AMOUNT column", "spans the full width")</li>
+            <li><strong>Termination:</strong> Where does the value end? (e.g. "one line only", "until the next REG. NUM. row begins")</li>
+            <li><strong>Named inclusions:</strong> Content that looks out-of-scope but must be included (e.g. "include registration numbers that appear in the remark text")</li>
+            <li><strong>Named exclusions:</strong> Nearby content that must be excluded (e.g. "do NOT include party names from the PARTIES TO column")</li>
+            <li><strong>Null case:</strong> What to return when nothing is found (e.g. "return an empty string")</li>
+        </ul>
+
+        <h2>Key Takeaways</h2>
+
+        <ul>
+            <li>The boundary problem is not a model failure — it is a description failure. The model extracts what the description permits.</li>
+            <li>Under-extraction is caused by the model stopping too early because an edge-case value matches something out-of-scope.</li>
+            <li>Over-extraction is caused by the model reaching too far because the boundary was never defined.</li>
+            <li>Use named examples of what to include AND exclude — abstract rules ("don't include unrelated text") are insufficient.</li>
+            <li>Expect two to three description iterations per complex field. Each iteration resolves one failure mode and may reveal another.</li>
+            <li><code>"estimateSourceAndConfidence": true</code> on <code>generate</code> fields gives you visibility into extraction confidence, which helps identify which fields are most at risk during testing.</li>
+        </ul>
+
+        <hr>
+
+        <div class="series-nav">
+            <p><i class="fas fa-check-circle"></i> &nbsp;You've completed the series</p>
+            <ul>
+                <li><a href="./extract-vs-generate-azure-content-understanding.html">Part 1: <code>extract</code> vs <code>generate</code> — choosing the right method</a></li>
+                <li><a href="./deterministic-field-descriptions-azure-content-understanding.html">Part 2: Writing Deterministic Field Descriptions</a></li>
+                <li><strong>Part 3 (this article):</strong> The Boundary Problem — Too Much or Too Little</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- Article Footer -->
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back">
+            <i class="fas fa-arrow-left"></i> Back to Blog
+        </a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/boundary-problem-azure-content-understanding.html" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i> LinkedIn
+            </a>
+            <a href="https://twitter.com/intent/tweet?url=https://dhavalshah01.github.io/blog/boundary-problem-azure-content-understanding.html&text=Check+out+this+article+by+%40dhavalshah" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-twitter"></i> Twitter
+            </a>
+        </div>
+    </div>
+</article>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => navLinks.classList.remove('active'));
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') {
+        document.body.classList.add('dark-mode');
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+    }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

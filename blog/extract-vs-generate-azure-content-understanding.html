@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>extract vs generate in Azure Content Understanding | Dhaval Shah</title>
+    <meta name="description" content="Why choosing the wrong extraction method in Azure AI Content Understanding causes non-deterministic results — and how to fix it with a single schema change.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/extract-vs-generate-azure-content-understanding.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="extract vs generate in Azure Content Understanding | Dhaval Shah">
+    <meta property="og:description" content="Why choosing the wrong extraction method in Azure AI Content Understanding causes non-deterministic results — and how to fix it with a single schema change.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/extract-vs-generate-azure-content-understanding.html">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #0078d4;
+            --primary-dark: #005a9e;
+            --primary-light: #deecf9;
+            --accent: #00b4d8;
+            --dark: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --text-lighter: #94a3b8;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --border: #e2e8f0;
+            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--off-white);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== Navbar ===== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: var(--transition);
+        }
+        .navbar.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo { font-weight: 800; font-size: 1.25rem; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+        .nav-logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 8px; list-style: none; }
+        .nav-links a {
+            color: var(--text-lighter);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        .nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: var(--accent); }
+        .nav-toggle { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .theme-toggle {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-lighter);
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-left: 8px;
+        }
+        .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* ===== Article Hero ===== */
+        .article-hero {
+            background: var(--gradient-hero);
+            padding: 120px 24px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+        .article-hero::before {
+            content: '';
+            position: absolute;
+            top: -30%; right: -10%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,120,212,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .article-hero-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .article-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.55);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+        .article-back:hover { color: var(--accent); }
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .article-tag {
+            background: rgba(0,180,216,0.15);
+            border: 1px solid rgba(0,180,216,0.3);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .article-hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1.25;
+            margin-bottom: 20px;
+        }
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+        }
+        .article-meta span { display: flex; align-items: center; gap: 6px; }
+        .article-meta i { font-size: 0.78rem; }
+
+        /* ===== Article Body ===== */
+        .article-body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 24px 80px;
+        }
+
+        /* ===== Prose Styles ===== */
+        .prose h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2.5rem 0 1rem;
+            letter-spacing: -0.5px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        .prose h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2rem 0 0.75rem;
+        }
+        .prose p {
+            margin-bottom: 1.25rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        .prose ul, .prose ol {
+            margin: 0 0 1.25rem 1.5rem;
+        }
+        .prose li {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        .prose a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .prose a:hover { color: var(--accent); }
+        .prose strong { font-weight: 700; color: var(--dark); }
+        .prose em { font-style: italic; }
+        .prose blockquote {
+            border-left: 4px solid var(--primary);
+            background: var(--primary-light);
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: var(--primary-dark);
+        }
+        .prose pre {
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .prose code {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.875em;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .prose pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
+        }
+        .prose img {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+        .prose hr {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 2.5rem 0;
+        }
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .prose th {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .prose td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .prose tr:nth-child(even) td { background: var(--off-white); }
+
+        /* ===== Info / Callout Box ===== */
+        .callout {
+            display: flex;
+            gap: 14px;
+            padding: 18px 20px;
+            border-radius: var(--radius-sm);
+            margin: 1.5rem 0;
+            font-size: 0.92rem;
+        }
+        .callout-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        .callout-tip  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .callout-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+        .callout i { margin-top: 2px; flex-shrink: 0; }
+
+        /* ===== Series nav ===== */
+        .series-nav {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 2rem 0;
+        }
+        .series-nav p { margin: 0 0 8px; font-weight: 600; color: var(--primary-dark); font-size: 0.9rem; }
+        .series-nav ul { margin: 0; padding-left: 1.25rem; }
+        .series-nav li { margin-bottom: 4px; font-size: 0.88rem; }
+
+        /* ===== Article Footer / Share ===== */
+        .article-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .article-footer-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .article-footer-back:hover { color: var(--accent); }
+        .share-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.82rem;
+            color: var(--text-lighter);
+        }
+        .share-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .share-links a:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ===== Dark Mode ===== */
+        body.dark-mode {
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --text-lighter: #94a3b8;
+            --off-white: #0f172a;
+            --white: #1e293b;
+            --border: #334155;
+            --primary-light: rgba(0,120,212,0.15);
+        }
+        body.dark-mode .prose h2,
+        body.dark-mode .prose h3,
+        body.dark-mode .prose strong { color: #f1f5f9; }
+        body.dark-mode .prose p,
+        body.dark-mode .prose li { color: #cbd5e1; }
+        body.dark-mode .prose blockquote { background: rgba(0,120,212,0.12); color: #93c5fd; border-color: var(--primary); }
+        body.dark-mode .prose code { background: rgba(0,120,212,0.2); color: #93c5fd; }
+        body.dark-mode .prose h2 { border-color: #1e3a5f; }
+        body.dark-mode .prose img { border-color: #334155; }
+        body.dark-mode .prose hr { border-color: #334155; }
+        body.dark-mode .prose td { color: #cbd5e1; }
+        body.dark-mode .prose tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        body.dark-mode .callout-info { background: rgba(30,64,175,0.15); border-color: rgba(191,219,254,0.2); color: #93c5fd; }
+        body.dark-mode .callout-tip  { background: rgba(22,101,52,0.15);  border-color: rgba(187,247,208,0.2); color: #86efac; }
+        body.dark-mode .callout-warn { background: rgba(146,64,14,0.15);  border-color: rgba(253,230,138,0.2); color: #fcd34d; }
+        body.dark-mode .series-nav { background: rgba(0,120,212,0.12); border-color: rgba(0,120,212,0.25); }
+        body.dark-mode .series-nav p { color: #93c5fd; }
+        body.dark-mode .article-footer { border-color: #334155; }
+        body.dark-mode .share-links a { border-color: #334155; color: #94a3b8; }
+        body.dark-mode .share-links a:hover { border-color: var(--primary); color: #60a5fa; }
+        body.dark-mode .theme-toggle { border-color: #334155; color: #94a3b8; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.98); padding: 16px; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+            .nav-links.active { display: flex; }
+            .nav-toggle { display: block; }
+            .article-hero h1 { font-size: 1.8rem; }
+            .prose h2 { font-size: 1.3rem; }
+            .prose table { font-size: 0.8rem; }
+            .prose th, .prose td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#certifications">Certifications</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- Article Hero -->
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Azure AI</span>
+            <span class="article-tag">Content Understanding</span>
+            <span class="article-tag">Document Intelligence</span>
+            <span class="article-tag">Part 1 of 3</span>
+        </div>
+        <h1><code style="font-family:inherit;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:6px;">extract</code> vs <code style="font-family:inherit;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:6px;">generate</code> in Azure Content Understanding: How Choosing the Wrong Method Causes Inconsistent Results</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 12, 2026</span>
+            <span><i class="fas fa-clock"></i> 8 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<!-- Article Body -->
+<article class="article-body">
+    <div class="prose">
+
+        <div class="series-nav">
+            <p><i class="fas fa-layer-group"></i> &nbsp;Series: Azure Content Understanding — Field Schema Design</p>
+            <ul>
+                <li><strong>Part 1 (this article):</strong> <code>extract</code> vs <code>generate</code> — choosing the right method</li>
+                <li><a href="./deterministic-field-descriptions-azure-content-understanding.html">Part 2: Writing Deterministic Field Descriptions</a></li>
+                <li><a href="./boundary-problem-azure-content-understanding.html">Part 3: The Boundary Problem — Too Much or Too Little</a></li>
+            </ul>
+        </div>
+
+        <h2>The Problem</h2>
+
+        <p>A team was building an automated document processing pipeline using Azure AI Content Understanding. They had designed a field schema to extract structured data from a multi-column table inside a formatted document — registration numbers, dates, instrument types, amounts, and remarks.</p>
+
+        <p>Everything looked fine on the first test. But on the second run, certain fields came back empty. The third run, they were populated again. No code had changed. No document had changed. The extraction was behaving non-deterministically.</p>
+
+        <p>The culprit wasn't the model. It wasn't a timeout. It was a single word in the schema: <code>"method": "extract"</code> on a field that needed <code>"method": "generate"</code>.</p>
+
+        <h2>Understanding the Two Methods</h2>
+
+        <p>Azure AI Content Understanding field schemas support two extraction methods:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>What it does</th>
+                    <th>Best for</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>extract</code></td>
+                    <td>Locates and returns the <strong>verbatim text</strong> found at a specific region of the document</td>
+                    <td>Values that live cleanly in a single cell or span — dates, names, codes, amounts</td>
+                </tr>
+                <tr>
+                    <td><code>generate</code></td>
+                    <td>Asks the model to <strong>reason, infer, and transform</strong> before returning a value</td>
+                    <td>Values that require association across rows, substring extraction from sentences, or combining multiple text spans</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The mental model is simple:</p>
+        <ul>
+            <li><strong><code>extract</code></strong> = "find it and return it as-is"</li>
+            <li><strong><code>generate</code></strong> = "think about it, then return what it means"</li>
+        </ul>
+
+        <h2>Why <code>extract</code> Fails on Complex Fields</h2>
+
+        <p>Consider a document table where an instrument row is followed by a REMARKS row that visually spans multiple columns:</p>
+
+        <pre><code>┌────────────┬────────────┬─────────────────┬──────────┬─────────────────┐
+│ REG. NUM.  │ DATE       │ INSTRUMENT TYPE │ AMOUNT   │ PARTIES TO      │
+├────────────┼────────────┼─────────────────┼──────────┼─────────────────┤
+│ AT590237   │ 2006/08/28 │ POSTPONEMENT    │ $557,997 │ CITY OF ACTON   │
+├────────────┴────────────┴─────────────────┴──────────┤                 │
+│ REMARKS: RO993321 ADDED 2006/08/28 DELETED BY...     │                 │
+└──────────────────────────────────────────────────────┴─────────────────┘</code></pre>
+
+        <p>The REMARKS row does not live in a single column. It spans across the REG. NUM., DATE, INSTRUMENT TYPE, and AMOUNT columns. When the field is defined as <code>"method": "extract"</code>, the model looks for a discrete cell value at a fixed location. When the spanning row lands ambiguously — which it does depending on how the document is parsed — the extraction either succeeds or silently returns empty.</p>
+
+        <p>Switching to <code>"method": "generate"</code> tells the model: <em>"reason about the document structure, find the row that starts with REMARKS and belongs to the instrument above it, and return that content."</em> This produces consistent results because reasoning is explicit rather than positional.</p>
+
+        <h2>The Decision Tree</h2>
+
+        <img src="images/extract-vs-generate.png" alt="Decision tree for choosing extract vs generate in Azure Content Understanding field schemas">
+
+        <p>Use the following questions to choose the right method for any field:</p>
+
+        <ol>
+            <li><strong>Is the value verbatim text sitting cleanly in a single column?</strong> → <code>extract</code></li>
+            <li><strong>Does it span multiple columns or require knowing which row it belongs to?</strong> → <code>generate</code></li>
+            <li><strong>Is it a substring you need to pull out of a longer sentence?</strong> → <code>generate</code></li>
+            <li><strong>Does it require combining, transforming, or counting values?</strong> → <code>generate</code></li>
+        </ol>
+
+        <h2>Before and After: The REMARKS Field</h2>
+
+        <h3>Before — inconsistent</h3>
+
+        <pre><code>"Remarks": {
+  "type": "string",
+  "method": "extract",
+  "description": "Remarks associated to the specific instrument type. This begins with REMARKS and will be an additional row in the document's table."
+}</code></pre>
+
+        <p>Result: Captured on some runs, empty on others. No error, no warning.</p>
+
+        <h3>After — consistent</h3>
+
+        <pre><code>"Remarks": {
+  "type": "string",
+  "method": "generate",
+  "description": "The remark for this instrument. A remark is the line that begins with the word 'REMARKS:' positioned directly beneath this instrument's row (same REG. NUM.). Return the complete text of that one line, reading left to right to the end of the line, joining words that are separated by column gaps into a single string. Include any registration numbers that appear in the remark text. Return an empty string if this instrument has no REMARKS line.",
+  "estimateSourceAndConfidence": true
+}</code></pre>
+
+        <p>Result: Consistent capture on every run, including remarks that contain embedded registration numbers.</p>
+
+        <h2>Another Common Case: Substring Extraction</h2>
+
+        <p>Imagine a field in an endorsement document that contains the sentence:</p>
+
+        <blockquote>"Attached to and forming a part of Policy No. AB-2024-009812 issued by XYZ Insurance."</blockquote>
+
+        <p>You only want the policy number <code>AB-2024-009812</code>.</p>
+
+        <p>With <code>"method": "extract"</code>, the model returns the entire sentence because that is the text span it can locate. It has no mechanism to isolate a substring.</p>
+
+        <p>With <code>"method": "generate"</code> and a description like <em>"The policy number referenced after 'Policy No.' in the attachment clause. Return only the alphanumeric policy number, nothing else."</em> — the model extracts exactly <code>AB-2024-009812</code>.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span><strong>Silent failures:</strong> When <code>extract</code> cannot locate a value, it returns an empty string — not an error. This makes non-deterministic behaviour especially hard to diagnose: runs succeed, runs return empty, and there is no signal in the response to indicate anything went wrong.</span>
+        </div>
+
+        <h2>Key Takeaways</h2>
+
+        <ul>
+            <li><code>extract</code> is fast and precise <strong>when the value lives in a single, clearly bounded cell or region</strong>.</li>
+            <li><code>extract</code> produces silent failures — empty strings, not errors — when the value requires any reasoning about document structure.</li>
+            <li>Non-deterministic extraction (works sometimes, fails other times) is almost always a symptom of using <code>extract</code> where <code>generate</code> is needed.</li>
+            <li>Switching the method costs nothing in schema complexity and eliminates the entire class of on/off failures.</li>
+            <li>Always add <code>"estimateSourceAndConfidence": true</code> to <code>generate</code> fields — it gives you confidence scores to help validate extraction quality during testing.</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>Not sure which method to use? Default to <code>generate</code> for any field whose value isn't a clean, isolated cell value. The performance cost is negligible, and the reliability gain is significant.</span>
+        </div>
+
+        <hr>
+
+        <div class="series-nav">
+            <p><i class="fas fa-arrow-right"></i> &nbsp;Continue the series</p>
+            <ul>
+                <li><a href="./deterministic-field-descriptions-azure-content-understanding.html">Part 2: Writing Deterministic Field Descriptions for Azure Content Understanding</a></li>
+                <li><a href="./boundary-problem-azure-content-understanding.html">Part 3: The Boundary Problem — When Your AI Extracts Too Much or Too Little</a></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- Article Footer -->
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back">
+            <i class="fas fa-arrow-left"></i> Back to Blog
+        </a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/extract-vs-generate-azure-content-understanding.html" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i> LinkedIn
+            </a>
+            <a href="https://twitter.com/intent/tweet?url=https://dhavalshah01.github.io/blog/extract-vs-generate-azure-content-understanding.html&text=Check+out+this+article+by+%40dhavalshah" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-twitter"></i> Twitter
+            </a>
+        </div>
+    </div>
+</article>
+
+<script>
+    // Navbar scroll
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Mobile nav toggle
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => navLinks.classList.remove('active'));
+    });
+
+    // Dark mode (shared localStorage key with main site)
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') {
+        document.body.classList.add('dark-mode');
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+    }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

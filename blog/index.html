@@ -72,6 +72,14 @@
 <!-- Blog Content -->
 <main class="blog-container">
 
+    <!-- Search -->
+    <div class="blog-search-wrap reveal">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="search" id="blogSearch" placeholder="Search articles by title, topic, or keyword…" autocomplete="off" spellcheck="false">
+        <button id="searchClear" aria-label="Clear search"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="search-meta" id="searchMeta"></div>
+
     <!-- Filter Buttons -->
     <div class="blog-filters reveal">
         <button class="filter-btn active" data-filter="all">All</button>
@@ -80,6 +88,7 @@
         <button class="filter-btn" data-filter="rag-series">RAG Series</button>
         <button class="filter-btn" data-filter="prompt-engineering">Prompt Engineering</button>
         <button class="filter-btn" data-filter="search-ai">Search &amp; AI</button>
+        <button class="filter-btn" data-filter="content-understanding">Content Understanding</button>
         <button class="filter-btn" data-filter="azure">Azure &amp; Certs</button>
         <button class="filter-btn" data-filter="power-platform">Power Platform</button>
         <button class="filter-btn" data-filter="graph">Microsoft Graph</button>
@@ -95,6 +104,47 @@
          <a class="post-card"> block, update href/title/date/tags.
          ============================================================ -->
     <div class="blog-grid" id="blogGrid">
+        <div class="no-results" id="noResults">
+            <i class="fas fa-face-frown-open"></i>
+            <p>No articles matched your search.</p>
+            <small>Try a different keyword, or <button onclick="clearSearch()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:inherit;padding:0;text-decoration:underline;">clear the search</button> to browse all articles.</small>
+        </div>
+
+        <!-- 45 -->
+        <a href="./boundary-problem-azure-content-understanding.html" class="post-card reveal" data-tags="azure-ai document-intelligence content-understanding">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 12, 2026</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Azure Content Understanding, Part 3: The Boundary Problem — Too Much or Too Little</h2>
+                <p>Under-extraction, over-extraction, and how to diagnose which failure you have. A field-level case study that walks through three rounds of description iteration to reach a stable, reliable boundary definition.</p>
+                <div class="post-tags"><span class="post-tag">Azure AI</span><span class="post-tag">Content Understanding</span><span class="post-tag">Part 3</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 44 -->
+        <a href="./deterministic-field-descriptions-azure-content-understanding.html" class="post-card reveal" data-tags="azure-ai document-intelligence content-understanding">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 12, 2026</span><span><i class="fas fa-clock"></i> 10 min</span></div>
+                <h2>Azure Content Understanding, Part 2: Writing Deterministic Field Descriptions</h2>
+                <p>Why vague descriptions fail on edge cases and how to write ones that produce the same output every time — covering anchoring, scope, inclusion rules, exclusion rules, and null cases with before-and-after examples.</p>
+                <div class="post-tags"><span class="post-tag">Azure AI</span><span class="post-tag">Content Understanding</span><span class="post-tag">Part 2</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 43 -->
+        <a href="./extract-vs-generate-azure-content-understanding.html" class="post-card reveal" data-tags="azure-ai document-intelligence content-understanding">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 12, 2026</span><span><i class="fas fa-clock"></i> 8 min</span></div>
+                <h2>Azure Content Understanding, Part 1: <code>extract</code> vs <code>generate</code> — Choosing the Right Method</h2>
+                <p>Why a single word in a field schema — <code>extract</code> vs <code>generate</code> — causes non-deterministic document extraction, and a decision framework for choosing the right method for every field.</p>
+                <div class="post-tags"><span class="post-tag">Azure AI</span><span class="post-tag">Content Understanding</span><span class="post-tag">Part 1</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
 
         <!-- 42 -->
         <a href="./github-copilot-token-optimization-agent-quality.html" class="post-card reveal" data-tags="copilot agentic-ai">
@@ -641,18 +691,66 @@
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-    // Tag filtering
+    // ── Search + Filter ──────────────────────────────────────────
     const filterBtns = document.querySelectorAll('.filter-btn');
-    const cards = document.querySelectorAll('.post-card[data-tags]');
+    const cards       = document.querySelectorAll('.post-card[data-tags]');
+    const searchInput = document.getElementById('blogSearch');
+    const searchClear = document.getElementById('searchClear');
+    const searchMeta  = document.getElementById('searchMeta');
+    const noResults   = document.getElementById('noResults');
+
+    let activeFilter = 'all';
+
+    function getCardText(card) {
+        const h2   = card.querySelector('h2')  ?.textContent || '';
+        const desc = card.querySelector('p')   ?.textContent || '';
+        const tags = card.querySelector('.post-tags')?.textContent || '';
+        return (h2 + ' ' + desc + ' ' + tags + ' ' + (card.dataset.tags || '')).toLowerCase();
+    }
+
+    function applyFilters() {
+        const query = searchInput.value.trim().toLowerCase();
+        const tokens = query ? query.split(/\s+/).filter(Boolean) : [];
+        let visible = 0;
+
+        cards.forEach(card => {
+            const tagMatch  = activeFilter === 'all' || (card.dataset.tags || '').split(' ').includes(activeFilter);
+            const textMatch = tokens.length === 0 || tokens.every(t => getCardText(card).includes(t));
+            const show = tagMatch && textMatch;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        // No-results state
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+
+        // Result count hint
+        if (tokens.length > 0) {
+            searchMeta.innerHTML = `<strong>${visible}</strong> article${visible !== 1 ? 's' : ''} matched <em>"${searchInput.value.trim()}"</em>`;
+        } else {
+            searchMeta.textContent = '';
+        }
+
+        // Clear button visibility
+        searchClear.style.display = query ? 'block' : 'none';
+    }
+
+    function clearSearch() {
+        searchInput.value = '';
+        applyFilters();
+        searchInput.focus();
+    }
+    window.clearSearch = clearSearch;
+
+    searchInput.addEventListener('input', applyFilters);
+    searchClear.addEventListener('click', clearSearch);
+
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const filter = btn.dataset.filter;
-            cards.forEach(card => {
-                const tags = card.dataset.tags || '';
-                card.style.display = (filter === 'all' || tags.split(' ').includes(filter)) ? '' : 'none';
-            });
+            activeFilter = btn.dataset.filter;
+            applyFilters();
         });
     });
 </script>
