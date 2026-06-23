@@ -745,14 +745,60 @@
     searchInput.addEventListener('input', applyFilters);
     searchClear.addEventListener('click', clearSearch);
 
+    // ── URL-driven tag filtering ────────────────────────────────
+    // Share/deep-link a category, e.g. /blog/?tag=prompt-engineering
+    // Accepts the data-filter slug ("rag-series"), the visible label
+    // ("RAG Series") or a slugified label ("azure-certs"). Reads the
+    // ?tag= param (also accepts ?filter= and ?category= as aliases).
+    function findFilterButton(value) {
+        if (!value) return null;
+        const v = String(value).trim().toLowerCase();
+        return Array.from(filterBtns).find(b => {
+            const slug  = (b.dataset.filter || '').toLowerCase();
+            const label = b.textContent.trim().toLowerCase();
+            const labelSlug = label.replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            return slug === v || label === v || labelSlug === v;
+        }) || null;
+    }
+
+    function getTagFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('tag') || params.get('filter') || params.get('category');
+    }
+
+    function syncURL(replace) {
+        const url = new URL(window.location);
+        if (activeFilter && activeFilter !== 'all') {
+            url.searchParams.set('tag', activeFilter);
+        } else {
+            url.searchParams.delete('tag');
+        }
+        url.searchParams.delete('filter');
+        url.searchParams.delete('category');
+        history[replace ? 'replaceState' : 'pushState'](null, '', url);
+    }
+
+    function activateFilter(btn, updateURL, pushHistory) {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilters();
+        if (updateURL) syncURL(!pushHistory);
+    }
+
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeFilter = btn.dataset.filter;
-            applyFilters();
-        });
+        btn.addEventListener('click', () => activateFilter(btn, true, true));
     });
+
+    // Keep the active filter in sync with browser back/forward.
+    window.addEventListener('popstate', () => {
+        const btn = findFilterButton(getTagFromURL()) || filterBtns[0];
+        activateFilter(btn, false);
+    });
+
+    // Apply any tag passed in the URL on initial load.
+    const initialBtn = findFilterButton(getTagFromURL());
+    if (initialBtn) activateFilter(initialBtn, true, false);
 </script>
 </body>
 </html>
