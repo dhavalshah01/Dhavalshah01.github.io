@@ -1,0 +1,89 @@
+<svg width="900" height="544" viewBox="0 0 900 544" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="nwEnd" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#0078d4"/>
+    </marker>
+    <marker id="nwStart" markerWidth="9" markerHeight="9" refX="1" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M8,0 L0,3 L8,6 Z" fill="#0078d4"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="544" fill="#f8f9fa" rx="12"/>
+
+  <text x="450" y="36" text-anchor="middle" font-size="19" font-weight="700" fill="#1a1a2e">Hub-and-Spoke Network Topology</text>
+  <text x="450" y="58" text-anchor="middle" font-size="12" fill="#555">Private endpoints, VNet peering, and DNS — zero public exposure for AI services</text>
+  <line x1="60" y1="72" x2="840" y2="72" stroke="#dee2e6" stroke-width="1.5"/>
+
+  <!-- ===== Spoke VNets ===== -->
+  <g>
+    <rect x="26" y="100" width="210" height="116" rx="10" fill="#ffffff" stroke="#107c10" stroke-width="1.5"/>
+    <text x="131" y="120" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0f172a">Spoke VNet 1</text>
+    <text x="131" y="134" text-anchor="middle" font-size="8.8" fill="#666">10.1.0.0/16</text>
+    <rect x="42" y="144" width="178" height="58" rx="7" fill="#eafaef" stroke="#107c10"/>
+    <text x="131" y="164" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0f172a">snet-app · 10.1.1.0/24</text>
+    <text x="131" y="182" text-anchor="middle" font-size="8.8" fill="#555">App Service / AKS workload</text>
+    <text x="131" y="195" text-anchor="middle" font-size="8.3" font-weight="600" fill="#107c10">NSG: DenyAllInbound</text>
+
+    <rect x="26" y="232" width="210" height="116" rx="10" fill="#ffffff" stroke="#107c10" stroke-width="1.5"/>
+    <text x="131" y="252" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0f172a">Spoke VNet 2</text>
+    <text x="131" y="266" text-anchor="middle" font-size="8.8" fill="#666">10.2.0.0/16</text>
+    <rect x="42" y="276" width="178" height="58" rx="7" fill="#eafaef" stroke="#107c10"/>
+    <text x="131" y="296" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0f172a">snet-app · 10.2.1.0/24</text>
+    <text x="131" y="314" text-anchor="middle" font-size="8.8" fill="#555">App Service / AKS workload</text>
+    <text x="131" y="327" text-anchor="middle" font-size="8.3" font-weight="600" fill="#107c10">NSG: DenyAllInbound</text>
+
+    <text x="131" y="372" text-anchor="middle" font-size="9" font-style="italic" fill="#94a3b8">…Spoke VNet N (10.n.0.0/16)</text>
+  </g>
+
+  <!-- Peering -->
+  <g stroke="#0078d4" stroke-width="2.2" marker-end="url(#nwEnd)" marker-start="url(#nwStart)">
+    <line x1="238" y1="173" x2="326" y2="210"/>
+    <line x1="238" y1="289" x2="326" y2="252"/>
+  </g>
+  <text x="284" y="150" text-anchor="middle" font-size="8.5" font-weight="700" fill="#0078d4">VNet Peering</text>
+  <text x="284" y="320" text-anchor="middle" font-size="8.5" font-weight="700" fill="#0078d4">VNet Peering</text>
+
+  <!-- ===== Hub VNet ===== -->
+  <rect x="328" y="92" width="544" height="288" rx="12" fill="#eef5fc" stroke="#0078d4" stroke-width="2"/>
+  <text x="600" y="113" text-anchor="middle" font-size="12.5" font-weight="700" fill="#005a9e">HUB VNET · 10.0.0.0/16</text>
+
+  <!-- subnet: AI -->
+  <rect x="348" y="124" width="504" height="50" rx="7" fill="#ffffff" stroke="#0078d4"/>
+  <text x="362" y="143" font-size="10" font-weight="700" fill="#0f172a">snet-ai · 10.0.1.0/24</text>
+  <text x="362" y="160" font-size="8.6" fill="#555">AI Gateway (APIM) + integration subnet</text>
+  <rect x="724" y="135" width="116" height="28" rx="6" fill="#fde7e7"/>
+  <text x="782" y="153" text-anchor="middle" font-size="8.4" font-weight="700" fill="#c50f1f">NSG: DenyAllInbound</text>
+
+  <!-- subnet: PE -->
+  <rect x="348" y="182" width="504" height="58" rx="7" fill="#ffffff" stroke="#8661c5"/>
+  <text x="362" y="201" font-size="10" font-weight="700" fill="#0f172a">snet-pe · 10.0.2.0/24 — Private Endpoints</text>
+  <g font-size="8" font-weight="600" fill="#6d28d9">
+    <rect x="362" y="210" width="92" height="22" rx="11" fill="#ede9fe"/><text x="408" y="225" text-anchor="middle">PE · OpenAI</text>
+    <rect x="462" y="210" width="92" height="22" rx="11" fill="#ede9fe"/><text x="508" y="225" text-anchor="middle">PE · Search</text>
+    <rect x="562" y="210" width="92" height="22" rx="11" fill="#ede9fe"/><text x="608" y="225" text-anchor="middle">PE · KeyVault</text>
+    <rect x="662" y="210" width="80" height="22" rx="11" fill="#ede9fe"/><text x="702" y="225" text-anchor="middle">PE · Blob</text>
+    <rect x="750" y="210" width="90" height="22" rx="11" fill="#ede9fe"/><text x="795" y="225" text-anchor="middle">PE · AML/DFS</text>
+  </g>
+
+  <!-- subnet: data -->
+  <rect x="348" y="248" width="504" height="50" rx="7" fill="#ffffff" stroke="#107c10"/>
+  <text x="362" y="267" font-size="10" font-weight="700" fill="#0f172a">snet-data · 10.0.3.0/24</text>
+  <text x="362" y="284" font-size="8.6" fill="#555">Data plane integration · storage / model registry access</text>
+
+  <!-- subnet: mgmt -->
+  <rect x="348" y="306" width="504" height="50" rx="7" fill="#ffffff" stroke="#64748b"/>
+  <text x="362" y="325" font-size="10" font-weight="700" fill="#0f172a">snet-mgmt · 10.0.4.0/24</text>
+  <text x="362" y="342" font-size="8.6" fill="#555">Bastion · jump-box · self-hosted build agents</text>
+
+  <!-- ===== Private DNS Zones ===== -->
+  <rect x="26" y="396" width="846" height="124" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="450" y="420" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0078d4">Private DNS Zones — linked to the Hub VNet for name resolution</text>
+  <g font-size="9" fill="#0f172a">
+    <rect x="48" y="438" width="258" height="30" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/><text x="177" y="457" text-anchor="middle">privatelink.openai.azure.com</text>
+    <rect x="320" y="438" width="258" height="30" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/><text x="449" y="457" text-anchor="middle">privatelink.search.windows.net</text>
+    <rect x="592" y="438" width="260" height="30" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/><text x="722" y="457" text-anchor="middle">privatelink.vaultcore.azure.net</text>
+    <rect x="48" y="476" width="258" height="30" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/><text x="177" y="495" text-anchor="middle">privatelink.blob.core.windows.net</text>
+    <rect x="320" y="476" width="258" height="30" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/><text x="449" y="495" text-anchor="middle">privatelink.dfs.core.windows.net</text>
+    <rect x="592" y="476" width="260" height="30" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/><text x="722" y="495" text-anchor="middle">privatelink.api.azureml.ms</text>
+  </g>
+</svg>

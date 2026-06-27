@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Hub, Part 2: The Network Landing Zone | Dhaval Shah</title>
+    <meta name="description" content="Part 2 of the Centralized Hub AI series: build the hub-and-spoke network — VNets and subnets, VNet peering, private endpoints, private DNS zones, and deny-all NSGs — so no AI service is ever reachable from the public internet.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/hub-ai-2-network-landing-zone.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Enterprise AI Hub, Part 2: The Network Landing Zone">
+    <meta property="og:description" content="Hub-and-spoke VNets, VNet peering, private endpoints, private DNS, and deny-all NSGs — the private foundation every AI service sits on.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/hub-ai-2-network-landing-zone.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Enterprise AI</span>
+            <span class="article-tag">Networking</span>
+            <span class="article-tag">Part 2</span>
+        </div>
+        <h1>Enterprise AI Hub, Part 2: The Network Landing Zone</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 18, 2026</span>
+            <span><i class="fas fa-clock"></i> 13 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">Everything in the hub sits on a network. Get the network right and the rest of the platform inherits a powerful default: <strong>nothing is reachable from the public internet</strong>. Get it wrong and no amount of RBAC or monitoring later will undo that exposure. This part builds the private foundation — hub-and-spoke VNets, peering, private endpoints, private DNS, and deny-all NSGs.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>The series at a glance:</strong> <a href="./hub-ai-1-problem-and-pattern.html">Part 1 — the problem &amp; the pattern</a>. <a href="./hub-ai-2-network-landing-zone.html">Part 2 — the network landing zone</a> (you're here). <a href="./hub-ai-3-shared-ai-services.html">Part 3 — the shared AI services</a>. <a href="./hub-ai-4-ai-gateway-apim.html">Part 4 — the AI gateway</a>. <a href="./hub-ai-5-identity-and-security.html">Part 5 — identity &amp; security</a>. <a href="./hub-ai-6-observability-and-cost.html">Part 6 — observability &amp; cost</a>. <a href="./hub-ai-7-iac-cicd-operating-model.html">Part 7 — IaC, CI/CD &amp; the operating model</a>.</span>
+        </div>
+
+        <h2>The problem: a public endpoint is a standing risk</h2>
+        <p>By default, Azure OpenAI, AI Search, Key Vault, and Storage all expose a public endpoint protected by keys or tokens. For a weekend prototype that's fine. For an enterprise platform handling regulated data it is a permanent liability: a leaked key, a misconfigured firewall rule, or an over-broad CORS setting becomes a direct path to your models and your data. In financial services and healthcare, "the data left over a public endpoint" is the sentence nobody wants to write in an incident report.</p>
+        <p>The fix is to make private the <em>only</em> way in. We do that with four building blocks, shown together below.</p>
+
+        <figure class="article-figure">
+            <img src="./images/hub-ai-network.svg" alt="Hub-and-spoke network topology: spoke VNets on the left peer into a central hub VNet that contains four subnets (snet-ai, snet-pe with private endpoints, snet-data, snet-mgmt); six private DNS zones are linked to the hub for name resolution; NSGs apply deny-all-inbound.">
+            <figcaption><em>The network landing zone.</em> Spokes peer into a hub whose private-endpoint subnet is the only door to the AI services; private DNS zones make the names resolve to internal addresses.</figcaption>
+        </figure>
+
+        <h2>Building block 1 — the hub VNet and its subnets</h2>
+        <p>The hub is a single VNet, segmented into purpose-built subnets so that traffic can be isolated and policed per function. A clean starting layout:</p>
+        <ul>
+            <li><strong>snet-ai</strong> — the AI gateway (API Management) and any VNet-integrated compute.</li>
+            <li><strong>snet-pe</strong> — dedicated to private endpoints for the PaaS services. Keeping these in their own subnet makes the NSG and routing story simple.</li>
+            <li><strong>snet-data</strong> — data-plane integration for storage and the model registry.</li>
+            <li><strong>snet-mgmt</strong> — Bastion, a jump-box, and self-hosted build agents that need to reach private resources.</li>
+        </ul>
+
+        <pre><code>resource hubVnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+  name: 'vnet-ai-hub'
+  location: location
+  properties: {
+    addressSpace: { addressPrefixes: ['10.0.0.0/16'] }
+    subnets: [
+      { name: 'snet-ai',   properties: { addressPrefix: '10.0.1.0/24' } }
+      { name: 'snet-pe',   properties: {
+          addressPrefix: '10.0.2.0/24'
+          privateEndpointNetworkPolicies: 'Disabled'   // required for PEs
+      } }
+      { name: 'snet-data', properties: { addressPrefix: '10.0.3.0/24' } }
+      { name: 'snet-mgmt', properties: { addressPrefix: '10.0.4.0/24' } }
+    ]
+  }
+}</code></pre>
+        <p class="code-caption">A /16 hub gives you room to grow; each /24 subnet is a clean isolation boundary.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> segmentation. Putting private endpoints in their own subnet means a single, auditable place where "the doors to the AI services" live — and a single NSG to govern them.</span>
+        </div>
+
+        <h2>Building block 2 — spokes and VNet peering</h2>
+        <p>Each application gets its own spoke VNet with its own address space (10.1.0.0/16, 10.2.0.0/16, …). The spoke connects to the hub with <strong>VNet peering</strong> — a low-latency, private link on the Microsoft backbone. Peering is configured on <em>both</em> sides; it is not transitive, which is exactly what we want: spokes reach the hub, but not each other.</p>
+
+        <pre><code>resource hubToSpoke 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-09-01' = {
+  parent: hubVnet
+  name: 'hub-to-spoke1'
+  properties: {
+    remoteVirtualNetwork: { id: spoke1VnetId }
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+  }
+}
+// A mirror 'spoke1-to-hub' peering is created on the spoke side.</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> private, low-latency connectivity <em>and</em> spoke isolation. Because peering isn't transitive, Spoke 1 cannot route to Spoke 2 — a leak in one app can't pivot into another.</span>
+        </div>
+
+        <h2>Building block 3 — private endpoints</h2>
+        <p>A <a href="https://learn.microsoft.com/azure/private-link/private-endpoint-overview" target="_blank" rel="noopener noreferrer">private endpoint</a> projects a PaaS service into your VNet as a private IP. Once Azure OpenAI has a private endpoint in <code>snet-pe</code> and its public network access is disabled, the only way to reach it is from inside the hub or a peered spoke. The public endpoint simply stops answering.</p>
+
+        <pre><code>resource openaiPe 'Microsoft.Network/privateEndpoints@2023-09-01' = {
+  name: 'pe-openai'
+  location: location
+  properties: {
+    subnet: { id: peSubnetId }
+    privateLinkServiceConnections: [{
+      name: 'openai'
+      properties: {
+        privateLinkServiceId: openAiAccountId
+        groupIds: ['account']        // the sub-resource to expose
+      }
+    }]
+  }
+}</code></pre>
+
+        <p>You'll create one private endpoint per shared service — Azure OpenAI, AI Search, Key Vault, Blob and DFS (for ADLS), and Azure Machine Learning — each with its own <code>groupIds</code> sub-resource.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> public exposure. With public access disabled and a private endpoint in place, a stolen key is useless from the outside — there is no internet-facing door to put it in.</span>
+        </div>
+
+        <h2>Building block 4 — private DNS (the step everyone forgets)</h2>
+        <p>This is the subtle one. When you disable public access, the service's public DNS name must now resolve to the <em>private</em> IP. That only happens if you create the matching <a href="https://learn.microsoft.com/azure/private-link/private-endpoint-dns" target="_blank" rel="noopener noreferrer">private DNS zone</a>, link it to the hub VNet, and attach the private endpoint to it via a DNS zone group. Skip this and your apps will resolve the public name, hit the now-disabled public endpoint, and fail with confusing timeouts.</p>
+
+        <pre><code>resource openaiDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = {
+  parent: openaiPe
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [{
+      name: 'openai'
+      properties: { privateDnsZoneId: privatelinkOpenAiZoneId }
+    }]
+  }
+}</code></pre>
+
+        <p>You'll need one zone per service family — the six the platform uses are:</p>
+        <div class="prose-table-scroll">
+        <table>
+            <thead><tr><th>Service</th><th>Private DNS zone</th></tr></thead>
+            <tbody>
+                <tr><td>Azure OpenAI</td><td><code>privatelink.openai.azure.com</code></td></tr>
+                <tr><td>Azure AI Search</td><td><code>privatelink.search.windows.net</code></td></tr>
+                <tr><td>Key Vault</td><td><code>privatelink.vaultcore.azure.net</code></td></tr>
+                <tr><td>Blob (Storage)</td><td><code>privatelink.blob.core.windows.net</code></td></tr>
+                <tr><td>ADLS (DFS)</td><td><code>privatelink.dfs.core.windows.net</code></td></tr>
+                <tr><td>Azure ML</td><td><code>privatelink.api.azureml.ms</code></td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>The classic failure:</strong> "the private endpoint is created but my app still can't connect." Nine times out of ten the private DNS zone isn't linked to the calling VNet, so the name still resolves to the public IP. Always verify resolution with <code>nslookup your-openai.openai.azure.com</code> from inside a spoke — it must return a <code>10.x.x.x</code> address.</span>
+        </div>
+
+        <h2>Building block 5 — deny-all NSGs</h2>
+        <p>Finally, micro-segment with Network Security Groups. The default posture on hub subnets is <strong>DenyAllInbound</strong>; you then add narrow allow rules for the traffic you actually want (peered VNet traffic, private-endpoint flows). This makes "deny" the baseline and every opening a deliberate, reviewable decision.</p>
+
+        <pre><code>{
+  name: 'DenyAllInbound'
+  properties: {
+    priority: 4096
+    direction: 'Inbound'
+    access: 'Deny'
+    protocol: '*'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+  }
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> lateral movement and accidental exposure. Deny-by-default means a new resource isn't reachable until someone explicitly, and traceably, opens a path to it.</span>
+        </div>
+
+        <h2>Putting it together: the path of a single call</h2>
+        <p>With all five blocks in place, here's what happens when a spoke app calls the AI gateway — entirely on the private network:</p>
+        <ol>
+            <li>The app resolves the gateway/service name. The linked <strong>private DNS zone</strong> returns a private <code>10.x</code> address.</li>
+            <li>Traffic leaves the spoke and crosses <strong>VNet peering</strong> into the hub — never touching the internet.</li>
+            <li>It reaches the <strong>private endpoint</strong> in <code>snet-pe</code>, the only door to the service.</li>
+            <li><strong>NSGs</strong> confirm the flow is permitted; everything else is denied.</li>
+            <li>The service responds back along the same private path.</li>
+        </ol>
+
+        <h2>What this layer bought us</h2>
+        <div class="prose-table-scroll">
+        <table>
+            <thead><tr><th>Building block</th><th>Problem it solved</th></tr></thead>
+            <tbody>
+                <tr><td>Hub VNet + subnets</td><td>Segmentation and a single place to govern AI ingress</td></tr>
+                <tr><td>Spoke VNets + peering</td><td>Private connectivity with non-transitive spoke isolation</td></tr>
+                <tr><td>Private endpoints</td><td>No public internet door to any AI service</td></tr>
+                <tr><td>Private DNS zones</td><td>Names resolve to private IPs so private access actually works</td></tr>
+                <tr><td>Deny-all NSGs</td><td>Deny-by-default; every opening is deliberate and auditable</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://learn.microsoft.com/azure/architecture/networking/architecture/hub-spoke" target="_blank" rel="noopener noreferrer">Hub-and-spoke network topology in Azure</a></li>
+            <li><a href="https://learn.microsoft.com/azure/private-link/private-endpoint-overview" target="_blank" rel="noopener noreferrer">What is a private endpoint?</a></li>
+            <li><a href="https://learn.microsoft.com/azure/private-link/private-endpoint-dns" target="_blank" rel="noopener noreferrer">Private endpoint DNS integration</a></li>
+            <li><a href="https://learn.microsoft.com/azure/virtual-network/network-security-groups-overview" target="_blank" rel="noopener noreferrer">Network security groups overview</a></li>
+            <li><a href="https://learn.microsoft.com/azure/virtual-network/virtual-network-peering-overview" target="_blank" rel="noopener noreferrer">Virtual network peering</a></li>
+        </ul>
+
+        <h2>What's next</h2>
+        <p>The doors are private and the corridors are mapped. In <strong>Part 3</strong> we move the valuable tenants in: the <strong>shared AI services</strong> — Azure OpenAI with its model deployments, Azure AI Search for RAG, the data lake, the model registry, and Key Vault — all placed behind the private endpoints we just built, and configured for safe sharing across spokes.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/hub-ai-2-network-landing-zone.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

@@ -83,6 +83,7 @@
     <!-- Filter Buttons -->
     <div class="blog-filters reveal">
         <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="ai-platform">Enterprise AI Platform</button>
         <button class="filter-btn" data-filter="agentic-ai">Agentic AI</button>
         <button class="filter-btn" data-filter="copilot">GitHub Copilot</button>
         <button class="filter-btn" data-filter="rag-series">RAG Series</button>
@@ -109,6 +110,90 @@
             <p>No articles matched your search.</p>
             <small>Try a different keyword, or <button onclick="clearSearch()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:inherit;padding:0;text-decoration:underline;">clear the search</button> to browse all articles.</small>
         </div>
+
+        <!-- 52 -->
+        <a href="./hub-ai-7-iac-cicd-operating-model.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 27, 2026</span><span><i class="fas fa-clock"></i> 14 min</span></div>
+                <h2>Enterprise AI Hub, Part 7: IaC, CI/CD &amp; the Operating Model</h2>
+                <p>Make the platform repeatable with modular Bicep and a gated dev-staging-prod pipeline using GitHub Actions and OIDC, then define the operating model — golden-path onboarding and guardrails — that turns architecture into an adopted product.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">IaC &amp; DevOps</span><span class="post-tag">Part 7</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 51 -->
+        <a href="./hub-ai-6-observability-and-cost.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 26, 2026</span><span><i class="fas fa-clock"></i> 12 min</span></div>
+                <h2>Enterprise AI Hub, Part 6: Observability &amp; Cost</h2>
+                <p>Turn the gateway's token metrics into per-spoke dashboards, distributed tracing, and proactive alerts — then build the FinOps chargeback model that makes shared AI spend fair, visible, and accountable.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">Observability</span><span class="post-tag">Part 6</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 50 -->
+        <a href="./hub-ai-5-identity-and-security.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 25, 2026</span><span><i class="fas fa-clock"></i> 13 min</span></div>
+                <h2>Enterprise AI Hub, Part 5: Identity &amp; Security</h2>
+                <p>Replace every key and connection string with managed identities and granular RBAC — the spoke-to-gateway-to-model identity chain, least-privilege data-plane roles, per-spoke isolation, and local auth disabled.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">Security</span><span class="post-tag">Part 5</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 49 -->
+        <a href="./hub-ai-4-ai-gateway-apim.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 23, 2026</span><span><i class="fas fa-clock"></i> 14 min</span></div>
+                <h2>Enterprise AI Hub, Part 4: The AI Gateway</h2>
+                <p>Put Azure API Management in front of Azure OpenAI as an AI gateway: per-spoke token limits, semantic caching, token metering, managed-identity backend auth, and load-balanced failover — five cross-cutting problems solved in one policy.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">API Management</span><span class="post-tag">Part 4</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 48 -->
+        <a href="./hub-ai-3-shared-ai-services.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 20, 2026</span><span><i class="fas fa-clock"></i> 13 min</span></div>
+                <h2>Enterprise AI Hub, Part 3: The Shared AI Services</h2>
+                <p>Deploy the shared services — Azure OpenAI with model deployments, AI Search for RAG, ADLS Gen2, the model registry, and Key Vault — behind private endpoints and configured for safe, multi-tenant sharing across every spoke.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">Azure OpenAI</span><span class="post-tag">Part 3</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 47 -->
+        <a href="./hub-ai-2-network-landing-zone.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 18, 2026</span><span><i class="fas fa-clock"></i> 13 min</span></div>
+                <h2>Enterprise AI Hub, Part 2: The Network Landing Zone</h2>
+                <p>Build the hub-and-spoke network — VNets and subnets, peering, private endpoints, private DNS zones, and deny-all NSGs — so no AI service is ever reachable from the public internet.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">Networking</span><span class="post-tag">Part 2</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- 46 -->
+        <a href="./hub-ai-1-problem-and-pattern.html" class="post-card reveal" data-tags="ai-platform azure">
+            <div class="post-card-accent"></div>
+            <div class="post-card-body">
+                <div class="post-meta"><span><i class="fas fa-calendar"></i> Jun 16, 2026</span><span><i class="fas fa-clock"></i> 12 min</span></div>
+                <h2>Enterprise AI Hub, Part 1: From AI Experiments to a Governed Platform</h2>
+                <p>Why every team building its own AI stack leads to duplicated cost, key sprawl, and governance gaps — and how the centralized hub-and-spoke pattern turns those one-off battles into a foundation every initiative inherits.</p>
+                <div class="post-tags"><span class="post-tag">Enterprise AI</span><span class="post-tag">Azure Architecture</span><span class="post-tag">Part 1</span></div>
+            </div>
+            <div class="post-card-footer">Read Article <i class="fas fa-arrow-right"></i></div>
+        </a>
 
         <!-- 45 -->
         <a href="./boundary-problem-azure-content-understanding.html" class="post-card reveal" data-tags="azure-ai document-intelligence content-understanding">

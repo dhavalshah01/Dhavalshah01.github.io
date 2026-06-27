@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Hub, Part 4: The AI Gateway | Dhaval Shah</title>
+    <meta name="description" content="Part 4 of the Centralized Hub AI series: put Azure API Management in front of Azure OpenAI as an AI gateway — per-spoke token limits, semantic caching, token metrics, managed-identity backend auth, and load-balanced failover.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/hub-ai-4-ai-gateway-apim.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Enterprise AI Hub, Part 4: The AI Gateway">
+    <meta property="og:description" content="Azure API Management as the AI gateway: token limits, semantic caching, token metering, managed-identity auth, and multi-region load balancing in one policy.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/hub-ai-4-ai-gateway-apim.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Enterprise AI</span>
+            <span class="article-tag">API Management</span>
+            <span class="article-tag">Part 4</span>
+        </div>
+        <h1>Enterprise AI Hub, Part 4: The AI Gateway</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 23, 2026</span>
+            <span><i class="fas fa-clock"></i> 14 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">If the network is the foundation, the AI gateway is the <strong>control point</strong>. By routing every spoke through one Azure API Management front door instead of letting them call Azure OpenAI directly, a list of hard cross-cutting problems — fair quota sharing, cost, resilience, metering — collapse into <em>policy configuration</em>. This is the most leverage you'll get from any single component in the platform.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>The series at a glance:</strong> <a href="./hub-ai-1-problem-and-pattern.html">Part 1 — the problem &amp; the pattern</a>. <a href="./hub-ai-2-network-landing-zone.html">Part 2 — the network landing zone</a>. <a href="./hub-ai-3-shared-ai-services.html">Part 3 — the shared AI services</a>. <a href="./hub-ai-4-ai-gateway-apim.html">Part 4 — the AI gateway</a> (you're here). <a href="./hub-ai-5-identity-and-security.html">Part 5 — identity &amp; security</a>. <a href="./hub-ai-6-observability-and-cost.html">Part 6 — observability &amp; cost</a>. <a href="./hub-ai-7-iac-cicd-operating-model.html">Part 7 — IaC, CI/CD &amp; the operating model</a>.</span>
+        </div>
+
+        <h2>The problem: direct access has no governance surface</h2>
+        <p>When a spoke calls Azure OpenAI directly, there is nowhere to enforce anything. You can't fairly divide the shared TPM pool, you pay full price for repeated near-identical prompts, you can't attribute spend to a team, and a regional outage takes the whole platform down. Every one of those is a <em>policy</em> that has nowhere to live. API Management gives it a home.</p>
+
+        <figure class="article-figure">
+            <img src="./images/hub-ai-gateway.svg" alt="AI gateway architecture: client applications call Azure API Management, which applies six policies — validate subscription/JWT, token-limit, semantic cache, emit-token-metric, managed-identity auth, and a load-balanced backend pool — before forwarding to two Azure OpenAI backends; Application Insights and a Redis semantic cache support the gateway.">
+            <figcaption><em>One front door, six policies.</em> Each spoke is identified, rate-limited, served from cache when possible, metered, and load-balanced across regional backends.</figcaption>
+        </figure>
+
+        <h2>Five jobs the gateway does</h2>
+
+        <h3>1. Per-spoke token limits — making shared quota safe</h3>
+        <p>This is the policy that resolves the shared-quota risk we left open in Part 3. The <a href="https://learn.microsoft.com/azure/api-management/azure-openai-token-limit-policy" target="_blank" rel="noopener noreferrer"><code>azure-openai-token-limit</code></a> policy counts tokens per a key you choose — the spoke's subscription — and throttles a noisy spoke without touching the others.</p>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> the "noisy neighbor." A bulk job in Spoke 1 hits <em>its</em> ceiling and gets a 429; Spokes 2–5 keep flowing. A shared pool is now genuinely safe to share.</span>
+        </div>
+
+        <h3>2. Semantic caching — paying once for the same answer</h3>
+        <p>LLM calls are expensive and slow, and in practice many prompts are near-duplicates. <a href="https://learn.microsoft.com/azure/api-management/azure-openai-semantic-cache-lookup-policy" target="_blank" rel="noopener noreferrer">Semantic caching</a> embeds the incoming prompt, compares it to recent prompts, and if the similarity clears a threshold, returns the cached completion — no model call at all.</p>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> cost and latency. Repeated questions are answered in milliseconds for near-zero cost, and they don't consume the shared TPM pool at all.</span>
+        </div>
+
+        <h3>3. Token metering — turning usage into chargeback</h3>
+        <p>The <a href="https://learn.microsoft.com/azure/api-management/azure-openai-emit-token-metric-policy" target="_blank" rel="noopener noreferrer"><code>azure-openai-emit-token-metric</code></a> policy emits prompt/completion token counts to Application Insights, dimensioned by spoke. That single line is what makes the FinOps story in Part 6 possible.</p>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> "who spent what?" Every call is attributed to a team, so cost is a fact you can chart and bill, not a guess.</span>
+        </div>
+
+        <h3>4. Managed-identity backend auth — no keys, ever</h3>
+        <p>Because we disabled local auth on Azure OpenAI in Part 3, the gateway authenticates to the backend with <em>its own managed identity</em> using <code>authentication-managed-identity</code>. The spoke proves who it is to APIM; APIM proves who it is to Azure OpenAI. No API key exists anywhere in the path.</p>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> key handling. There is no secret to leak, rotate, or paste into a config file — the full identity model is the subject of Part 5.</span>
+        </div>
+
+        <h3>5. Load-balanced backends — resilience by configuration</h3>
+        <p>Define a <strong>backend pool</strong> of two or more regional Azure OpenAI deployments with <a href="https://learn.microsoft.com/azure/api-management/backends" target="_blank" rel="noopener noreferrer">circuit breaker</a> rules. APIM spreads load and, when one region returns 429s or errors, trips the breaker and routes to a healthy region automatically.</p>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> single-region fragility and throughput ceilings. A regional blip becomes a transparent failover instead of a platform outage, and you can pool quota across regions.</span>
+        </div>
+
+        <h2>It's one policy document</h2>
+        <p>What's striking is that all five jobs live in a single, readable APIM policy. Here is the shape of it — inbound governance, backend auth and routing, outbound caching and metering:</p>
+
+        <pre><code>&lt;policies&gt;
+  &lt;inbound&gt;
+    &lt;base /&gt;
+    &lt;!-- Identify the calling spoke --&gt;
+    &lt;validate-jwt header-name="Authorization" failed-validation-httpcode="401" /&gt;
+
+    &lt;!-- 1. Fair-share the shared TPM pool, per spoke --&gt;
+    &lt;azure-openai-token-limit
+        counter-key="@(context.Subscription.Id)"
+        tokens-per-minute="6000"
+        estimate-prompt-tokens="true"
+        remaining-tokens-header-name="x-tokens-remaining" /&gt;
+
+    &lt;!-- 2. Serve semantically-similar prompts from cache --&gt;
+    &lt;azure-openai-semantic-cache-lookup
+        score-threshold="0.95"
+        embeddings-backend-id="embeddings-backend" /&gt;
+  &lt;/inbound&gt;
+
+  &lt;backend&gt;
+    &lt;!-- 4. Authenticate to Azure OpenAI with APIM's managed identity --&gt;
+    &lt;authentication-managed-identity resource="https://cognitiveservices.azure.com" /&gt;
+    &lt;!-- 5. Spread load across regional backends with circuit breaking --&gt;
+    &lt;set-backend-service backend-id="openai-pool" /&gt;
+    &lt;forward-request /&gt;
+  &lt;/backend&gt;
+
+  &lt;outbound&gt;
+    &lt;base /&gt;
+    &lt;!-- 2. Store the completion for future similar prompts --&gt;
+    &lt;azure-openai-semantic-cache-store duration="120" /&gt;
+    &lt;!-- 3. Meter token usage per spoke for chargeback --&gt;
+    &lt;azure-openai-emit-token-metric namespace="ai-gateway"&gt;
+      &lt;dimension name="spoke" value="@(context.Subscription.Name)" /&gt;
+    &lt;/azure-openai-emit-token-metric&gt;
+  &lt;/outbound&gt;
+&lt;/policies&gt;</code></pre>
+        <p class="code-caption">Five governance capabilities, one declarative document — versioned in Git like any other config.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>Onboarding model:</strong> each spoke gets its own APIM <em>subscription</em> (the identity the policies key off). Onboarding a new app becomes "issue a subscription and assign a role" — minutes, not a new architecture.</span>
+        </div>
+
+        <h2>What this layer bought us</h2>
+        <div class="prose-table-scroll">
+        <table>
+            <thead><tr><th>Policy</th><th>Capability</th><th>Problem it solved</th></tr></thead>
+            <tbody>
+                <tr><td><code>azure-openai-token-limit</code></td><td>Per-spoke rate limiting</td><td>Noisy-neighbor quota starvation</td></tr>
+                <tr><td>Semantic cache lookup/store</td><td>Response caching</td><td>Cost &amp; latency on repeat prompts</td></tr>
+                <tr><td><code>azure-openai-emit-token-metric</code></td><td>Usage metering</td><td>No cost attribution / chargeback</td></tr>
+                <tr><td><code>authentication-managed-identity</code></td><td>Keyless backend auth</td><td>API-key handling &amp; leakage</td></tr>
+                <tr><td>Backend pool + circuit breaker</td><td>Load balancing &amp; failover</td><td>Single-region fragility</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://learn.microsoft.com/azure/api-management/genai-gateway-capabilities" target="_blank" rel="noopener noreferrer">GenAI gateway capabilities in API Management</a></li>
+            <li><a href="https://learn.microsoft.com/azure/api-management/azure-openai-token-limit-policy" target="_blank" rel="noopener noreferrer">azure-openai-token-limit policy</a></li>
+            <li><a href="https://learn.microsoft.com/azure/api-management/azure-openai-emit-token-metric-policy" target="_blank" rel="noopener noreferrer">azure-openai-emit-token-metric policy</a></li>
+            <li><a href="https://learn.microsoft.com/azure/api-management/azure-openai-semantic-cache-lookup-policy" target="_blank" rel="noopener noreferrer">Semantic caching policies</a></li>
+            <li><a href="https://learn.microsoft.com/azure/api-management/backends" target="_blank" rel="noopener noreferrer">Backends &amp; load balancing in API Management</a></li>
+        </ul>
+
+        <h2>What's next</h2>
+        <p>The gateway keeps referring to identities — "the spoke proves who it is," "APIM uses its managed identity." In <strong>Part 5</strong> we make that concrete: the end-to-end <strong>identity and security</strong> model, where managed identities and granular RBAC replace every key and connection string in the platform.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/hub-ai-4-ai-gateway-apim.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

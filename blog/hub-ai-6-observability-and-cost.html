@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Hub, Part 6: Observability &amp; Cost | Dhaval Shah</title>
+    <meta name="description" content="Part 6 of the Centralized Hub AI series: turn the gateway's token metrics into per-spoke dashboards, distributed tracing, proactive alerts, and a FinOps chargeback model that makes shared AI spend fair and visible.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/hub-ai-6-observability-and-cost.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Enterprise AI Hub, Part 6: Observability &amp; Cost">
+    <meta property="og:description" content="Per-spoke token dashboards, distributed tracing, alerts, and a chargeback model — making shared AI platform spend fair, visible, and accountable.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/hub-ai-6-observability-and-cost.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Enterprise AI</span>
+            <span class="article-tag">Observability</span>
+            <span class="article-tag">Part 6</span>
+        </div>
+        <h1>Enterprise AI Hub, Part 6: Observability &amp; Cost</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 26, 2026</span>
+            <span><i class="fas fa-clock"></i> 12 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">A platform you can't see is a platform you can't run — and a platform whose costs you can't attribute is one that finance will eventually shut down. This part turns the telemetry the gateway already emits into three things every enterprise AI platform needs: <strong>visibility</strong> into what's happening, <strong>alerts</strong> before things break, and a <strong>chargeback model</strong> that makes shared spend fair.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>The series at a glance:</strong> <a href="./hub-ai-1-problem-and-pattern.html">Part 1 — the problem &amp; the pattern</a>. <a href="./hub-ai-2-network-landing-zone.html">Part 2 — the network landing zone</a>. <a href="./hub-ai-3-shared-ai-services.html">Part 3 — the shared AI services</a>. <a href="./hub-ai-4-ai-gateway-apim.html">Part 4 — the AI gateway</a>. <a href="./hub-ai-5-identity-and-security.html">Part 5 — identity &amp; security</a>. <a href="./hub-ai-6-observability-and-cost.html">Part 6 — observability &amp; cost</a> (you're here). <a href="./hub-ai-7-iac-cicd-operating-model.html">Part 7 — IaC, CI/CD &amp; the operating model</a>.</span>
+        </div>
+
+        <h2>The problem: invisible usage, unaccountable spend</h2>
+        <p>In the sprawl world, every team's AI spend lands in a different subscription under a different cost center with no token-level detail. Nobody can answer the three questions leadership actually asks: <em>How much are we spending on AI? Which initiative is driving it? Is any of it failing or being abused?</em> Worse, when a spoke app degrades, there's no trace that connects "the user saw an error" to "Azure OpenAI returned a 429 in region X." The hub fixes both by funneling every call through one gateway that emits structured telemetry.</p>
+
+        <h2>The telemetry backbone</h2>
+        <p>We deployed the pieces back in Part 3: a single <strong>Log Analytics</strong> workspace and an <strong>Application Insights</strong> resource, shared by the gateway and every spoke. Because all traffic flows through APIM, that one integration point captures the entire platform's request stream — no per-team instrumentation project required.</p>
+
+        <h2>Per-spoke usage you can actually see</h2>
+        <p>Remember the <code>azure-openai-emit-token-metric</code> policy from Part 4, dimensioned by spoke? That one line is what makes this view possible. Prompt and completion tokens land in Application Insights tagged with the spoke that spent them, so "who is using the platform, and how much" becomes a chart instead of a guess:</p>
+
+        <div class="ctx-bars">
+            <div class="ctx-bar">
+                <div class="ctx-bar-label">Customer Bot<small>spoke 1</small></div>
+                <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 84%;">12.4M</div></div>
+            </div>
+            <div class="ctx-bar">
+                <div class="ctx-bar-label">Doc Search<small>spoke 2</small></div>
+                <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 56%;">8.1M</div></div>
+            </div>
+            <div class="ctx-bar">
+                <div class="ctx-bar-label">Analytics Copilot<small>spoke 3</small></div>
+                <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 33%;">4.7M</div></div>
+            </div>
+            <div class="ctx-bar">
+                <div class="ctx-bar-label">Internal Helpdesk<small>spoke 4</small></div>
+                <div class="ctx-bar-track"><div class="ctx-bar-fill" style="width: 15%;">2.2M</div></div>
+            </div>
+        </div>
+        <p class="code-caption">Tokens consumed this month, by spoke — the raw material for both capacity planning and chargeback.</p>
+
+        <p>The query behind a chart like this is a few lines of KQL against the metrics the gateway emitted:</p>
+
+        <pre><code>customMetrics
+| where name == "Total Tokens"
+| where timestamp > ago(30d)
+| extend spoke = tostring(customDimensions["spoke"])
+| summarize TotalTokens = sum(valueSum) by spoke, bin(timestamp, 1d)
+| render timechart</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> invisible usage. Consumption is now broken down per team, per day, per model — the foundation for every decision about capacity and cost.</span>
+        </div>
+
+        <h2>Distributed tracing: from symptom to root cause</h2>
+        <p>When a spoke reports a failure, you need to follow one request across every hop. Because the platform shares an Application Insights resource and APIM propagates correlation IDs, a single trace links the spoke call → the gateway policy decisions → the Azure OpenAI backend response. The "user saw an error" event and the "backend returned 429 in East US" event sit on the same timeline.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> blind debugging. Mean-time-to-resolution drops because the trace points straight at the failing hop — a throttled region, a slow retrieval, a rejected token — instead of leaving teams to guess.</span>
+        </div>
+
+        <h2>Dashboards and workbooks</h2>
+        <p>On top of the shared data you build <a href="https://learn.microsoft.com/azure/azure-monitor/visualize/workbooks-overview" target="_blank" rel="noopener noreferrer">Azure Monitor workbooks</a> that the whole organization shares: a platform-health view (latency, error rate, cache-hit ratio, throttling) and a cost view (tokens and estimated spend by spoke and model). One source of truth replaces a dozen team-built spreadsheets.</p>
+
+        <h2>Proactive alerts</h2>
+        <p>Visibility is reactive; alerts are proactive. A handful of rules catch the failure modes this architecture is prone to <em>before</em> users feel them:</p>
+        <ul>
+            <li><strong>Quota pressure</strong> — a spoke approaching its token-limit ceiling (time to raise its limit or coach the team).</li>
+            <li><strong>Error-rate spike</strong> — 429/5xx responses crossing a threshold (a region under stress or a misbehaving spoke).</li>
+            <li><strong>Latency regression</strong> — P95 response time climbing (often a sign the cache-hit ratio dropped).</li>
+            <li><strong>Cost anomaly</strong> — daily token spend for a spoke jumping above its trend (a runaway loop or an abuse pattern).</li>
+        </ul>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> finding out from your users. Alerts shift the platform team from firefighting to prevention — you hear about the throttled region from Azure Monitor, not from an angry product owner.</span>
+        </div>
+
+        <h2>FinOps: from shared bill to fair chargeback</h2>
+        <p>This is where observability pays for itself politically. Because every token is attributed to a spoke, the shared platform bill can be split back to the teams that drove it — real <a href="https://learn.microsoft.com/azure/cost-management-billing/finops/" target="_blank" rel="noopener noreferrer">showback or chargeback</a>. That single capability changes the conversation: instead of "the AI platform is expensive," leadership sees "the Customer Bot delivers X at Y cost per conversation." Cost becomes a per-initiative metric tied to value, and teams gain a built-in incentive to use caching and right-size their prompts.</p>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> unaccountable spend. The platform stops looking like a cost center and starts reading like a portfolio of measurable investments — the argument that keeps it funded.</span>
+        </div>
+
+        <h2>What this layer bought us</h2>
+        <div class="prose-table-scroll">
+        <table>
+            <thead><tr><th>Capability</th><th>Problem it solved</th></tr></thead>
+            <tbody>
+                <tr><td>Per-spoke token metrics</td><td>Invisible, un-attributable usage</td></tr>
+                <tr><td>Distributed tracing</td><td>Slow, blind root-cause analysis</td></tr>
+                <tr><td>Shared dashboards/workbooks</td><td>Fragmented, inconsistent views</td></tr>
+                <tr><td>Proactive alerts</td><td>Learning about issues from users</td></tr>
+                <tr><td>Chargeback / showback</td><td>Unfair, unaccountable shared spend</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://learn.microsoft.com/azure/azure-monitor/overview" target="_blank" rel="noopener noreferrer">Azure Monitor overview</a></li>
+            <li><a href="https://learn.microsoft.com/azure/api-management/azure-openai-emit-token-metric-policy" target="_blank" rel="noopener noreferrer">Emit token metrics from API Management</a></li>
+            <li><a href="https://learn.microsoft.com/azure/azure-monitor/visualize/workbooks-overview" target="_blank" rel="noopener noreferrer">Azure Monitor workbooks</a></li>
+            <li><a href="https://learn.microsoft.com/azure/azure-monitor/logs/log-analytics-overview" target="_blank" rel="noopener noreferrer">Log Analytics &amp; KQL</a></li>
+            <li><a href="https://learn.microsoft.com/azure/cost-management-billing/finops/" target="_blank" rel="noopener noreferrer">FinOps on Azure</a></li>
+        </ul>
+
+        <h2>What's next</h2>
+        <p>We've designed every layer of the platform — network, services, gateway, identity, and observability. The final question is how to <strong>build it repeatably and run it as a product</strong>. In <strong>Part 7</strong> we bring it home with Infrastructure as Code, a dev→staging→prod CI/CD pipeline, and the operating model that decides who owns what — the difference between a clever architecture and a platform teams actually adopt.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/hub-ai-6-observability-and-cost.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

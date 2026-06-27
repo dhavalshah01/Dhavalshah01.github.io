@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Hub, Part 1: From AI Experiments to a Governed Platform | Dhaval Shah</title>
+    <meta name="description" content="Part 1 of a 7-part series on the Centralized Hub AI pattern: why the first GenAI proof of concept is easy but scaling AI safely across teams is the real challenge — and how a hub-and-spoke AI platform solves it.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/hub-ai-1-problem-and-pattern.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Enterprise AI Hub, Part 1: From AI Experiments to a Governed Platform">
+    <meta property="og:description" content="Why scaling AI safely across teams is the real challenge — and how the Centralized Hub pattern turns scattered experiments into a repeatable, governed platform.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/hub-ai-1-problem-and-pattern.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Enterprise AI</span>
+            <span class="article-tag">Azure Architecture</span>
+            <span class="article-tag">Part 1</span>
+        </div>
+        <h1>Enterprise AI Hub, Part 1: From AI Experiments to a Governed Platform</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 16, 2026</span>
+            <span><i class="fas fa-clock"></i> 12 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">The first generative-AI use case is rarely the real challenge. A motivated team wires up a chat prototype against Azure OpenAI in an afternoon and the demo lands well. The harder question arrives the very next week: <strong>how do you scale AI safely across many teams, applications, and environments — without every team building its own isolated AI deployment?</strong> This series is a practical, end-to-end walk through one answer: the <strong>Centralized Hub AI pattern</strong>.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>The series at a glance:</strong> <a href="./hub-ai-1-problem-and-pattern.html">Part 1 — the problem &amp; the pattern</a> (you're here). <a href="./hub-ai-2-network-landing-zone.html">Part 2 — the network landing zone</a>. <a href="./hub-ai-3-shared-ai-services.html">Part 3 — the shared AI services</a>. <a href="./hub-ai-4-ai-gateway-apim.html">Part 4 — the AI gateway</a>. <a href="./hub-ai-5-identity-and-security.html">Part 5 — identity &amp; security</a>. <a href="./hub-ai-6-observability-and-cost.html">Part 6 — observability &amp; cost</a>. <a href="./hub-ai-7-iac-cicd-operating-model.html">Part 7 — IaC, CI/CD &amp; the operating model</a>.</span>
+        </div>
+
+        <h2>The moment it gets hard</h2>
+        <p>Picture a mid-sized enterprise — say a financial-services firm — six months into its GenAI journey. There isn't <em>one</em> AI project anymore; there are five. The payments team has a support copilot. Risk has a document-Q&amp;A tool. Marketing is drafting content. Two more proofs of concept are forming in the margins. Every one of them works. And that is exactly when the trouble starts.</p>
+        <p>Because each team, moving fast and independently, did the natural thing: they each provisioned <em>their own</em> Azure OpenAI resource, pasted an API key into app settings, pointed at a public endpoint, and shipped. Individually sensible. Collectively, it's an anti-pattern — and one that quietly becomes very expensive, very ungoverned, and very hard to unwind.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>The "everyone builds their own" anti-pattern.</strong> Five teams, five OpenAI resources, five copies of keys, five sets of (or zero) monitoring, five interpretations of "responsible AI," and a finance team that cannot answer a simple question: <em>what are we actually spending on AI, and why?</em></span>
+        </div>
+
+        <h2>The six problems hiding in the sprawl</h2>
+        <p>Decentralized AI feels like speed, but it accumulates six specific liabilities. Naming them is half the cure, because the hub pattern exists to answer each one directly.</p>
+
+        <div class="habit-grid">
+            <div class="habit-card">
+                <span class="habit-num">01</span>
+                <div class="habit-icon"><i class="fas fa-copy"></i></div>
+                <h5>Duplicated cost</h5>
+                <p>Expensive capacity — Azure OpenAI quota, AI Search, model hosting — is bought five times over, each one underused, none of them sharing a cache.</p>
+            </div>
+            <div class="habit-card">
+                <span class="habit-num">02</span>
+                <div class="habit-icon"><i class="fas fa-key"></i></div>
+                <h5>Key sprawl</h5>
+                <p>API keys live in app settings, scripts, and the occasional commit. No rotation, no per-caller identity, no way to revoke one team without breaking the rest.</p>
+            </div>
+            <div class="habit-card">
+                <span class="habit-num">03</span>
+                <div class="habit-icon"><i class="fas fa-scale-unbalanced"></i></div>
+                <h5>Governance gaps</h5>
+                <p>Content filtering, data-residency, and responsible-AI controls are configured (or forgotten) per team. There is no single place to enforce a rule.</p>
+            </div>
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-eye-slash"></i></div>
+                <span class="habit-num">04</span>
+                <h5>No observability</h5>
+                <p>Nobody can see latency, failures, or token consumption across the estate. The first signal of trouble is a surprise invoice or an outage.</p>
+            </div>
+            <div class="habit-card">
+                <span class="habit-num">05</span>
+                <div class="habit-icon"><i class="fas fa-gauge-high"></i></div>
+                <h5>Quota chaos</h5>
+                <p>One team's batch job exhausts a regional quota and throttles everyone. There is no rate limiting, no fair-share, no spillover.</p>
+            </div>
+            <div class="habit-card">
+                <span class="habit-num">06</span>
+                <div class="habit-icon"><i class="fas fa-recycle"></i></div>
+                <h5>No repeatability</h5>
+                <p>Each deployment is hand-built. There is no golden path for the next team, so the sixth use case is as slow and risky as the first.</p>
+            </div>
+        </div>
+
+        <h2>Enter the hub: a shared AI platform</h2>
+        <p>The Centralized Hub pattern reframes the problem. Instead of treating each AI app as a standalone deployment, you build a <strong>shared AI platform layer</strong> that application teams consume securely — while governance, monitoring, access control, and cost management stay centralized. Architecturally it borrows the well-worn <a href="https://learn.microsoft.com/azure/architecture/networking/architecture/hub-spoke" target="_blank" rel="noopener noreferrer">hub-and-spoke topology</a> from Azure landing zones and applies it to AI services.</p>
+
+        <figure class="article-figure">
+            <img src="./images/hub-ai-architecture.svg" alt="Centralized Hub AI pattern: shared AI services (Azure OpenAI, AI Search, Data Lake, Key Vault, Monitor, Model Registry) sit behind an AI Gateway in a hub VNet; application spokes connect privately via VNet peering and private endpoints; a governance strip and a business-value strip run along the bottom.">
+            <figcaption><em>The Centralized Hub AI pattern.</em> Shared AI services live once, in a governed hub; application spokes consume them privately through an AI gateway.</figcaption>
+        </figure>
+
+        <p>The idea is deliberately simple. The <strong>hub</strong> is a platform landing zone that hosts the AI services worth sharing — the large language models, the retrieval index, the data lake, the secrets store, and the monitoring backbone — all fronted by an <strong>AI gateway</strong>. Each application is a <strong>spoke</strong>: its own network, its own workload, connected to the hub over private, low-latency links. No spoke talks to the public internet to reach AI; no spoke owns the expensive capacity.</p>
+
+        <h3>What lives in the hub vs. the spokes</h3>
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Concern</th><th>Hub (platform team owns)</th><th>Spoke (app team owns)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Models</td><td>Azure OpenAI deployments + shared quota</td><td>Prompts, app logic, orchestration</td></tr>
+                <tr><td>Retrieval</td><td>Azure AI Search service</td><td>Its own index(es) and data</td></tr>
+                <tr><td>Entry point</td><td>AI gateway (API Management)</td><td>A subscription/identity to call it</td></tr>
+                <tr><td>Secrets</td><td>Central Key Vault, RBAC</td><td>References, never raw keys</td></tr>
+                <tr><td>Networking</td><td>Hub VNet, private endpoints, DNS</td><td>Spoke VNet, peered to the hub</td></tr>
+                <tr><td>Monitoring</td><td>Log Analytics + App Insights</td><td>App-level traces flowing to the hub</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>How the hub answers each problem</h2>
+        <p>This is the part that matters at each level of the series — every capability we add later maps back to a specific problem from the sprawl. Here is the whole map in one table; the rest of the series implements each row.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Sprawl problem</th><th>Hub capability that solves it</th><th>Covered in</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Duplicated cost</td><td>Shared models + response caching, amortized across spokes</td><td>Parts 3 &amp; 4</td></tr>
+                <tr><td>Key sprawl</td><td>Managed identity + RBAC; local keys disabled</td><td>Part 5</td></tr>
+                <tr><td>Governance gaps</td><td>One gateway choke point for policy, content filtering, residency</td><td>Part 4</td></tr>
+                <tr><td>No observability</td><td>Centralized token metrics, tracing, dashboards, alerts</td><td>Part 6</td></tr>
+                <tr><td>Quota chaos</td><td>Per-spoke token-limit policy + multi-backend load balancing</td><td>Part 4</td></tr>
+                <tr><td>No repeatability</td><td>Bicep modules + CI/CD promotion + an onboarding golden path</td><td>Part 7</td></tr>
+                <tr><td>Public exposure</td><td>Private endpoints, private DNS, deny-all networking</td><td>Part 2</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>The part the diagram doesn't show: the operating model</h2>
+        <p>Here's the lesson I keep relearning on these engagements: the architecture diagram is the <em>easy</em> half. What actually makes a hub succeed is the operating model — the answers to a set of distinctly un-technical questions. If you can't answer these, the prettiest Bicep in the world won't save you:</p>
+        <ul>
+            <li><strong>Ownership</strong> — who owns the shared AI services, and who is on the hook when they're down?</li>
+            <li><strong>Onboarding</strong> — how does a new team get a spoke and start consuming AI? Is it a ticket, a pull request, a self-service template?</li>
+            <li><strong>Cost control</strong> — how do you prevent one team's runaway token consumption, and how do you attribute spend back to teams?</li>
+            <li><strong>Monitoring</strong> — who watches latency, failures, and cost, and what do they do when a threshold trips?</li>
+            <li><strong>Promotion</strong> — how do AI apps and agents move across dev, staging, and production?</li>
+            <li><strong>Autonomy vs. governance</strong> — how do you give teams enough freedom to move fast while keeping the enterprise guardrails intact?</li>
+        </ul>
+        <p>That shift in conversation — from <em>"we built an AI proof of concept"</em> to <em>"we have a repeatable foundation to scale AI responsibly"</em> — is the real deliverable. We'll close the series in Part 7 with concrete answers to every one of these questions.</p>
+
+        <h2>Is this pattern right for you?</h2>
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Use the hub when</strong> you have multiple teams or apps consuming AI, you need centralized governance and cost control, and shared services like Azure OpenAI and AI Search are expensive enough to be worth amortizing. It's especially powerful in regulated industries that must reconcile innovation with security, observability, and compliance.</span>
+        </div>
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Think twice if</strong> you have a single AI workload with no foreseeable second consumer — the hub's coordination overhead may not pay off yet. And be honest about the trade-offs it introduces: a shared platform is a potential single point of failure and needs a real RBAC and isolation strategy so spokes can't read each other's data. We design for both throughout the series.</span>
+        </div>
+
+        <h2>The road ahead</h2>
+        <p>We'll build the hub from the network up, one governed layer at a time. Each part stands alone, but they stack:</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Part</th><th>What we build</th><th>The problem it solves</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2</td><td>Hub-and-spoke VNets, private endpoints, private DNS, NSGs</td><td>Public exposure &amp; data-exfiltration risk</td></tr>
+                <tr><td>3</td><td>Shared Azure OpenAI, AI Search, Data Lake, Key Vault, model registry</td><td>Duplicated, inconsistent services</td></tr>
+                <tr><td>4</td><td>API Management as the AI gateway — limits, caching, routing</td><td>No governance, no cost control, quota chaos</td></tr>
+                <tr><td>5</td><td>Managed identity + RBAC; keys disabled everywhere</td><td>Key sprawl &amp; weak isolation</td></tr>
+                <tr><td>6</td><td>Token metrics, tracing, dashboards, alerts, FinOps</td><td>No visibility into usage, latency, or spend</td></tr>
+                <tr><td>7</td><td>Bicep modules, CI/CD promotion, the operating model</td><td>No repeatability; unclear ownership</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://learn.microsoft.com/azure/cloud-adoption-framework/ready/landing-zone/" target="_blank" rel="noopener noreferrer">Azure landing zones — Cloud Adoption Framework</a></li>
+            <li><a href="https://learn.microsoft.com/azure/architecture/networking/architecture/hub-spoke" target="_blank" rel="noopener noreferrer">Hub-and-spoke network topology in Azure</a></li>
+            <li><a href="https://learn.microsoft.com/azure/architecture/ai-ml/architecture/baseline-openai-e2e-chat" target="_blank" rel="noopener noreferrer">Baseline OpenAI end-to-end chat reference architecture</a></li>
+            <li><a href="https://learn.microsoft.com/azure/architecture/ai-ml/architecture/azure-openai-baseline-landing-zone" target="_blank" rel="noopener noreferrer">Azure OpenAI chat baseline in an Azure landing zone</a></li>
+            <li><a href="https://ai.azuretools.wiki/pattern1.html" target="_blank" rel="noopener noreferrer">Centralized Hub AI — deployment pattern reference</a></li>
+        </ul>
+
+        <h2>What's next</h2>
+        <p>In <strong>Part 2</strong> we lay the foundation everything else sits on: the <strong>network landing zone</strong>. We'll build the hub VNet and its subnets, peer the spokes, put every AI service behind a private endpoint, wire up private DNS so names resolve correctly, and lock the doors with deny-all NSGs — so that no part of the platform is ever reachable from the public internet.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/hub-ai-1-problem-and-pattern.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

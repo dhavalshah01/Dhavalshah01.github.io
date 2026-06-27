@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Hub, Part 3: The Shared AI Services | Dhaval Shah</title>
+    <meta name="description" content="Part 3 of the Centralized Hub AI series: deploy the shared AI services — Azure OpenAI with model deployments, Azure AI Search for RAG, ADLS Gen2, the AML model registry, and Key Vault — behind private endpoints and configured for safe sharing across spokes.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/hub-ai-3-shared-ai-services.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Enterprise AI Hub, Part 3: The Shared AI Services">
+    <meta property="og:description" content="Azure OpenAI, AI Search, Data Lake, the model registry, and Key Vault — deployed once in the hub, configured for safe sharing across every spoke.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/hub-ai-3-shared-ai-services.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Enterprise AI</span>
+            <span class="article-tag">Azure OpenAI</span>
+            <span class="article-tag">Part 3</span>
+        </div>
+        <h1>Enterprise AI Hub, Part 3: The Shared AI Services</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> June 20, 2026</span>
+            <span><i class="fas fa-clock"></i> 13 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead">With private corridors in place, we move the valuable tenants into the hub: the AI services worth sharing. The goal of this part is not just to <em>deploy</em> them, but to configure each one for <strong>safe, multi-tenant sharing</strong> — deployed once, consumed by many, governed centrally.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>The series at a glance:</strong> <a href="./hub-ai-1-problem-and-pattern.html">Part 1 — the problem &amp; the pattern</a>. <a href="./hub-ai-2-network-landing-zone.html">Part 2 — the network landing zone</a>. <a href="./hub-ai-3-shared-ai-services.html">Part 3 — the shared AI services</a> (you're here). <a href="./hub-ai-4-ai-gateway-apim.html">Part 4 — the AI gateway</a>. <a href="./hub-ai-5-identity-and-security.html">Part 5 — identity &amp; security</a>. <a href="./hub-ai-6-observability-and-cost.html">Part 6 — observability &amp; cost</a>. <a href="./hub-ai-7-iac-cicd-operating-model.html">Part 7 — IaC, CI/CD &amp; the operating model</a>.</span>
+        </div>
+
+        <h2>The problem: five services, five configurations</h2>
+        <p>In the sprawl world, each team stands up its own Azure OpenAI and AI Search. Beyond the duplicated cost, the deeper issue is <em>drift</em>: one team enables content filtering, another doesn't; one disables keys, another emails them around; one pins a model version, another floats. There is no shared knowledge base, so the same documents get embedded five times into five indexes. The hub replaces this with a single, well-configured catalog of services.</p>
+
+        <div class="habit-grid">
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-robot"></i></div>
+                <h5>Azure OpenAI</h5>
+                <p>GPT-4o for chat and <code>text-embedding-3-large</code> for vectors. The shared LLM endpoint for every spoke.</p>
+            </div>
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <h5>Azure AI Search</h5>
+                <p>Vector + semantic indexes — the retrieval engine behind production RAG, isolated per spoke.</p>
+            </div>
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-database"></i></div>
+                <h5>ADLS Gen2</h5>
+                <p>A hierarchical data lake for raw docs, processed datasets, model artifacts, and embeddings.</p>
+            </div>
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-cubes"></i></div>
+                <h5>Model Registry</h5>
+                <p>Azure ML for versioning, experiment tracking, and staged model promotion.</p>
+            </div>
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-key"></i></div>
+                <h5>Key Vault</h5>
+                <p>Central secrets, keys, and certificates with RBAC authorization and purge protection.</p>
+            </div>
+            <div class="habit-card">
+                <div class="habit-icon"><i class="fas fa-chart-line"></i></div>
+                <h5>Monitor</h5>
+                <p>Log Analytics + Application Insights, the telemetry backbone we wire up fully in Part 6.</p>
+            </div>
+        </div>
+
+        <h2>Azure OpenAI — the shared model endpoint</h2>
+        <p>This is the centerpiece. Three configuration choices turn a default Azure OpenAI resource into a platform-grade one: a custom subdomain (required for private endpoints and Entra auth), <strong>public access disabled</strong>, and — critically — <strong>local auth disabled</strong> so the only way to call it is with an Entra identity, never a key.</p>
+
+        <pre><code>resource openai 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: 'oai-ai-hub'
+  location: 'canadacentral'
+  kind: 'OpenAI'
+  sku: { name: 'S0' }
+  properties: {
+    customSubDomainName: 'oai-ai-hub'
+    publicNetworkAccess: 'Disabled'   // reachable only via the private endpoint
+    disableLocalAuth: true            // no API keys — Entra ID only (see Part 5)
+  }
+}</code></pre>
+
+        <p>On top of the account you create <strong>model deployments</strong>. Using the <code>GlobalStandard</code> deployment type gives you a single, shared pool of throughput measured in tokens-per-minute (TPM). A practical starting allocation mirrors the reference pattern: 30K TPM for GPT-4o and 120K TPM for embeddings, shared across all spokes.</p>
+
+        <pre><code>resource gpt4o 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+  parent: openai
+  name: 'gpt-4o'
+  sku: { name: 'GlobalStandard', capacity: 30 }     // 30K TPM, shared
+  properties: {
+    model: { format: 'OpenAI', name: 'gpt-4o', version: '2024-08-06' }
+  }
+}
+
+resource embeddings 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+  parent: openai
+  name: 'text-embedding-3-large'
+  sku: { name: 'GlobalStandard', capacity: 120 }    // 120K TPM, shared
+  properties: {
+    model: { format: 'OpenAI', name: 'text-embedding-3-large', version: '1' }
+  }
+}</code></pre>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Shared quota is a feature and a risk.</strong> One pool of TPM is cost-efficient, but a single spoke running a bulk embedding job can starve everyone else. We deliberately leave fair-sharing to the gateway — the per-spoke <em>token-limit</em> policy in Part 4 is what makes a shared pool safe.</span>
+        </div>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> duplicated, inconsistent models. One account, one content-filtering posture, one place to pin versions, one shared quota to amortize — instead of five drifting copies.</span>
+        </div>
+
+        <h2>Azure AI Search — retrieval for production RAG</h2>
+        <p>Azure AI Search is the hub's retrieval engine. Configure it for RBAC-only access (no admin/query keys), private networking, and semantic ranking. The shared service hosts <em>separate indexes per spoke</em>, which is how you get reuse of the engine without co-mingling each team's data.</p>
+
+        <pre><code>resource search 'Microsoft.Search/searchServices@2024-06-01-preview' = {
+  name: 'srch-ai-hub'
+  location: location
+  sku: { name: 'standard' }              // S1: vector + semantic
+  properties: {
+    publicNetworkAccess: 'disabled'
+    disableLocalAuth: true               // RBAC only — no api-keys
+    semanticSearch: 'standard'
+  }
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> duplicated retrieval and weak isolation. The expensive search engine is shared; data is not. Per-spoke indexes (plus the Search RBAC roles from Part 5) keep Spoke 1 from ever reading Spoke 2's documents.</span>
+        </div>
+        <p>If you want the deep mechanics of how chunking, embeddings, and vector search actually work, I covered that end-to-end in my <a href="./rag-series-1-pipeline-overview.html">RAG Explained series</a> — this hub is the production home for exactly that pipeline.</p>
+
+        <h2>The data lake and the model registry</h2>
+        <p><strong>ADLS Gen2</strong> (Storage with hierarchical namespace) is the platform's data plane. A clean container layout keeps the lifecycle obvious: <code>raw</code> for source documents, <code>processed</code> for cleaned/chunked text, <code>embeddings</code> for vector artifacts, and <code>models</code> for any fine-tuned or registered model files. Enforce TLS 1.2, disable account keys, and front it with the Blob and DFS private endpoints from Part 2.</p>
+        <p>The <strong>Azure Machine Learning</strong> workspace provides a central model registry — versioning, lineage, and staged promotion for any model the platform manages. The workspace itself is free; only compute is billed, so it's a low-cost way to bring discipline to model management across teams.</p>
+
+        <h2>Key Vault — secrets done once, properly</h2>
+        <p>Even in a keys-disabled world you still have secrets: certificates, connection strings for non-AAD systems, signing keys. Centralize them in one Key Vault configured for <strong>RBAC authorization</strong> (not legacy access policies) with <strong>purge protection</strong> on and public access off.</p>
+
+        <pre><code>resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: 'kv-ai-hub'
+  location: location
+  properties: {
+    sku: { family: 'A', name: 'standard' }
+    tenantId: tenant().tenantId
+    enableRbacAuthorization: true     // grant access with roles, not policies
+    enablePurgeProtection: true
+    publicNetworkAccess: 'Disabled'
+  }
+}</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span><strong>Problem solved:</strong> scattered secrets and key sprawl. One vault, RBAC-governed, auditable, and recoverable — the foundation for the identity model in Part 5.</span>
+        </div>
+
+        <h2>What this layer bought us</h2>
+        <div class="prose-table-scroll">
+        <table>
+            <thead><tr><th>Service</th><th>Key config for safe sharing</th><th>Problem it solved</th></tr></thead>
+            <tbody>
+                <tr><td>Azure OpenAI</td><td>Custom subdomain, public off, local auth off, GlobalStandard quota</td><td>Inconsistent, duplicated models</td></tr>
+                <tr><td>AI Search</td><td>RBAC-only, private, per-spoke indexes</td><td>Duplicated retrieval; data co-mingling</td></tr>
+                <tr><td>ADLS Gen2</td><td>HNS, TLS 1.2, keys off, per-spoke containers</td><td>No governed shared data plane</td></tr>
+                <tr><td>Azure ML</td><td>Central model registry &amp; versioning</td><td>Ad-hoc, untracked model management</td></tr>
+                <tr><td>Key Vault</td><td>RBAC auth, purge protection, private</td><td>Scattered, unmanaged secrets</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://learn.microsoft.com/azure/ai-services/openai/overview" target="_blank" rel="noopener noreferrer">What is Azure OpenAI Service?</a></li>
+            <li><a href="https://learn.microsoft.com/azure/ai-services/openai/how-to/deployment-types" target="_blank" rel="noopener noreferrer">Azure OpenAI deployment types (Global Standard, etc.)</a></li>
+            <li><a href="https://learn.microsoft.com/azure/search/vector-search-overview" target="_blank" rel="noopener noreferrer">Vector search in Azure AI Search</a></li>
+            <li><a href="https://learn.microsoft.com/azure/storage/blobs/data-lake-storage-introduction" target="_blank" rel="noopener noreferrer">Introduction to ADLS Gen2</a></li>
+            <li><a href="https://learn.microsoft.com/azure/key-vault/general/rbac-guide" target="_blank" rel="noopener noreferrer">Key Vault RBAC authorization guide</a></li>
+        </ul>
+
+        <h2>What's next</h2>
+        <p>We now have powerful shared services — and a shared-quota risk we deliberately left open. In <strong>Part 4</strong> we put a single, governed front door in front of all of it: <strong>Azure API Management as the AI gateway</strong>. That one choke point is where per-spoke rate limiting, response caching, multi-region load balancing, and token metering all come to life.</p>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/hub-ai-3-shared-ai-services.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

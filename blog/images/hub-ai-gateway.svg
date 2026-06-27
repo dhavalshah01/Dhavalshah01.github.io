@@ -1,0 +1,94 @@
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="gwEnd" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#0078d4"/>
+    </marker>
+    <marker id="gwPurple" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8661c5"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="500" fill="#f8f9fa" rx="12"/>
+
+  <text x="450" y="36" text-anchor="middle" font-size="19" font-weight="700" fill="#1a1a2e">AI Gateway — APIM in Front of Azure OpenAI</text>
+  <text x="450" y="58" text-anchor="middle" font-size="12" fill="#555">Every token of traffic passes one governed, observable, cost-controlled choke point</text>
+  <line x1="60" y1="72" x2="840" y2="72" stroke="#dee2e6" stroke-width="1.5"/>
+
+  <!-- Client -->
+  <rect x="24" y="150" width="158" height="120" rx="10" fill="#ffffff" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="103" y="186" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0f172a">App Spoke</text>
+  <text x="103" y="212" text-anchor="middle" font-size="9.5" fill="#555">Calls the gateway, not</text>
+  <text x="103" y="226" text-anchor="middle" font-size="9.5" fill="#555">Azure OpenAI directly</text>
+  <text x="103" y="250" text-anchor="middle" font-size="9" font-weight="600" fill="#0078d4">Managed Identity + sub key</text>
+
+  <line x1="182" y1="210" x2="236" y2="210" stroke="#0078d4" stroke-width="2.2" marker-end="url(#gwEnd)"/>
+  <text x="209" y="200" text-anchor="middle" font-size="8.3" font-weight="600" fill="#0078d4">HTTPS</text>
+
+  <!-- Supporting stores (left-bottom) -->
+  <rect x="24" y="300" width="158" height="58" rx="9" fill="#ffffff" stroke="#8661c5"/>
+  <text x="103" y="324" text-anchor="middle" font-size="10.5" font-weight="700" fill="#6d28d9">App Insights</text>
+  <text x="103" y="342" text-anchor="middle" font-size="8.6" fill="#555">token metrics per spoke</text>
+
+  <rect x="24" y="378" width="158" height="58" rx="9" fill="#ffffff" stroke="#8661c5"/>
+  <text x="103" y="402" text-anchor="middle" font-size="10.5" font-weight="700" fill="#6d28d9">Semantic Cache</text>
+  <text x="103" y="420" text-anchor="middle" font-size="8.6" fill="#555">Azure Managed Redis</text>
+
+  <!-- dashed connectors -->
+  <line x1="254" y1="286" x2="183" y2="328" stroke="#8661c5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#gwPurple)"/>
+  <line x1="254" y1="238" x2="183" y2="404" stroke="#8661c5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#gwPurple)"/>
+
+  <!-- ===== APIM ===== -->
+  <rect x="238" y="84" width="360" height="380" rx="12" fill="#f3eefc" stroke="#8661c5" stroke-width="2"/>
+  <text x="418" y="107" text-anchor="middle" font-size="12.5" font-weight="700" fill="#6d28d9">Azure API Management — AI Gateway</text>
+
+  <g>
+    <rect x="256" y="120" width="324" height="42" rx="7" fill="#ffffff" stroke="#cbd5e1"/><rect x="256" y="120" width="4" height="42" fill="#8661c5"/>
+    <text x="272" y="146" font-size="10.5" font-weight="600" fill="#0f172a">① Validate subscription / JWT</text>
+
+    <rect x="256" y="168" width="324" height="42" rx="7" fill="#ffffff" stroke="#cbd5e1"/><rect x="256" y="168" width="4" height="42" fill="#8661c5"/>
+    <text x="272" y="194" font-size="10.5" font-weight="600" fill="#0f172a">② Token-limit — TPM / RPM per spoke</text>
+
+    <rect x="256" y="216" width="324" height="42" rx="7" fill="#ffffff" stroke="#cbd5e1"/><rect x="256" y="216" width="4" height="42" fill="#8661c5"/>
+    <text x="272" y="242" font-size="10.5" font-weight="600" fill="#0f172a">③ Semantic cache — lookup / store</text>
+
+    <rect x="256" y="264" width="324" height="42" rx="7" fill="#ffffff" stroke="#cbd5e1"/><rect x="256" y="264" width="4" height="42" fill="#8661c5"/>
+    <text x="272" y="290" font-size="10.5" font-weight="600" fill="#0f172a">④ Emit-token-metric (per spoke)</text>
+
+    <rect x="256" y="312" width="324" height="42" rx="7" fill="#ffffff" stroke="#cbd5e1"/><rect x="256" y="312" width="4" height="42" fill="#8661c5"/>
+    <text x="272" y="338" font-size="10.5" font-weight="600" fill="#0f172a">⑤ Managed-identity auth to backend</text>
+
+    <rect x="256" y="360" width="324" height="42" rx="7" fill="#ffffff" stroke="#cbd5e1"/><rect x="256" y="360" width="4" height="42" fill="#8661c5"/>
+    <text x="272" y="386" font-size="10.5" font-weight="600" fill="#0f172a">⑥ Load-balanced pool + circuit breaker</text>
+  </g>
+
+  <!-- route arrow to backends -->
+  <line x1="598" y1="381" x2="634" y2="210" stroke="#0078d4" stroke-width="2.4" marker-end="url(#gwEnd)"/>
+  <text x="624" y="300" text-anchor="middle" font-size="8.6" font-weight="700" fill="#0078d4" transform="rotate(-78 624 300)">load-balanced</text>
+
+  <!-- ===== Backends ===== -->
+  <rect x="636" y="120" width="240" height="70" rx="10" fill="#ffffff" stroke="#0078d4" stroke-width="1.5"/>
+  <rect x="636" y="120" width="240" height="4" rx="2" fill="#0078d4"/>
+  <text x="756" y="150" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">Azure OpenAI — Region A</text>
+  <text x="756" y="170" text-anchor="middle" font-size="8.8" fill="#555">GPT-4o · primary · 30K TPM</text>
+
+  <rect x="636" y="206" width="240" height="70" rx="10" fill="#ffffff" stroke="#0078d4" stroke-width="1.5"/>
+  <rect x="636" y="206" width="240" height="4" rx="2" fill="#00b4d8"/>
+  <text x="756" y="236" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">Azure OpenAI — Region B</text>
+  <text x="756" y="256" text-anchor="middle" font-size="8.8" fill="#555">GPT-4o · failover / spillover</text>
+
+  <text x="756" y="300" text-anchor="middle" font-size="9" font-style="italic" fill="#64748b">Circuit breaker trips a failing</text>
+  <text x="756" y="314" text-anchor="middle" font-size="9" font-style="italic" fill="#64748b">backend; pool retries the healthy one</text>
+
+  <!-- benefit chips -->
+  <g font-size="9" font-weight="600">
+    <rect x="636" y="346" width="116" height="46" rx="8" fill="#eafaef" stroke="#107c10"/>
+    <text x="694" y="367" text-anchor="middle" fill="#107c10">No runaway</text>
+    <text x="694" y="381" text-anchor="middle" fill="#107c10">token spend</text>
+    <rect x="760" y="346" width="116" height="46" rx="8" fill="#eafaef" stroke="#107c10"/>
+    <text x="818" y="367" text-anchor="middle" fill="#107c10">Resilient</text>
+    <text x="818" y="381" text-anchor="middle" fill="#107c10">multi-region</text>
+    <rect x="636" y="402" width="240" height="46" rx="8" fill="#fff8e6" stroke="#e0a800"/>
+    <text x="756" y="423" text-anchor="middle" fill="#9a6700">One policy change protects</text>
+    <text x="756" y="437" text-anchor="middle" fill="#9a6700">every spoke at once</text>
+  </g>
+</svg>
