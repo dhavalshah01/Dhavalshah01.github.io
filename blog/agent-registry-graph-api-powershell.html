@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHT814VRKY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHT814VRKY');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent 365 Governance: Query the Agent Registry with PowerShell | Dhaval Shah</title>
+    <meta name="description" content="A governance-focused, step-by-step PowerShell walkthrough for Microsoft Agent 365: enumerate every agent in your tenant and pull details for one via the Graph Package Management (Inventory) API — the foundation for attestation, deduplication, and lifecycle reviews.">
+    <meta name="author" content="Dhaval Shah">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dhavalshah01.github.io/blog/agent-registry-graph-api-powershell.html">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Agent 365 Governance: Query the Agent Registry with PowerShell">
+    <meta property="og:description" content="The foundation for Agent 365 governance: enumerate every agent in your tenant and pull details for one, step by step in PowerShell using the Microsoft Graph Package Management (Inventory) API.">
+    <meta property="og:url" content="https://dhavalshah01.github.io/blog/agent-registry-graph-api-powershell.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./blog.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">D<span>.</span>Shah</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#ai-projects">AI Projects</a></li>
+            <li><a href="/#youtube-series">YouTube</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#contact">Contact</a></li>
+            <li><a href="/blog/" class="active">Blog</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    </div>
+</nav>
+
+<header class="article-hero">
+    <div class="article-hero-inner">
+        <a href="/blog/" class="article-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="article-tags">
+            <span class="article-tag">Agentic AI</span>
+            <span class="article-tag">Microsoft Graph</span>
+            <span class="article-tag">PowerShell</span>
+        </div>
+        <h1>Agent 365 Governance: Query the Agent Registry with PowerShell</h1>
+        <div class="article-meta">
+            <span><i class="fas fa-calendar"></i> August 11, 2026</span>
+            <span><i class="fas fa-clock"></i> 9 min read</span>
+            <span><i class="fas fa-user"></i> Dhaval Shah</span>
+        </div>
+    </div>
+</header>
+
+<article class="article-body">
+    <div class="prose">
+        <p class="lead"><a href="https://www.microsoft.com/microsoft-agent-365" target="_blank" rel="noopener noreferrer">Microsoft Agent 365</a> exists to give organizations a control plane for the agents now spreading across their tenant — and <strong>governance is the whole point</strong>. But you can&rsquo;t govern what you can&rsquo;t see, and admins had exactly one way to see their agents: clicking through the admin center, one screen at a time. The <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/admin/graph-api" target="_blank" rel="noopener noreferrer">Agent Registry Graph API (Preview)</a> changes that — it exposes the agent inventory programmatically so security and compliance teams can automate the governance workflows they already run. This is the step-by-step PowerShell version.</p>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>These are <strong>/beta</strong> Graph endpoints under the Agent 365 <a href="https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api/admin-settings/package/overview" target="_blank" rel="noopener noreferrer">Package Management (Inventory) API</a>. They&rsquo;re preview and subject to change — ideal for governance tooling and reporting, not for production-critical automation yet.</span>
+        </div>
+
+        <div class="agent-info">
+            <div class="agent-info-head">
+                <span class="agent-info-badge"><i class="fas fa-code-branch"></i> Preview</span>
+                <h3>Programmatic access to the Agent Registry</h3>
+                <p class="agent-info-sub">Agent inventory data is available programmatically through the Microsoft Graph API — enabling automated governance at scale.</p>
+            </div>
+            <p class="agent-info-tasks-label">Integrate the following tasks into existing workflows across agents:</p>
+            <div class="agent-info-pills">
+                <span class="agent-info-pill"><i class="fas fa-layer-group"></i> Automate bulk agent management</span>
+                <span class="agent-info-pill"><i class="fas fa-user-plus"></i> Streamline onboarding</span>
+                <span class="agent-info-pill"><i class="fas fa-scale-balanced"></i> Integrate governance</span>
+            </div>
+            <div class="agent-info-cards">
+                <div class="agent-info-card">
+                    <div class="aic-icon"><i class="fas fa-tags"></i></div>
+                    <div class="aic-body">
+                        <span class="aic-num">01</span>
+                        <span class="aic-title">Get all agents in your inventory</span>
+                        <span class="aic-sub">List every agent for compliance and reporting.</span>
+                        <code>GET /beta/copilot/admin/catalog/packages</code>
+                    </div>
+                </div>
+                <div class="agent-info-card">
+                    <div class="aic-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="aic-body">
+                        <span class="aic-num">02</span>
+                        <span class="aic-title">Get details of a particular agent</span>
+                        <span class="aic-sub">Pull full metadata for a single agent to audit and manage it.</span>
+                        <code>GET /beta/copilot/admin/catalog/packages/{id}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>The governance problem this solves</h2>
+        <p>The requests came in a familiar order — and every one of them was a governance question. First it was <strong>visibility</strong>: &ldquo;How many agents actually exist in my tenant?&rdquo; A security team can&rsquo;t attest to what it can&rsquo;t enumerate. Then it was <strong>duplication</strong>: three departments had each built an &ldquo;HR helper,&rdquo; and nobody knew until the licensing review. Then <strong>lifecycle and compliance</strong>: governance wanted a recurring export of every agent, its publisher, and when it last changed — dropped into SharePoint or a ticket, not screenshotted from a portal.</p>
+        <p>A UI is fine for one lookup. It falls apart at governance scale. What these teams were really asking for was an <strong>API they could script</strong> so they could automate bulk agent management, streamline onboarding, and fold agent oversight into existing workflows. That&rsquo;s exactly what the Agent 365 Agent Registry delivers. Microsoft documents the two governance entry points on the <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/admin/graph-api" target="_blank" rel="noopener noreferrer">Graph API for agent registry and agent details</a> page, and they cover the vast majority of what people asked for.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Two building blocks anchor Agent 365 governance: <strong>(1)</strong> <a href="https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api/admin-settings/package/copilotpackages-list" target="_blank" rel="noopener noreferrer">list all agents</a> in your inventory, and <strong>(2)</strong> <a href="https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api/admin-settings/package/copilotpackagedetail-get" target="_blank" rel="noopener noreferrer">get the details</a> of a particular agent. Attestation, dedupe reports, and lifecycle reviews are all built on top of these two calls.</span>
+        </div>
+
+        <h2>Prerequisites &amp; access required</h2>
+        <p>Before the first command, make sure the boxes below are ticked. Most &ldquo;it doesn&rsquo;t work&rdquo; moments trace back to a missing license or role, not the code.</p>
+
+        <div class="prose-table-scroll">
+        <table>
+            <thead>
+                <tr><th>Requirement</th><th>What you need</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>License</td><td>A <a href="https://www.microsoft.com/microsoft-agent-365" target="_blank" rel="noopener noreferrer">Microsoft Agent 365</a> license — access to the Package Management API depends on it.</td></tr>
+                <tr><td>Role</td><td>Sign in as an <a href="https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference" target="_blank" rel="noopener noreferrer">AI administrator or Global administrator</a>.</td></tr>
+                <tr><td>Graph permission</td><td><a href="https://learn.microsoft.com/en-us/graph/permissions-reference" target="_blank" rel="noopener noreferrer"><code>CopilotPackages.Read.All</code></a> (delegated). Consented on first interactive sign-in.</td></tr>
+                <tr><td>PowerShell module</td><td><a href="https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation" target="_blank" rel="noopener noreferrer"><code>Microsoft.Graph.Authentication</code></a> (PowerShell 7+ recommended).</td></tr>
+                <tr><td>Cloud</td><td>Global (commercial) cloud. Gov and 21Vianet clouds aren&rsquo;t supported in preview.</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-id-card"></i>
+            <span>The admin center <strong>Agents &rarr; All agents</strong> registry and the <strong>Graph APIs are licensed separately</strong>. You may see hundreds of agents in the portal yet still get a <code>403</code> from the API &mdash; the portal ships with Microsoft 365 Copilot admin, but the Agent 365 Graph APIs require a Microsoft Agent 365 license on the tenant. Admin <em>role</em> alone is not enough.</span>
+        </div>
+
+        <div class="callout callout-warn">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>Microsoft 365 Copilot is not Microsoft Agent 365.</strong> Having a Microsoft 365 Copilot license (even alongside E5 and Copilot Studio) does <em>not</em> unlock these APIs &mdash; the entitlement they check for is the distinct <strong>Microsoft Agent 365</strong> SKU. On demo or developer tenants, start the Agent 365 trial from <strong>Agents &rarr; All agents</strong> in the admin center.</span>
+        </div>
+        <h2>Step-by-step in the PowerShell terminal</h2>
+        <p>Open a PowerShell 7 terminal and paste these one block at a time. Each step is deliberately small so you can see the result before moving on.</p>
+
+        <h3>Step 1 — Install the Graph auth module (one time)</h3>
+        <p>Skip this if you already have it. It&rsquo;s the only dependency.</p>
+        <pre><code>Install-Module Microsoft.Graph.Authentication -Scope CurrentUser</code></pre>
+
+        <h3>Step 2 — Sign in as your admin user</h3>
+        <p>A browser window opens for interactive sign-in. Approve the <code>CopilotPackages.Read.All</code> consent the first time. See <a href="https://learn.microsoft.com/en-us/powershell/microsoftgraph/authentication-commands" target="_blank" rel="noopener noreferrer"><code>Connect-MgGraph</code></a> for all sign-in options.</p>
+        <pre><code>Connect-MgGraph -Scopes "CopilotPackages.Read.All"</code></pre>
+
+        <div class="callout callout-info">
+            <i class="fas fa-laptop-code"></i>
+            <span>On a remote or headless session where a browser can&rsquo;t open, add <code>-UseDeviceCode</code> and follow the code prompt instead.</span>
+        </div>
+
+        <h3>Step 3 — Get all agents in your inventory</h3>
+        <p>This is the <a href="https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api/admin-settings/package/copilotpackages-list" target="_blank" rel="noopener noreferrer">List Copilot packages</a> API. The <code>supportedHosts eq 'Copilot'</code> filter narrows the package catalog down to <em>agents</em>. Drop the filter to list every package.</p>
+        <pre><code>$uri = "https://graph.microsoft.com/beta/copilot/admin/catalog/packages?`$filter=supportedHosts/any(h:h eq 'Copilot')"
+$agents = (Invoke-MgGraphRequest -Method GET -Uri $uri).value
+$agents | Select-Object id, displayName, publisher, platform | Format-Table -AutoSize</code></pre>
+
+        <div class="callout callout-tip">
+            <i class="fas fa-lightbulb"></i>
+            <span>The backtick before <code>$filter</code> (<code>`$filter</code>) stops PowerShell from treating it as a variable — it&rsquo;s a literal OData query parameter that Graph expects.</span>
+        </div>
+
+        <h3>Step 4 — Get details of a particular agent</h3>
+        <p>This is the <a href="https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api/admin-settings/package/copilotpackagedetail-get" target="_blank" rel="noopener noreferrer">Get Copilot package details</a> API. Grab an <code>id</code> from the table above and pull the full metadata — long description, categories, sensitivity, who it&rsquo;s deployed to, and its underlying elements — exactly the fields an attestation review needs.</p>
+        <pre><code>$id = "PASTE_AN_ID_FROM_STEP_3"
+Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/beta/copilot/admin/catalog/packages/$id" |
+    ConvertTo-Json -Depth 10</code></pre>
+
+        <h3>Step 5 — Export the inventory for governance (optional)</h3>
+        <p>This is the line compliance actually wanted: a flat CSV they can drop into SharePoint or attach to an attestation ticket.</p>
+        <pre><code>$agents | Select-Object id, displayName, publisher, platform, lastModifiedDateTime |
+    Export-Csv ./agent-inventory.csv -NoTypeInformation -Encoding UTF8</code></pre>
+
+        <h3>Step 6 — Sign out when you&rsquo;re done</h3>
+        <pre><code>Disconnect-MgGraph</code></pre>
+
+       
+        
+
+        <div class="callout callout-info">
+            <i class="fas fa-circle-info"></i>
+            <span>The 403 license error is the most common blocker in preview. Trial tenants (for example, developer or demo tenants) usually have the Copilot admin experience but <strong>not</strong> an Agent 365 license, so the portal registry loads while the API stays locked.</span>
+        </div>
+
+        <h2>Wiring it into Agent 365 governance</h2>
+        <p>The two calls are the raw material; governance is what you build with them. A few patterns that map directly onto Agent 365 oversight responsibilities:</p>
+        <ul>
+            <li><strong>Attestation reviews</strong> &mdash; on a schedule, list every agent, join it to owner and publisher, and route each one to its owner to confirm it&rsquo;s still needed and correctly configured.</li>
+            <li><strong>Deduplication</strong> &mdash; group agents by <code>displayName</code> and <code>publisher</code> to surface the three &ldquo;HR helpers&rdquo; before the next licensing review, and consolidate.</li>
+            <li><strong>Lifecycle tracking</strong> &mdash; watch <code>lastModifiedDateTime</code> to flag stale or abandoned agents for retirement, and new arrivals for onboarding checks.</li>
+            <li><strong>Compliance reporting</strong> &mdash; export the inventory to SharePoint, Dataverse, or a ticketing system so oversight lives where your auditors already look.</li>
+        </ul>
+        <div class="callout callout-tip">
+            <i class="fas fa-diagram-project"></i>
+            <span>Microsoft publishes ready-to-adapt building blocks for exactly these patterns in the <a href="https://github.com/microsoft/copilot-agent-inventory-samples" target="_blank" rel="noopener noreferrer">Copilot Agent Inventory Samples</a> repo &mdash; a declarative agent, a Power Platform custom connector, and a Power Automate flow that syncs the inventory to a SharePoint list.</span>
+        </div>
+
+        <h2>The takeaway</h2>
+        <p>Two Graph calls turn a manual, screen-by-screen chore into a governance capability. <strong>List</strong> gives security the enumeration it needs to attest; <strong>details</strong> gives compliance the depth it needs to review. Wrap them in a scheduled export and you&rsquo;ve answered the original Agent 365 governance ask &mdash; visibility, deduplication, and lifecycle oversight &mdash; without anyone touching the admin center. Start with the interactive steps to build confidence, then graduate the same logic to app-only auth when you&rsquo;re ready to automate.</p>
+
+        <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Because these APIs are in preview, verify the current endpoints, permissions, and licensing before you build production tooling. Start with the <a href="https://learn.microsoft.com/en-us/microsoft-agent-365/admin/graph-api" target="_blank" rel="noopener noreferrer">Agent 365 Graph API</a> overview and the <a href="https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api/admin-settings/package/overview" target="_blank" rel="noopener noreferrer">Package Management API</a> reference.</span>
+        </div>
+    </div>
+
+    <div class="author-box">
+        <div class="author-avatar">DS</div>
+        <div>
+            <h4>Dhaval Shah</h4>
+            <p>Cloud Solution Architect — 18+ years across SharePoint, Microsoft 365, and Azure AI.</p>
+        </div>
+    </div>
+
+    <div class="article-footer">
+        <a href="/blog/" class="article-footer-back"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        <div class="share-links">
+            <span>Share:</span>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://dhavalshah01.github.io/blog/agent-registry-graph-api-powershell.html" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i> LinkedIn</a>
+        </div>
+    </div>
+</article>
+
+<footer class="blog-footer">
+    <p>&copy; 2026 Dhaval Shah &nbsp;·&nbsp; <a href="/">Back to Portfolio</a></p>
+</footer>
+
+<script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navLinks.classList.remove('active')));
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('i');
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === null || savedTheme === 'true') { document.body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeIcon.classList.toggle('fa-moon', !isDark);
+        themeIcon.classList.toggle('fa-sun', isDark);
+        localStorage.setItem('darkMode', isDark);
+    });
+</script>
+</body>
+</html>

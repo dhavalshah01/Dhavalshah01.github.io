@@ -1266,3 +1266,107 @@ body.dark-mode .sim-track { background: #0f172a; }
     .sim-row { grid-template-columns: 1fr; gap: 5px; }
     .vec-space { height: 340px; }
 }
+
+/* ============================================================
+   AGENT REGISTRY INFOGRAPHIC — "Programmatic access" summary
+   (title + subtitle, task pills, two numbered task cards)
+   ============================================================ */
+.agent-info {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--white);
+    box-shadow: var(--shadow-md);
+    padding: 26px 26px 28px;
+    margin: 1.9rem 0 0.6rem;
+    overflow: hidden;
+    position: relative;
+}
+.agent-info::before {
+    content: '';
+    position: absolute;
+    top: -40%; right: -12%;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(0,120,212,0.10) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.agent-info-head { position: relative; z-index: 1; }
+.agent-info-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px;
+    color: var(--primary);
+    background: var(--primary-light);
+    border: 1px solid rgba(0,120,212,0.2);
+    padding: 4px 11px; border-radius: 50px;
+    margin-bottom: 12px;
+}
+.agent-info-head h3 {
+    font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1.25;
+    color: var(--dark); margin: 0 0 8px;
+}
+.agent-info-head p.agent-info-sub {
+    font-size: 0.95rem; line-height: 1.6; margin: 0 0 4px; max-width: 640px;
+    font-weight: 600;
+    background: linear-gradient(90deg, var(--primary), #8661c5);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.agent-info-tasks-label {
+    position: relative; z-index: 1;
+    font-size: 0.9rem; color: var(--text); margin: 18px 0 12px; font-weight: 600;
+}
+.agent-info-pills { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.agent-info-pill {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--off-white); border: 1px solid var(--border);
+    border-radius: 50px; padding: 8px 15px 8px 10px;
+    font-size: 0.82rem; font-weight: 600; color: var(--dark);
+}
+.agent-info-pill i {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--primary); color: #fff; font-size: 0.74rem; flex-shrink: 0;
+}
+.agent-info-pill:nth-child(2) i { background: #8661c5; }
+.agent-info-pill:nth-child(3) i { background: #107c10; }
+.agent-info-cards { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.agent-info-card {
+    display: flex; gap: 14px; align-items: flex-start;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--off-white); padding: 18px 18px 18px 16px;
+    border-top: 3px solid var(--primary);
+}
+.agent-info-card:nth-child(2) { border-top-color: #00b4d8; }
+.agent-info-card .aic-icon {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.05rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    box-shadow: var(--shadow-sm);
+}
+.agent-info-card:nth-child(2) .aic-icon { background: linear-gradient(135deg, #00b4d8, #0078d4); }
+.agent-info-card .aic-body { display: flex; flex-direction: column; gap: 3px; }
+.agent-info-card .aic-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700;
+    color: var(--primary); letter-spacing: 1px;
+}
+.agent-info-card .aic-title { font-size: 0.92rem; font-weight: 700; color: var(--dark); line-height: 1.35; }
+.agent-info-card .aic-sub { font-size: 0.76rem; color: var(--text-light); line-height: 1.45; }
+.agent-info-card code {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+    background: var(--primary-light); color: var(--primary-dark);
+    padding: 1px 5px; border-radius: 4px; margin-top: 3px; align-self: flex-start;
+}
+
+body.dark-mode .agent-info { background: #1e293b; border-color: #334155; }
+body.dark-mode .agent-info-head h3,
+body.dark-mode .agent-info-pill,
+body.dark-mode .agent-info-card .aic-title { color: #f1f5f9; }
+body.dark-mode .agent-info-tasks-label { color: #cbd5e1; }
+body.dark-mode .agent-info-pill,
+body.dark-mode .agent-info-card { background: #16233b; border-color: #334155; }
+body.dark-mode .agent-info-card code { background: rgba(0,120,212,0.25); color: #93c5fd; }
+
+@media (max-width: 640px) {
+    .agent-info-cards { grid-template-columns: 1fr; }
+    .agent-info-head h3 { font-size: 1.2rem; }
+}
